@@ -325,6 +325,25 @@
     color: #1e293b;
   }
 
+  /* ── Nutrient Flags ── */
+  .nutrient-flag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+    animation: flagPulse 1.5s ease-in-out infinite;
+  }
+  .nutrient-short {
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+  }
+  .nutrient-excess {
+    border-color: rgba(245, 158, 11, 0.4) !important;
+  }
+  @keyframes flagPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
   /* ── Stepper Buttons ── */
   .stepper-wrap {
     display: flex;

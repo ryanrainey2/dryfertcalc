@@ -515,6 +515,33 @@ function calculateAll() {
   if ($('kDelivered')) $('kDelivered').textContent = totalK.toFixed(1)
   if ($('sDelivered')) $('sDelivered').textContent = totalS.toFixed(1)
 
+  // Nutrient target flagging
+  const targets = { n: val('targetN'), p: val('targetP'), k: val('targetK'), s: val('targetS') }
+  const delivered = { n: totalN, p: totalP, k: totalK, s: totalS }
+  const ids = { n: 'nDelivered', p: 'pDelivered', k: 'kDelivered', s: 'sDelivered' }
+  const tolerance = 0.5 // half a lb tolerance
+  for (const nut of ['n', 'p', 'k', 's']) {
+    const el = $(ids[nut])
+    if (!el) continue
+    const parent = el.parentElement
+    const flag = parent.querySelector('.nutrient-flag')
+    if (flag) flag.remove()
+    parent.classList.remove('nutrient-short', 'nutrient-excess')
+    if (targets[nut] > 0 && delivered[nut] < targets[nut] - tolerance) {
+      parent.classList.add('nutrient-short')
+      const span = document.createElement('div')
+      span.className = 'nutrient-flag text-red-400'
+      span.textContent = `⚠ Short ${(targets[nut] - delivered[nut]).toFixed(1)}`
+      parent.appendChild(span)
+    } else if (delivered[nut] > targets[nut] + tolerance && targets[nut] > 0) {
+      parent.classList.add('nutrient-excess')
+      const span = document.createElement('div')
+      span.className = 'nutrient-flag text-amber-400'
+      span.textContent = `+${(delivered[nut] - targets[nut]).toFixed(1)} excess`
+      parent.appendChild(span)
+    }
+  }
+
   // Breakdown table
   if ($('breakdownBody')) {
     $('breakdownBody').innerHTML = keys.map(k => {
