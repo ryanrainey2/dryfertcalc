@@ -202,13 +202,21 @@ function renderApp() {
               <div class="space-y-4">
                 <div>
                   <label class="lbl">Acres</label>
-                  <input id="acres" type="number" value="120" min="1"
-                    class="w-full text-4xl font-bold bg-transparent focus:outline-none py-1 border-b-2 border-zinc-700 focus:border-zinc-400 transition-colors" />
+                  <div class="stepper-wrap">
+                    <button class="stepper-btn stepper-lg" data-target="acres" data-step="1">+</button>
+                    <input id="acres" type="number" value="120" min="1"
+                      class="flex-1 text-4xl font-bold bg-transparent focus:outline-none py-1 border-b-2 border-zinc-700 focus:border-zinc-400 transition-colors text-center" />
+                    <button class="stepper-btn stepper-lg" data-target="acres" data-step="-1">−</button>
+                  </div>
                 </div>
                 <div>
                   <label class="lbl">Number of Batches</label>
-                  <input id="numBatches" type="number" value="1" min="1"
-                    class="w-full text-4xl font-bold bg-transparent focus:outline-none py-1 border-b-2 border-zinc-700 focus:border-zinc-400 transition-colors" />
+                  <div class="stepper-wrap">
+                    <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="1">+</button>
+                    <input id="numBatches" type="number" value="1" min="1"
+                      class="flex-1 text-4xl font-bold bg-transparent focus:outline-none py-1 border-b-2 border-zinc-700 focus:border-zinc-400 transition-colors text-center" />
+                    <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="-1">−</button>
+                  </div>
                 </div>
                 <div class="pt-2 border-t border-zinc-800 space-y-2">
                   <div class="flex justify-between items-baseline">
@@ -240,10 +248,10 @@ function renderApp() {
               </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div><label class="lbl" style="color:#60a5fa">Nitrogen (N)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetN" data-step="-1">−</button><input id="targetN" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetN" data-step="1">+</button></div></div>
-              <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button></div></div>
-              <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button></div></div>
-              <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:#60a5fa">Nitrogen (N)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetN" data-step="1">+</button><input id="targetN" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetN" data-step="-1">−</button></div></div>
+              <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button></div></div>
+              <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button></div></div>
+              <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button></div></div>
             </div>
             <div class="mt-3 flex items-start gap-3 bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3">
               <input type="checkbox" id="allowExcess" checked class="w-4 h-4 accent-emerald-500 mt-0.5 shrink-0" />
@@ -324,7 +332,7 @@ function renderApp() {
 
             <div class="mt-5 text-center text-xs text-zinc-600 pb-1">
               ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-4 w-auto opacity-40 inline-block mr-1" />` : ''}
-              © 2026 FertCalc Pro${companyName ? ` · ${companyName}` : ''}
+              © 2026 FertCalc Pro${companyName ? ` · ${companyName}` : ''} · Version 7.0
             </div>
           </div>
         </main>
@@ -374,10 +382,10 @@ function renderProducts() {
           </div>
         </div>
         <div class="flex items-center gap-0.5">
-          <button class="stepper-btn" data-target="price_${key}" data-step="-1">−</button>
+          <button class="stepper-btn" data-target="price_${key}" data-step="1">+</button>
           <input id="price_${key}" type="number" step="1" value="${priceVal}"
             class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
-          <button class="stepper-btn" data-target="price_${key}" data-step="1">+</button>
+          <button class="stepper-btn" data-target="price_${key}" data-step="-1">−</button>
         </div>
       </div>`
   }).join('')
@@ -385,13 +393,14 @@ function renderProducts() {
   $('priceUnitBadge').textContent = '$/TON'
 
   for (const k of productKeys()) {
-    $(`price_${k}`)?.addEventListener('input', calculateAll)
+    $(`price_${k}`)?.addEventListener('input', () => { if (checked('autoOptimize')) optimizeBlend(); else calculateAll() })
     $(`price_${k}`)?.addEventListener('change', savePrices)
     $(`use_${k}`)?.addEventListener('change', () => { if (checked('autoOptimize')) optimizeBlend(); else calculateAll() })
   }
 
   // Wire stepper buttons
   container.querySelectorAll('.stepper-btn').forEach(btn => {
+    btn._stepperWired = true
     btn.addEventListener('click', () => {
       const input = $(btn.dataset.target)
       if (!input) return
@@ -732,6 +741,10 @@ function resetAll() {
 }
 
 // ── PDF helpers ────────────────────────────────────────────────────────────
+function setPdfButtons(disabled) {
+  ['btnQuote','btnBlend','btnQuoteMob','btnBlendMob'].forEach(id => { const btn = $(id); if (btn) btn.disabled = disabled })
+}
+
 function printQuote() {
   const notes = $('notes')?.value || 'No notes'
   const customer = $('customerName')?.value || 'N/A'
@@ -741,7 +754,7 @@ function printQuote() {
   const rateUnit = mode === 'liquid' ? 'gal/acre' : 'lbs/acre'
   const prods = products(); const keys = productKeys()
 
-  const rows = keys.map(k => {
+  const rows = keys.filter(k => val(`rate_${k}`) > 0).map(k => {
     const p = prods[k]; const rate = val(`rate_${k}`)
     const lbs = mode === 'liquid' ? rate * p.lbsPerGal : rate
     return `<tr><td style="padding:8px 12px;border:1px solid #ddd;">${p.name} ${p.analysis}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${rate.toFixed(2)} ${rateUnit}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">$${(lbs * costPerLb(k)).toFixed(2)}</td></tr>`
@@ -757,7 +770,13 @@ function printQuote() {
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
-  html2pdf().set({ margin: 0, filename: `quote-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+  setPdfButtons(true)
+  toast('Generating PDF...', 'info')
+  setTimeout(() => {
+    html2pdf().set({ margin: 0, filename: `quote-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+      .then(() => { setPdfButtons(false); toast('Quote saved!', 'success') })
+      .catch(e => { setPdfButtons(false); toast('PDF error: ' + e.message, 'error') })
+  }, 100)
 }
 
 function printBlendSheet() {
@@ -795,7 +814,13 @@ function printBlendSheet() {
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;"><tr style="background:#f5f5f5;"><th style="padding:6px 12px;border:1px solid #ddd;">Batch #</th><th style="padding:6px 12px;border:1px solid #ddd;">Date/Time</th><th style="padding:6px 12px;border:1px solid #ddd;">Initials</th><th style="padding:6px 12px;border:1px solid #ddd;">Done</th></tr>${checks}</table>
     <p style="font-size:11px;color:#999;text-align:center;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
-  html2pdf().set({ margin: 0, filename: `blend-sheet-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+  setPdfButtons(true)
+  toast('Generating PDF...', 'info')
+  setTimeout(() => {
+    html2pdf().set({ margin: 0, filename: `blend-sheet-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+      .then(() => { setPdfButtons(false); toast('Blend sheet saved!', 'success') })
+      .catch(e => { setPdfButtons(false); toast('PDF error: ' + e.message, 'error') })
+  }, 100)
 }
 
 // ── Wire Events ────────────────────────────────────────────────────────────
@@ -949,18 +974,22 @@ route('/grower', async () => {
 // ── Init ───────────────────────────────────────────────────────────────────
 applyTheme()
 
-// Listen for auth state changes
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT') navigate('/login')
-})
+// Show loading spinner while Supabase processes session/auth tokens
+document.getElementById('app').innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="text-zinc-500 text-sm animate-pulse">Loading...</div></div>'
 
-// Start router
-;(async () => {
-  const session = await getSession()
-  if (session && (window.location.hash === '' || window.location.hash === '#/login')) {
-    navigate('/app')
-  } else if (!session && window.location.hash !== '#/login') {
+// Use onAuthStateChange for initial routing — fires after Supabase processes
+// any auth tokens in the URL (magic links, email confirmations, etc.)
+let _routerStarted = false
+supabase.auth.onAuthStateChange((event, session) => {
+  if (!_routerStarted) {
+    _routerStarted = true
+    if (session && (window.location.hash === '' || window.location.hash === '#/login')) {
+      navigate('/app')
+    } else if (!session && window.location.hash !== '#/login') {
+      navigate('/login')
+    }
+    startRouter()
+  } else if (event === 'SIGNED_OUT') {
     navigate('/login')
   }
-  startRouter()
-})()
+})
