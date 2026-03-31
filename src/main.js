@@ -41,9 +41,29 @@ async function requireAuth() {
   try {
     currentProfile = await getProfile(session.user.id)
     currentCompany = currentProfile.companies || null
-  } catch {
-    currentProfile = { role: 'user', full_name: session.user.email }
-    currentCompany = null
+  } catch (err) {
+    console.error('Profile load failed:', err)
+    // Try without company join as fallback
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single()
+      currentProfile = data || { role: 'user', full_name: session.user.email }
+      // Load company separately if profile has company_id
+      if (currentProfile.company_id) {
+        const { data: company } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', currentProfile.company_id)
+          .single()
+        currentCompany = company || null
+      }
+    } catch {
+      currentProfile = { role: 'user', full_name: session.user.email }
+      currentCompany = null
+    }
   }
   return session
 }
