@@ -240,10 +240,10 @@ function renderApp() {
               </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div><label class="lbl" style="color:#60a5fa">Nitrogen (N)</label><input id="targetN" type="number" step="1" value="40" class="inp-xl" /></div>
-              <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><input id="targetP" type="number" step="1" value="40" class="inp-xl" /></div>
-              <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><input id="targetK" type="number" step="1" value="40" class="inp-xl" /></div>
-              <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><input id="targetS" type="number" step="1" value="20" class="inp-xl" /></div>
+              <div><label class="lbl" style="color:#60a5fa">Nitrogen (N)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetN" data-step="-1">−</button><input id="targetN" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetN" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button></div></div>
             </div>
             <div class="mt-3 flex items-start gap-3 bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3">
               <input type="checkbox" id="allowExcess" checked class="w-4 h-4 accent-emerald-500 mt-0.5 shrink-0" />
@@ -373,8 +373,12 @@ function renderProducts() {
             <div class="text-xs text-zinc-500">${p.analysis}${p.lbsPerGal ? ` · ${p.lbsPerGal} lb/gal` : ''}</div>
           </div>
         </div>
-        <input id="price_${key}" type="number" step="1" value="${priceVal}"
-          class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
+        <div class="flex items-center gap-0.5">
+          <button class="stepper-btn" data-target="price_${key}" data-step="-1">−</button>
+          <input id="price_${key}" type="number" step="1" value="${priceVal}"
+            class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
+          <button class="stepper-btn" data-target="price_${key}" data-step="1">+</button>
+        </div>
       </div>`
   }).join('')
 
@@ -385,6 +389,18 @@ function renderProducts() {
     $(`price_${k}`)?.addEventListener('change', savePrices)
     $(`use_${k}`)?.addEventListener('change', () => { if (checked('autoOptimize')) optimizeBlend(); else calculateAll() })
   }
+
+  // Wire stepper buttons
+  container.querySelectorAll('.stepper-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = $(btn.dataset.target)
+      if (!input) return
+      const step = parseInt(btn.dataset.step)
+      input.value = Math.max(0, parseInt(input.value || 0) + step)
+      input.dispatchEvent(new Event('input'))
+      input.dispatchEvent(new Event('change'))
+    })
+  })
 }
 
 function renderRates() {
@@ -796,6 +812,20 @@ function wireAppEvents() {
   ;['targetN','targetP','targetK','targetS'].forEach(id => $(id)?.addEventListener('input', () => { if (checked('autoOptimize')) optimizeBlend() }))
   ;['acres','numBatches'].forEach(id => $(id)?.addEventListener('input', calculateAll))
   $('allowExcess')?.addEventListener('change', () => { if (checked('autoOptimize')) optimizeBlend(); else calculateAll() })
+
+  // Wire all stepper buttons (targets)
+  document.querySelectorAll('.stepper-btn').forEach(btn => {
+    if (btn._stepperWired) return
+    btn._stepperWired = true
+    btn.addEventListener('click', () => {
+      const input = $(btn.dataset.target)
+      if (!input) return
+      const step = parseInt(btn.dataset.step)
+      input.value = Math.max(0, parseInt(input.value || 0) + step)
+      input.dispatchEvent(new Event('input'))
+      input.dispatchEvent(new Event('change'))
+    })
+  })
 }
 
 // ── Routes ─────────────────────────────────────────────────────────────────
