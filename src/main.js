@@ -370,16 +370,16 @@ function renderProducts() {
     const companyPrices = currentCompany?.default_prices || {}
     const priceVal = savedPrices[key] || companyPrices[key] || p.defaultPrice
     return `
-      <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
+      <div class="flex items-center justify-between gap-1.5">
+        <div class="flex items-center gap-1.5 min-w-0">
           <input type="checkbox" id="use_${key}" checked class="w-4 h-4 shrink-0" style="accent-color:${p.color}" />
           <div class="badge" style="background:${p.color}">${p.abbr}</div>
-          <div>
-            <div class="font-medium text-sm">${p.name}</div>
-            <div class="text-xs text-zinc-500">${p.analysis}${p.lbsPerGal ? ` · ${p.lbsPerGal} lb/gal` : ''}</div>
+          <div class="min-w-0">
+            <div class="font-medium text-sm leading-tight">${p.name}</div>
+            <div class="text-xs text-zinc-500 leading-tight truncate">${p.analysis}${p.lbsPerGal ? ` · ${p.lbsPerGal} lb/gal` : ''}</div>
           </div>
         </div>
-        <div class="flex items-center gap-0.5">
+        <div class="flex items-center gap-0.5 shrink-0">
           <button class="stepper-btn" data-target="price_${key}" data-step="1">+</button>
           <input id="price_${key}" type="number" step="1" value="${priceVal}"
             class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
@@ -739,8 +739,12 @@ function resetAll() {
 }
 
 // ── PDF helpers ────────────────────────────────────────────────────────────
-function setPdfButtons(disabled) {
-  ['btnQuote','btnBlend','btnQuoteMob','btnBlendMob'].forEach(id => { const btn = $(id); if (btn) btn.disabled = disabled })
+function openPrintWindow(html, title) {
+  const w = window.open('', '_blank', 'width=820,height=1060')
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}@media print{body{margin:0;}}</style></head><body>${html}</body></html>`)
+  w.document.close()
+  w.focus()
+  setTimeout(() => { w.print() }, 400)
 }
 
 function printQuote() {
@@ -768,13 +772,8 @@ function printQuote() {
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
-  setPdfButtons(true)
-  toast('Generating PDF...', 'info')
-  setTimeout(() => {
-    html2pdf().set({ margin: 0, filename: `quote-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
-      .then(() => { setPdfButtons(false); toast('Quote saved!', 'success') })
-      .catch(e => { setPdfButtons(false); toast('PDF error: ' + e.message, 'error') })
-  }, 100)
+  openPrintWindow(html, `Quote - ${blendName}`)
+  toast('Print dialog opened', 'success')
 }
 
 function printBlendSheet() {
@@ -812,13 +811,8 @@ function printBlendSheet() {
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;"><tr style="background:#f5f5f5;"><th style="padding:6px 12px;border:1px solid #ddd;">Batch #</th><th style="padding:6px 12px;border:1px solid #ddd;">Date/Time</th><th style="padding:6px 12px;border:1px solid #ddd;">Initials</th><th style="padding:6px 12px;border:1px solid #ddd;">Done</th></tr>${checks}</table>
     <p style="font-size:11px;color:#999;text-align:center;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
-  setPdfButtons(true)
-  toast('Generating PDF...', 'info')
-  setTimeout(() => {
-    html2pdf().set({ margin: 0, filename: `blend-sheet-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
-      .then(() => { setPdfButtons(false); toast('Blend sheet saved!', 'success') })
-      .catch(e => { setPdfButtons(false); toast('PDF error: ' + e.message, 'error') })
-  }, 100)
+  openPrintWindow(html, `Blend Sheet - ${blendName}`)
+  toast('Print dialog opened', 'success')
 }
 
 // ── Wire Events ────────────────────────────────────────────────────────────
