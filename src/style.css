@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @layer base {
-  html { background-color: #09090b; color: #e4e4e7; }
+  html { background-color: #09090b; color: #e4e4e7; transition: background-color 0.2s, color 0.2s; }
+  html.light { background-color: #f4f4f5; color: #18181b; }
   body { font-family: 'Inter', system-ui, sans-serif; margin: 0; }
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -155,4 +156,22 @@
     border-color: #059669;
   }
   .mode-btn-active:hover { background-color: #047857; }
+
+  /* ── Light mode overrides ── */
+  .light .card { background-color: #ffffff; border-color: #e4e4e7; }
+  .light .inp {
+    background-color: #f4f4f5; border-color: #d4d4d8; color: #18181b;
+  }
+  .light .inp:focus { border-color: #a1a1aa; box-shadow: 0 0 0 1px #a1a1aa; }
+  .light .inp-ro { background-color: #f4f4f5; border-color: #d4d4d8; color: #52525b; }
+  .light .inp-xl { background-color: #f4f4f5; border-color: #d4d4d8; color: #18181b; }
+  .light .inp-xl:focus { border-color: #a1a1aa; }
+  .light .inp-xl-ro { background-color: #f4f4f5; border-color: #d4d4d8; color: #3f3f46; }
+  .light .btn-ghost { border-color: #d4d4d8; color: #52525b; }
+  .light .btn-ghost:hover { background-color: #e4e4e7; color: #18181b; }
+  .light .mode-btn { border-color: #d4d4d8; color: #71717a; }
+  .light .mode-btn:hover { background-color: #e4e4e7; color: #18181b; }
+  .light .lbl { color: #71717a; }
+  .light .badge { color: #fff; }
+  .light #toast { background-color: #fff; border-color: #d4d4d8; color: #18181b; }
 }

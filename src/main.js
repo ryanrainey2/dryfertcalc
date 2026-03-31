@@ -19,6 +19,7 @@ const LIQUID_PRODUCTS = {
 
 // ── State ──────────────────────────────────────────────────────────────────
 let mode = 'dry' // 'dry' | 'liquid'
+let theme = localStorage.getItem('dfc_theme') || 'dark'
 
 function products() { return mode === 'dry' ? DRY_PRODUCTS : LIQUID_PRODUCTS }
 function productKeys() { return Object.keys(products()) }
@@ -36,6 +37,19 @@ function toast(msg, type = 'info') {
   el.style.opacity = '1'; el.style.transform = 'translateY(0)'; el.style.pointerEvents = 'auto'
   clearTimeout(el._t)
   el._t = setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; el.style.pointerEvents = 'none' }, 2800)
+}
+
+function applyTheme() {
+  document.documentElement.classList.toggle('light', theme === 'light')
+  const icon = theme === 'light' ? '🌙' : '☀️'
+  if ($('btnTheme')) $('btnTheme').textContent = icon
+  if ($('btnThemeMob')) $('btnThemeMob').textContent = icon
+  localStorage.setItem('dfc_theme', theme)
+}
+
+function toggleTheme() {
+  theme = theme === 'dark' ? 'light' : 'dark'
+  applyTheme()
 }
 
 function priceId(key) { return `price_${key}` }
@@ -652,6 +666,10 @@ function printBlendSheet() {
 
 // ── UI Wiring ──────────────────────────────────────────────────────────────
 function initUI() {
+  // Theme toggle
+  $('btnTheme').addEventListener('click', toggleTheme)
+  $('btnThemeMob').addEventListener('click', toggleTheme)
+
   // Mode toggle
   $('btnModeDry').addEventListener('click', () => setMode('dry'))
   $('btnModeLiquid').addEventListener('click', () => setMode('liquid'))
@@ -691,6 +709,7 @@ function initUI() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+applyTheme()
 renderProducts()
 renderRates()
 loadSavedList()
