@@ -216,3 +216,197 @@ export async function deleteFeatureRequest(id) {
   const { error } = await supabase.from('feature_requests').delete().eq('id', id)
   if (error) throw error
 }
+
+// ── Crop Library ───────────────────────────────────────────
+export async function listCrops() {
+  const { data, error } = await supabase
+    .from('crops')
+    .select('*')
+    .order('category', { ascending: true })
+    .order('name', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+// ── Fields ─────────────────────────────────────────────────
+export async function listFields(companyId) {
+  const { data, error } = await supabase
+    .from('fields')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('name')
+  if (error) throw error
+  return data
+}
+
+export async function createField(field) {
+  const { data, error } = await supabase
+    .from('fields')
+    .insert(field)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateField(id, updates) {
+  const { data, error } = await supabase
+    .from('fields')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteField(id) {
+  const { error } = await supabase.from('fields').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ── Soil Tests ─────────────────────────────────────────────
+export async function listSoilTests(companyId, fieldId = null) {
+  let q = supabase.from('soil_tests').select('*').eq('company_id', companyId)
+  if (fieldId) q = q.eq('field_id', fieldId)
+  const { data, error } = await q.order('test_date', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function createSoilTest(test) {
+  const { data, error } = await supabase
+    .from('soil_tests')
+    .insert(test)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateSoilTest(id, updates) {
+  const { data, error } = await supabase
+    .from('soil_tests')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteSoilTest(id) {
+  const { error } = await supabase.from('soil_tests').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ── Field Applications ─────────────────────────────────────
+export async function listFieldApplications(companyId, fieldId = null) {
+  let q = supabase.from('field_applications').select('*').eq('company_id', companyId)
+  if (fieldId) q = q.eq('field_id', fieldId)
+  const { data, error } = await q.order('application_date', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function createFieldApplication(app) {
+  const { data, error } = await supabase
+    .from('field_applications')
+    .insert(app)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteFieldApplication(id) {
+  const { error } = await supabase.from('field_applications').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ── Application Plans ──────────────────────────────────────
+export async function listApplicationPlans(companyId, fieldId = null) {
+  let q = supabase.from('application_plans').select('*').eq('company_id', companyId)
+  if (fieldId) q = q.eq('field_id', fieldId)
+  const { data, error } = await q.order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function createApplicationPlan(plan) {
+  const { data, error } = await supabase
+    .from('application_plans')
+    .insert(plan)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateApplicationPlan(id, updates) {
+  const { data, error } = await supabase
+    .from('application_plans')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteApplicationPlan(id) {
+  const { error } = await supabase.from('application_plans').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ── Inventory ──────────────────────────────────────────────
+export async function listInventory(companyId) {
+  const { data, error } = await supabase
+    .from('inventory')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('product_name')
+  if (error) throw error
+  return data
+}
+
+export async function upsertInventory(item) {
+  const { data, error } = await supabase
+    .from('inventory')
+    .upsert({ ...item, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteInventoryItem(id) {
+  const { error } = await supabase.from('inventory').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ── Spreader Settings ──────────────────────────────────────
+export async function listSpreaders(companyId) {
+  const { data, error } = await supabase
+    .from('spreader_settings')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('equipment_name')
+  if (error) throw error
+  return data
+}
+
+export async function upsertSpreader(item) {
+  const { data, error } = await supabase
+    .from('spreader_settings')
+    .upsert({ ...item, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteSpreader(id) {
+  const { error } = await supabase.from('spreader_settings').delete().eq('id', id)
+  if (error) throw error
+}

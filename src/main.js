@@ -4,6 +4,13 @@ import { route, navigate, startRouter } from './router.js'
 import { renderLogin } from './pages/login.js'
 import { renderAdmin } from './pages/admin.js'
 import { renderFeatures } from './pages/features.js'
+import { renderFields } from './pages/fields.js'
+import { renderCrops } from './pages/crops.js'
+import { renderSoilTests } from './pages/soil-tests.js'
+import { renderInventory } from './pages/inventory.js'
+import { renderPlanner } from './pages/planner.js'
+import { renderSpreader } from './pages/spreader.js'
+import { renderWeather } from './pages/weather.js'
 import { toast, applyTheme, toggleTheme } from './ui.js'
 
 // ── Product Definitions ────────────────────────────────────────────────────
@@ -88,8 +95,21 @@ function renderApp() {
           <button id="btnSaveHeader" class="btn-blue">💾 Save</button>
           <button id="btnQuote" class="btn-green">📄 Quote</button>
           <button id="btnBlend" class="btn-amber">📦 Blend Sheet</button>
-          ${isAdmin ? '<button id="btnFeatures" class="btn-ghost">📋 Features</button>' : ''}
-          ${isAdmin ? '<button id="btnAdmin" class="btn-ghost">🛠️ Admin</button>' : ''}
+          <div class="relative" id="toolsDropdown">
+            <button id="btnToolsMenu" class="btn-ghost">🧰 Tools ▾</button>
+            <div id="toolsPanel" class="hidden absolute right-0 top-full mt-1 w-52 card p-2 z-50 shadow-xl space-y-0.5">
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/crops">🌿 Crop Library</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/fields">🗺️ Fields</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/soil-tests">🧪 Soil Tests</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/planner">📅 App Planner</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/inventory">📦 Inventory</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/spreader">⚙️ Spreader Cal</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/weather">🌤️ Weather</button>
+              <div class="border-t border-zinc-700 my-1"></div>
+              ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/features">📋 Features</button>' : ''}
+              ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/admin">🛠️ Admin</button>' : ''}
+            </div>
+          </div>
           <button id="btnLogoutApp" class="btn-ghost">Sign Out</button>
         </div>
         <div class="flex sm:hidden gap-2 shrink-0">
@@ -103,6 +123,15 @@ function renderApp() {
       <div id="mobileMenu" class="hidden card p-3 mb-4 flex-col gap-2">
         <button class="btn-ghost w-full justify-center theme-toggle">☀️ Toggle Theme</button>
         <button id="btnSaveMob" class="btn-blue w-full justify-center">💾 Save Blend</button>
+        <div class="border-t border-zinc-700 my-1"></div>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/crops">🌿 Crop Library</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/fields">🗺️ Fields</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/soil-tests">🧪 Soil Tests</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/planner">📅 Planner</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/inventory">📦 Inventory</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/spreader">⚙️ Spreader</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/weather">🌤️ Weather</button>
+        <div class="border-t border-zinc-700 my-1"></div>
         ${isAdmin ? '<button id="btnAdminMob" class="btn-ghost w-full justify-center">🛠️ Admin</button>' : ''}
         <button id="btnResetMob" class="btn-ghost w-full justify-center">↺ Reset All</button>
         <button id="btnLogoutMob" class="btn-ghost w-full justify-center">Sign Out</button>
@@ -298,6 +327,20 @@ function renderApp() {
   renderRates()
   loadSavedList()
   wireAppEvents()
+
+  // Check for crop targets from crop library
+  const cropTargets = sessionStorage.getItem('cropTargets')
+  if (cropTargets) {
+    try {
+      const t = JSON.parse(cropTargets)
+      if ($('targetN')) $('targetN').value = t.n || 0
+      if ($('targetP')) $('targetP').value = t.p || 0
+      if ($('targetK')) $('targetK').value = t.k || 0
+      if ($('targetS')) $('targetS').value = t.s || 0
+      if ($('notes') && t.crop) $('notes').value = `${t.crop} @ ${t.yield} ${t.yieldUnit} yield goal`
+      sessionStorage.removeItem('cropTargets')
+    } catch {}
+  }
   optimizeBlend()
 }
 
@@ -721,9 +764,17 @@ function wireAppEvents() {
   $('btnDelete')?.addEventListener('click', deleteBlend)
   $('btnOptimize')?.addEventListener('click', optimizeBlend)
   $('btnResetMob')?.addEventListener('click', resetAll)
-  // Admin & Features
-  $('btnFeatures')?.addEventListener('click', () => navigate('/features'))
-  $('btnAdmin')?.addEventListener('click', () => navigate('/admin'))
+  // Tools dropdown
+  $('btnToolsMenu')?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    $('toolsPanel')?.classList.toggle('hidden')
+  })
+  document.addEventListener('click', () => $('toolsPanel')?.classList.add('hidden'))
+  // Nav tool buttons (both desktop dropdown and mobile menu)
+  document.querySelectorAll('.nav-tool').forEach(btn => {
+    btn.addEventListener('click', () => navigate(btn.dataset.route))
+  })
+  // Admin mobile
   $('btnAdminMob')?.addEventListener('click', () => navigate('/admin'))
   // Logout
   $('btnLogoutApp')?.addEventListener('click', async () => { await signOut(); navigate('/login') })
@@ -767,6 +818,48 @@ route('/features', async () => {
     return
   }
   renderFeatures(currentProfile)
+})
+
+route('/fields', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderFields(currentProfile, currentCompany)
+})
+
+route('/crops', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderCrops(currentProfile)
+})
+
+route('/soil-tests', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderSoilTests(currentProfile, currentCompany)
+})
+
+route('/inventory', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderInventory(currentProfile, currentCompany)
+})
+
+route('/planner', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderPlanner(currentProfile, currentCompany)
+})
+
+route('/spreader', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderSpreader(currentProfile)
+})
+
+route('/weather', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderWeather(currentProfile)
 })
 
 // ── Init ───────────────────────────────────────────────────────────────────
