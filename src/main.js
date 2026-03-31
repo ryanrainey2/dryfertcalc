@@ -3,6 +3,7 @@ import { getSession, getProfile, signOut, supabase, listBlends, saveBlendToDB, d
 import { route, navigate, startRouter } from './router.js'
 import { renderLogin } from './pages/login.js'
 import { renderAdmin } from './pages/admin.js'
+import { renderFeatures } from './pages/features.js'
 import { toast, applyTheme, toggleTheme } from './ui.js'
 
 // ── Product Definitions ────────────────────────────────────────────────────
@@ -87,6 +88,7 @@ function renderApp() {
           <button id="btnSaveHeader" class="btn-blue">💾 Save</button>
           <button id="btnQuote" class="btn-green">📄 Quote</button>
           <button id="btnBlend" class="btn-amber">📦 Blend Sheet</button>
+          ${isAdmin ? '<button id="btnFeatures" class="btn-ghost">📋 Features</button>' : ''}
           ${isAdmin ? '<button id="btnAdmin" class="btn-ghost">🛠️ Admin</button>' : ''}
           <button id="btnLogoutApp" class="btn-ghost">Sign Out</button>
         </div>
@@ -719,7 +721,8 @@ function wireAppEvents() {
   $('btnDelete')?.addEventListener('click', deleteBlend)
   $('btnOptimize')?.addEventListener('click', optimizeBlend)
   $('btnResetMob')?.addEventListener('click', resetAll)
-  // Admin
+  // Admin & Features
+  $('btnFeatures')?.addEventListener('click', () => navigate('/features'))
   $('btnAdmin')?.addEventListener('click', () => navigate('/admin'))
   $('btnAdminMob')?.addEventListener('click', () => navigate('/admin'))
   // Logout
@@ -753,6 +756,17 @@ route('/admin', async () => {
     return
   }
   renderAdmin(currentProfile)
+})
+
+route('/features', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  if (currentProfile?.role !== 'super_admin') {
+    toast('Admin access required', 'error')
+    navigate('/app')
+    return
+  }
+  renderFeatures(currentProfile)
 })
 
 // ── Init ───────────────────────────────────────────────────────────────────

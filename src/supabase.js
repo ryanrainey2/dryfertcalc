@@ -180,3 +180,39 @@ export async function inviteUser(email, fullName, companyId, role = 'user') {
   }
   return data
 }
+
+// ── Feature Requests ────────────────────────────────────────
+export async function listFeatureRequests() {
+  const { data, error } = await supabase
+    .from('feature_requests')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function createFeatureRequest(request) {
+  const { data, error } = await supabase
+    .from('feature_requests')
+    .insert({ ...request, status: 'Approved' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateFeatureRequest(id, updates) {
+  const { data, error } = await supabase
+    .from('feature_requests')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteFeatureRequest(id) {
+  const { error } = await supabase.from('feature_requests').delete().eq('id', id)
+  if (error) throw error
+}
