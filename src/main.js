@@ -66,8 +66,8 @@ async function requireAuth() {
 
 // ── Render Calculator App ──────────────────────────────────────────────────
 function renderApp() {
-  const companyName = currentCompany?.name || 'FertCalc Pro'
   const companyLogo = currentCompany?.logo_url || null
+  const companyName = currentCompany?.name || null
   const isAdmin = currentProfile?.role === 'super_admin'
 
   document.getElementById('app').innerHTML = `
@@ -75,11 +75,12 @@ function renderApp() {
       <!-- Header -->
       <header class="flex items-center justify-between gap-4 mb-5">
         <div class="flex items-center gap-3 min-w-0">
-          ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-10 sm:h-12 w-auto" />` : '<div class="text-3xl">🌾</div>'}
+          <div class="text-3xl">🌾</div>
           <div class="min-w-0">
-            <h1 class="text-xl sm:text-2xl font-bold leading-tight">${companyName}</h1>
-            <p id="appSubtitle" class="text-xs text-zinc-500 mt-0.5">Fertilizer Optimizer</p>
+            <h1 class="text-xl sm:text-2xl font-bold leading-tight">FertCalc Pro</h1>
+            <p id="appSubtitle" class="text-xs text-zinc-500 mt-0.5">${companyName ? companyName : 'Fertilizer Optimizer'}</p>
           </div>
+          ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-8 sm:h-10 w-auto ml-2 opacity-70" />` : ''}
         </div>
         <div class="hidden sm:flex flex-wrap gap-2 items-center shrink-0">
           <button class="theme-toggle" title="Toggle theme">☀️</button>
@@ -283,7 +284,7 @@ function renderApp() {
 
             <div class="mt-5 text-center text-xs text-zinc-600 pb-1">
               ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-4 w-auto opacity-40 inline-block mr-1" />` : ''}
-              © 2026 ${companyName} · Powered by FertCalc Pro
+              © 2026 FertCalc Pro${companyName ? ` · ${companyName}` : ''}
             </div>
           </div>
         </main>
