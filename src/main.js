@@ -270,6 +270,7 @@ function renderApp() {
               <span id="optimizationNote" class="hidden text-xs bg-emerald-900/60 text-emerald-400 px-2 py-0.5 rounded-full normal-case">✅ Optimized</span>
             </h2>
             <div id="ratesContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3"></div>
+            <div class="mt-2 text-center text-sm text-zinc-400">Total Spread Rate: <span id="spreadRateValue" class="font-semibold text-zinc-200">0.00</span> <span id="spreadRateUnit">lbs/acre</span></div>
 
             <!-- Cost Hero -->
             <div class="mt-4 bg-gradient-to-br from-emerald-700 to-teal-800 rounded-2xl p-5 flex items-center justify-between gap-4">
@@ -415,6 +416,7 @@ function renderRates() {
   const unit = mode === 'dry' ? 'lbs/acre' : 'gal/acre'
   if ($('rateUnitLabel')) $('rateUnitLabel').textContent = unit
   if ($('thRate')) $('thRate').textContent = unit
+  if ($('spreadRateUnit')) $('spreadRateUnit').textContent = unit
 
   const container = $('ratesContainer')
   if (!container) return
@@ -509,9 +511,11 @@ function calculateAll() {
 
   const totalFieldCost = totalCostPerAcre * acres
   const pUnit = isLiquid ? 'gal' : 'lbs'
-  const totalProduct = keys.reduce((a, k) => a + rawRates[k], 0) * acres
+  const totalSpreadRate = keys.reduce((a, k) => a + rawRates[k], 0)
+  const totalProduct = totalSpreadRate * acres
   const perBatch = numBatches > 0 ? totalProduct / numBatches : 0
 
+  if ($('spreadRateValue')) $('spreadRateValue').textContent = totalSpreadRate.toFixed(2)
   if ($('totalProductNeeded')) $('totalProductNeeded').textContent = totalProduct.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' ' + pUnit
   if ($('productPerBatch')) $('productPerBatch').textContent = perBatch.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' ' + pUnit
   if ($('costPerAcreBig')) $('costPerAcreBig').textContent = '$' + totalCostPerAcre.toFixed(2)
@@ -787,6 +791,7 @@ function printBlendSheet() {
   const isLiquid = mode === 'liquid'
 
   const batchRows = keys.map(k => { const p = prods[k]; const rate = val(`rate_${k}`); if (rate === 0) return null; const totalField = rate * acres; return { label: `${p.name} ${p.analysis}`, color: p.color, rate, perBatch: totalField / numBatches, tons: (isLiquid ? totalField * p.lbsPerGal : totalField) / 2000 } }).filter(Boolean)
+  const totalSpreadRate = batchRows.reduce((sum, r) => sum + r.rate, 0)
 
   let cum = 0; const tableRows = batchRows.map(r => { cum += r.perBatch; return `<tr><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${r.rate.toFixed(2)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${r.perBatch.toFixed(isLiquid?1:0)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#f0fdf4;font-weight:bold;">${cum.toFixed(isLiquid?1:0)}</td></tr>` }).join('')
 
@@ -801,7 +806,7 @@ function printBlendSheet() {
   const checks = Array.from({length:numBatches},(_,i)=>`<tr><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">${i+1}</td><td style="padding:6px 12px;border:1px solid #ddd;width:120px;"></td><td style="padding:6px 12px;border:1px solid #ddd;width:80px;"></td><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">☐</td></tr>`).join('')
 
   const html = `<div style="padding:36px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}</div></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRate.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}</div></div>
     <hr style="border-color:#ddd;margin-bottom:20px;">
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
