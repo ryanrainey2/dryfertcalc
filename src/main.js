@@ -788,16 +788,15 @@ function printBlendSheet() {
 
   const batchRows = keys.map(k => { const p = prods[k]; const rate = val(`rate_${k}`); if (rate === 0) return null; const totalField = rate * acres; return { label: `${p.name} ${p.analysis}`, color: p.color, rate, perBatch: totalField / numBatches, tons: (isLiquid ? totalField * p.lbsPerGal : totalField) / 2000 } }).filter(Boolean)
 
-  let cum = 0; const tableRows = batchRows.map(r => { cum += r.perBatch; return `<tr><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${r.rate.toFixed(2)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${r.perBatch.toFixed(isLiquid?1:0)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#f0fdf4;font-weight:bold;">${cum.toFixed(isLiquid?1:0)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${r.tons.toFixed(2)}</td></tr>` }).join('')
+  let cum = 0; const tableRows = batchRows.map(r => { cum += r.perBatch; return `<tr><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${r.rate.toFixed(2)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${r.perBatch.toFixed(isLiquid?1:0)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#f0fdf4;font-weight:bold;">${cum.toFixed(isLiquid?1:0)}</td></tr>` }).join('')
 
   const totalTons = batchRows.reduce((sum, r) => sum + r.tons, 0)
   const totalTonsAllBatches = totalTons * numBatches
   const isCart = checked('cartRental')
-  const totalsRow = `<tr style="background:${isCart ? '#fffbeb' : '#f5f5f5'};font-weight:bold;">
-    <td style="padding:8px 12px;border:1px solid #ddd;" colspan="4">${isCart ? '🚜 CART RENTAL — Total Tons' : 'Total Tons'}</td>
-    <td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-size:16px;">${totalTons.toFixed(2)}</td>
-  </tr>
-  ${numBatches > 1 ? `<tr style="background:#f5f5f5;"><td style="padding:8px 12px;border:1px solid #ddd;" colspan="4">Total Tons (${numBatches} batches)</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${totalTonsAllBatches.toFixed(2)}</td></tr>` : ''}`
+  const totalTonsBlock = `<div style="margin-top:20px;padding:14px 18px;border-radius:8px;background:${isCart ? '#fffbeb' : '#f5f5f5'};border:1px solid ${isCart ? '#fde68a' : '#ddd'};font-size:15px;">
+    <div style="font-weight:bold;">${isCart ? '🚜 CART RENTAL — ' : ''}Total Tons (per batch): ${totalTons.toFixed(2)}</div>
+    ${numBatches > 1 ? `<div style="margin-top:6px;">Total Tons (${numBatches} batches): <strong>${totalTonsAllBatches.toFixed(2)}</strong></div>` : ''}
+  </div>`
 
   const checks = Array.from({length:numBatches},(_,i)=>`<tr><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">${i+1}</td><td style="padding:6px 12px;border:1px solid #ddd;width:120px;"></td><td style="padding:6px 12px;border:1px solid #ddd;width:80px;"></td><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">☐</td></tr>`).join('')
 
@@ -806,10 +805,11 @@ function printBlendSheet() {
     <hr style="border-color:#ddd;margin-bottom:20px;">
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Cumulative</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Total Tons</th></tr>${tableRows}${totalsRow}</table>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}</table>
     <h2 style="font-size:15px;margin:0 0 8px;">Batch Log</h2>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;"><tr style="background:#f5f5f5;"><th style="padding:6px 12px;border:1px solid #ddd;">Batch #</th><th style="padding:6px 12px;border:1px solid #ddd;">Date/Time</th><th style="padding:6px 12px;border:1px solid #ddd;">Initials</th><th style="padding:6px 12px;border:1px solid #ddd;">Done</th></tr>${checks}</table>
-    <p style="font-size:11px;color:#999;text-align:center;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
+    ${totalTonsBlock}
+    <p style="font-size:11px;color:#999;text-align:center;margin-top:24px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
   openPrintWindow(html, `Blend Sheet - ${blendName}`)
   toast('Print dialog opened', 'success')
