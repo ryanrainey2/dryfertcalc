@@ -11,6 +11,9 @@ import { renderInventory } from './pages/inventory.js'
 import { renderPlanner } from './pages/planner.js'
 import { renderSpreader } from './pages/spreader.js'
 import { renderWeather } from './pages/weather.js'
+import { renderNutrientPlan } from './pages/nutrient-plan.js'
+import { renderVRT } from './pages/vrt.js'
+import { renderGrowerPortal } from './pages/grower-portal.js'
 import { toast, applyTheme, toggleTheme } from './ui.js'
 
 // ── Product Definitions ────────────────────────────────────────────────────
@@ -105,6 +108,9 @@ function renderApp() {
               <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/inventory">📦 Inventory</button>
               <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/spreader">⚙️ Spreader Cal</button>
               <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/weather">🌤️ Weather</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/vrt">🗺️ VRT Rx</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/nutrient-plan">📋 4R Plan</button>
+              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/grower">👤 Grower Portal</button>
               <div class="border-t border-zinc-700 my-1"></div>
               ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/features">📋 Features</button>' : ''}
               ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/admin">🛠️ Admin</button>' : ''}
@@ -131,6 +137,9 @@ function renderApp() {
         <button class="btn-ghost w-full justify-center nav-tool" data-route="/inventory">📦 Inventory</button>
         <button class="btn-ghost w-full justify-center nav-tool" data-route="/spreader">⚙️ Spreader</button>
         <button class="btn-ghost w-full justify-center nav-tool" data-route="/weather">🌤️ Weather</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/vrt">🗺️ VRT Rx</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/nutrient-plan">📋 4R Plan</button>
+        <button class="btn-ghost w-full justify-center nav-tool" data-route="/grower">👤 Grower Portal</button>
         <div class="border-t border-zinc-700 my-1"></div>
         ${isAdmin ? '<button id="btnAdminMob" class="btn-ghost w-full justify-center">🛠️ Admin</button>' : ''}
         <button id="btnResetMob" class="btn-ghost w-full justify-center">↺ Reset All</button>
@@ -860,6 +869,24 @@ route('/weather', async () => {
   const session = await requireAuth()
   if (!session) return
   renderWeather(currentProfile)
+})
+
+route('/nutrient-plan', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderNutrientPlan(currentProfile, currentCompany)
+})
+
+route('/vrt', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderVRT(currentProfile, currentCompany)
+})
+
+route('/grower', async () => {
+  const session = await requireAuth()
+  if (!session) return
+  renderGrowerPortal(currentProfile, currentCompany)
 })
 
 // ── Init ───────────────────────────────────────────────────────────────────
