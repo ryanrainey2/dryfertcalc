@@ -616,7 +616,6 @@ async function loadBlends(filterCompanyId) {
             <div class="font-semibold text-sm">${b.name || 'Unnamed blend'}</div>
             <div class="text-xs text-zinc-500">
               ${b.companies?.name || 'Unknown'} ·
-              ${b.profiles?.full_name || 'Unknown user'} ·
               <span class="px-1.5 py-0.5 rounded text-xs font-medium ${b.mode === 'dry' ? 'bg-amber-900/60 text-amber-400' : 'bg-blue-900/60 text-blue-400'}">${b.mode}</span>
               ${b.customer_name ? ` · ${b.customer_name}` : ''}
               ${costPerAcre ? ` · ${costPerAcre}` : ''}

@@ -143,7 +143,7 @@ export async function uploadLogo(file, companySlug) {
 export async function listAllBlends() {
   const { data, error } = await supabase
     .from('blends')
-    .select('*, companies(name), profiles(full_name)')
+    .select('*, companies(name)')
     .order('updated_at', { ascending: false })
   if (error) throw error
   return data
@@ -152,7 +152,7 @@ export async function listAllBlends() {
 export async function listBlendsForCompany(companyId) {
   const { data, error } = await supabase
     .from('blends')
-    .select('*, profiles(full_name)')
+    .select('*')
     .eq('company_id', companyId)
     .order('updated_at', { ascending: false })
   if (error) throw error
