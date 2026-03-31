@@ -195,7 +195,7 @@ function renderApp() {
                 💰 Products &amp; Prices
                 <span id="priceUnitBadge" class="bg-amber-900/60 text-amber-400 px-2 py-0.5 rounded-full text-xs">$/TON</span>
               </h2>
-              <div id="productsContainer" class="space-y-3"></div>
+              <div id="productsContainer" class="space-y-2"></div>
             </div>
             <div class="card p-4">
               <h2 class="text-xs font-semibold mb-3 uppercase tracking-wide text-zinc-400">📍 Field Information</h2>
