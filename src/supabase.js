@@ -1,0 +1,125 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://fuilqexzgdrlhwetlwrj.supabase.co'
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWxxZXh6Z2RybGh3ZXRsd3JqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MTg5MDcsImV4cCI6MjA5MDQ5NDkwN30.JlpjSUBQSbHMA2R6jSvbOxipAHbsT6SOPSRcejfoNAE'
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
+
+// ── Auth helpers ─────────────────────────────────────────────
+export async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) throw error
+  return data
+}
+
+export async function signUp(email, password, fullName) {
+  const { data, error } = await supabase.auth.signUp({
+    email, password,
+    options: { data: { full_name: fullName } }
+  })
+  if (error) throw error
+  return data
+}
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
+}
+
+export async function getSession() {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session
+}
+
+export async function getProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, companies(*)')
+    .eq('user_id', userId)
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ── Company helpers ──────────────────────────────────────────
+export async function listCompanies() {
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .order('name')
+  if (error) throw error
+  return data
+}
+
+export async function createCompany(company) {
+  const { data, error } = await supabase
+    .from('companies')
+    .insert(company)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateCompany(id, updates) {
+  const { data, error } = await supabase
+    .from('companies')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteCompany(id) {
+  const { error } = await supabase.from('companies').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ── User management ──────────────────────────────────────────
+export async function listProfiles() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, companies(name, slug)')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function updateProfile(id, updates) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ── Blends (cloud storage) ───────────────────────────────────
+export async function listBlends(companyId) {
+  const { data, error } = await supabase
+    .from('blends')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('updated_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function saveBlendToDB(blend) {
+  const { data, error } = await supabase
+    .from('blends')
+    .upsert(blend, { onConflict: 'id' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteBlendFromDB(id) {
+  const { error } = await supabase.from('blends').delete().eq('id', id)
+  if (error) throw error
+}
