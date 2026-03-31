@@ -184,7 +184,7 @@ function renderApp() {
       <!-- Main Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <!-- Sidebar -->
-        <aside class="lg:col-span-3 space-y-3">
+        <aside class="lg:col-span-3 space-y-3 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
           <button id="sidebarToggle" class="lg:hidden btn-ghost w-full justify-between text-sm py-3">
             <span>⚙️ Products &amp; Field Info</span>
             <span id="sidebarArrow" class="text-xs">▼</span>
