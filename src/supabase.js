@@ -123,3 +123,60 @@ export async function deleteBlendFromDB(id) {
   const { error } = await supabase.from('blends').delete().eq('id', id)
   if (error) throw error
 }
+
+// ── Logo upload ─────────────────────────────────────────────
+export async function uploadLogo(file, companySlug) {
+  const ext = file.name.split('.').pop()
+  const path = `${companySlug}/logo.${ext}`
+  // Remove old logo first
+  await supabase.storage.from('logos').remove([path])
+  const { error } = await supabase.storage.from('logos').upload(path, file, {
+    cacheControl: '3600',
+    upsert: true,
+  })
+  if (error) throw error
+  const { data } = supabase.storage.from('logos').getPublicUrl(path)
+  return data.publicUrl
+}
+
+// ── Admin: blends by company ────────────────────────────────
+export async function listAllBlends() {
+  const { data, error } = await supabase
+    .from('blends')
+    .select('*, companies(name), profiles(full_name)')
+    .order('updated_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function listBlendsForCompany(companyId) {
+  const { data, error } = await supabase
+    .from('blends')
+    .select('*, profiles(full_name)')
+    .eq('company_id', companyId)
+    .order('updated_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+// ── Invite user (Supabase inviteUserByEmail requires service role, so we use signUp) ──
+export async function inviteUser(email, fullName, companyId, role = 'user') {
+  // Generate a temp password — user will reset via email
+  const tempPass = crypto.randomUUID().slice(0, 16)
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: tempPass,
+    options: { data: { full_name: fullName } }
+  })
+  if (error) throw error
+  // Update profile with company and role
+  if (data.user) {
+    // Wait briefly for trigger to create profile
+    await new Promise(r => setTimeout(r, 1000))
+    await supabase
+      .from('profiles')
+      .update({ company_id: companyId, role })
+      .eq('user_id', data.user.id)
+  }
+  return data
+}

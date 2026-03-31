@@ -290,7 +290,8 @@ function renderProducts() {
   container.innerHTML = productKeys().map(key => {
     const p = prods[key]
     const savedPrices = JSON.parse(localStorage.getItem(`dfc_${mode}_prices`) || '{}')
-    const priceVal = savedPrices[key] || p.defaultPrice
+    const companyPrices = currentCompany?.default_prices || {}
+    const priceVal = savedPrices[key] || companyPrices[key] || p.defaultPrice
     return `
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">

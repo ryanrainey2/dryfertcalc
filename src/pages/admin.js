@@ -1,9 +1,15 @@
-import { listCompanies, createCompany, updateCompany, deleteCompany, listProfiles, updateProfile, signOut } from '../supabase.js'
+import {
+  listCompanies, createCompany, updateCompany, deleteCompany,
+  listProfiles, updateProfile, uploadLogo,
+  listBlendsForCompany, listAllBlends, deleteBlendFromDB,
+  inviteUser, signOut
+} from '../supabase.js'
 import { navigate } from '../router.js'
 import { toast } from '../ui.js'
 
 let companies = []
 let profiles = []
+let blends = []
 
 export async function renderAdmin(profile) {
   const app = document.getElementById('app')
@@ -12,7 +18,7 @@ export async function renderAdmin(profile) {
       <header class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold">🛠️ Admin Dashboard</h1>
-          <p class="text-xs text-zinc-500 mt-0.5">Manage companies, users, and deployments</p>
+          <p class="text-xs text-zinc-500 mt-0.5">Manage companies, users, blends, and settings</p>
         </div>
         <div class="flex gap-2">
           <button id="btnGoApp" class="btn-green">🌾 Calculator</button>
@@ -21,12 +27,13 @@ export async function renderAdmin(profile) {
       </header>
 
       <!-- Tabs -->
-      <div class="flex gap-1 mb-5">
+      <div class="flex gap-1 mb-5 flex-wrap">
         <button class="admin-tab admin-tab-active" data-tab="companies">Companies</button>
         <button class="admin-tab" data-tab="users">Users</button>
+        <button class="admin-tab" data-tab="blends">Blends</button>
       </div>
 
-      <!-- Companies Tab -->
+      <!-- ══════ Companies Tab ══════ -->
       <div id="tabCompanies">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide">Company Tenants</h2>
@@ -36,7 +43,7 @@ export async function renderAdmin(profile) {
         <!-- New company form (hidden) -->
         <div id="newCompanyForm" class="hidden card p-4 mb-4">
           <h3 class="text-sm font-semibold mb-3">Create New Company</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
               <label class="lbl">Company Name</label>
               <input id="ncName" type="text" class="inp" placeholder="e.g. Prairie Ag Co-op" />
@@ -45,9 +52,18 @@ export async function renderAdmin(profile) {
               <label class="lbl">Slug (URL-friendly)</label>
               <input id="ncSlug" type="text" class="inp" placeholder="e.g. prairie-ag" />
             </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
-              <label class="lbl">Logo URL</label>
-              <input id="ncLogo" type="text" class="inp" placeholder="https://..." />
+              <label class="lbl">Logo</label>
+              <input id="ncLogoFile" type="file" accept="image/*" class="inp text-xs" />
+            </div>
+            <div>
+              <label class="lbl">Primary Brand Color</label>
+              <div class="flex gap-2 items-center">
+                <input id="ncColor" type="color" value="#059669" class="w-10 h-10 rounded-lg border border-zinc-700 cursor-pointer" />
+                <input id="ncColorHex" type="text" class="inp" value="#059669" placeholder="#059669" />
+              </div>
             </div>
           </div>
           <div class="flex gap-2">
@@ -59,10 +75,68 @@ export async function renderAdmin(profile) {
         <div id="companiesList" class="space-y-2"></div>
       </div>
 
-      <!-- Users Tab -->
+      <!-- ══════ Users Tab ══════ -->
       <div id="tabUsers" class="hidden">
-        <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-4">All Users</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide">All Users</h2>
+          <button id="btnInviteUser" class="btn-blue text-xs">+ Invite User</button>
+        </div>
+
+        <!-- Invite form (hidden) -->
+        <div id="inviteForm" class="hidden card p-4 mb-4">
+          <h3 class="text-sm font-semibold mb-3">Invite New User</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+            <div>
+              <label class="lbl">Full Name</label>
+              <input id="invName" type="text" class="inp" placeholder="John Doe" />
+            </div>
+            <div>
+              <label class="lbl">Email</label>
+              <input id="invEmail" type="email" class="inp" placeholder="john@company.com" />
+            </div>
+            <div>
+              <label class="lbl">Company</label>
+              <select id="invCompany" class="inp"></select>
+            </div>
+            <div>
+              <label class="lbl">Role</label>
+              <select id="invRole" class="inp">
+                <option value="user">User</option>
+                <option value="company_admin">Company Admin</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button id="btnSendInvite" class="btn-blue text-xs">Send Invite</button>
+            <button id="btnCancelInvite" class="btn-ghost text-xs">Cancel</button>
+          </div>
+        </div>
+
         <div id="usersList" class="space-y-2"></div>
+      </div>
+
+      <!-- ══════ Blends Tab ══════ -->
+      <div id="tabBlends" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide">All Saved Blends</h2>
+          <div class="flex gap-2 items-center">
+            <label class="lbl mr-1">Filter:</label>
+            <select id="blendCompanyFilter" class="inp text-xs py-1 w-40"></select>
+          </div>
+        </div>
+        <div id="blendsList" class="space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- Company Detail Modal -->
+    <div id="companyModal" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4">
+      <div class="card p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="cmTitle" class="text-lg font-bold">Company Settings</h2>
+          <button id="cmClose" class="btn-ghost text-xs">✕</button>
+        </div>
+        <div id="cmBody"></div>
       </div>
     </div>`
 
@@ -81,11 +155,13 @@ export async function renderAdmin(profile) {
       const target = tab.dataset.tab
       document.getElementById('tabCompanies').classList.toggle('hidden', target !== 'companies')
       document.getElementById('tabUsers').classList.toggle('hidden', target !== 'users')
+      document.getElementById('tabBlends').classList.toggle('hidden', target !== 'blends')
       if (target === 'users') loadUsers()
+      if (target === 'blends') loadBlends()
     })
   })
 
-  // New company form toggle
+  // New company form
   document.getElementById('btnNewCompany').addEventListener('click', () => {
     document.getElementById('newCompanyForm').classList.remove('hidden')
   })
@@ -99,30 +175,99 @@ export async function renderAdmin(profile) {
       .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   })
 
+  // Sync color picker ↔ hex
+  document.getElementById('ncColor').addEventListener('input', (e) => {
+    document.getElementById('ncColorHex').value = e.target.value
+  })
+  document.getElementById('ncColorHex').addEventListener('input', (e) => {
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+      document.getElementById('ncColor').value = e.target.value
+    }
+  })
+
   // Create company
   document.getElementById('btnCreateCompany').addEventListener('click', async () => {
     const name = document.getElementById('ncName').value.trim()
     const slug = document.getElementById('ncSlug').value.trim()
     if (!name || !slug) { toast('Name and slug required', 'error'); return }
+
+    const btn = document.getElementById('btnCreateCompany')
+    btn.disabled = true; btn.textContent = 'Creating...'
+
     try {
+      let logo_url = null
+      const fileInput = document.getElementById('ncLogoFile')
+      if (fileInput.files[0]) {
+        logo_url = await uploadLogo(fileInput.files[0], slug)
+      }
+
       await createCompany({
-        name, slug,
-        logo_url: document.getElementById('ncLogo').value.trim() || null,
+        name, slug, logo_url,
+        primary_color: document.getElementById('ncColorHex').value || '#059669',
       })
       toast(`"${name}" created`, 'success')
       document.getElementById('newCompanyForm').classList.add('hidden')
       document.getElementById('ncName').value = ''
       document.getElementById('ncSlug').value = ''
-      document.getElementById('ncLogo').value = ''
+      document.getElementById('ncLogoFile').value = ''
       loadCompanies()
     } catch (err) {
       toast(err.message, 'error')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create'
     }
+  })
+
+  // Invite user form
+  document.getElementById('btnInviteUser').addEventListener('click', () => {
+    // Populate company dropdown
+    const sel = document.getElementById('invCompany')
+    sel.innerHTML = `<option value="">No company</option>` +
+      companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+    document.getElementById('inviteForm').classList.remove('hidden')
+  })
+  document.getElementById('btnCancelInvite').addEventListener('click', () => {
+    document.getElementById('inviteForm').classList.add('hidden')
+  })
+  document.getElementById('btnSendInvite').addEventListener('click', async () => {
+    const name = document.getElementById('invName').value.trim()
+    const email = document.getElementById('invEmail').value.trim()
+    const companyId = document.getElementById('invCompany').value || null
+    const role = document.getElementById('invRole').value
+    if (!name || !email) { toast('Name and email required', 'error'); return }
+
+    const btn = document.getElementById('btnSendInvite')
+    btn.disabled = true; btn.textContent = 'Creating...'
+    try {
+      await inviteUser(email, name, companyId, role)
+      toast(`Invited ${email}`, 'success')
+      document.getElementById('inviteForm').classList.add('hidden')
+      document.getElementById('invName').value = ''
+      document.getElementById('invEmail').value = ''
+      loadUsers()
+    } catch (err) {
+      toast(err.message, 'error')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Send Invite'
+    }
+  })
+
+  // Company modal close
+  document.getElementById('cmClose').addEventListener('click', closeCompanyModal)
+  document.getElementById('companyModal').addEventListener('click', (e) => {
+    if (e.target.id === 'companyModal') closeCompanyModal()
   })
 
   loadCompanies()
 }
 
+function closeCompanyModal() {
+  document.getElementById('companyModal').classList.add('hidden')
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Companies
+// ══════════════════════════════════════════════════════════════
 async function loadCompanies() {
   try {
     companies = await listCompanies()
@@ -136,17 +281,21 @@ async function loadCompanies() {
 
     el.innerHTML = companies.map(c => `
       <div class="card p-4 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3 min-w-0">
+        <div class="flex items-center gap-3 min-w-0 cursor-pointer open-company" data-id="${c.id}">
           ${c.logo_url
-            ? `<img src="${c.logo_url}" class="h-8 w-8 rounded-lg object-contain bg-zinc-800 p-1" />`
-            : `<div class="h-8 w-8 rounded-lg bg-zinc-700 flex items-center justify-center text-xs font-bold">${c.name[0]}</div>`
+            ? `<img src="${c.logo_url}" class="h-10 w-10 rounded-lg object-contain bg-zinc-800 p-1" />`
+            : `<div class="h-10 w-10 rounded-lg flex items-center justify-center text-sm font-bold text-white" style="background:${c.primary_color || '#059669'}">${c.name[0]}</div>`
           }
           <div class="min-w-0">
             <div class="font-semibold text-sm">${c.name}</div>
-            <div class="text-xs text-zinc-500">/${c.slug} · ${c.active ? '🟢 Active' : '🔴 Inactive'}</div>
+            <div class="text-xs text-zinc-500">
+              /${c.slug} · ${c.active ? '🟢 Active' : '🔴 Inactive'}
+              ${c.primary_color ? ` · <span class="inline-block w-3 h-3 rounded-full align-middle" style="background:${c.primary_color}"></span>` : ''}
+            </div>
           </div>
         </div>
         <div class="flex gap-2 shrink-0">
+          <button class="btn-ghost text-xs open-company" data-id="${c.id}">⚙️ Settings</button>
           <button class="btn-ghost text-xs toggle-company" data-id="${c.id}" data-active="${c.active}">
             ${c.active ? 'Deactivate' : 'Activate'}
           </button>
@@ -155,19 +304,21 @@ async function loadCompanies() {
       </div>`
     ).join('')
 
-    // Wire toggle/delete
+    // Wire events
+    el.querySelectorAll('.open-company').forEach(btn => {
+      btn.addEventListener('click', () => openCompanySettings(btn.dataset.id))
+    })
     el.querySelectorAll('.toggle-company').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const id = btn.dataset.id
         const active = btn.dataset.active === 'true'
-        await updateCompany(id, { active: !active })
+        await updateCompany(btn.dataset.id, { active: !active })
         toast(active ? 'Company deactivated' : 'Company activated', 'info')
         loadCompanies()
       })
     })
     el.querySelectorAll('.delete-company').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (!confirm(`Delete "${btn.dataset.name}"? This removes all their blends.`)) return
+        if (!confirm(`Delete "${btn.dataset.name}"? This removes all their blends and user assignments.`)) return
         await deleteCompany(btn.dataset.id)
         toast('Company deleted', 'info')
         loadCompanies()
@@ -178,6 +329,197 @@ async function loadCompanies() {
   }
 }
 
+// ── Company Settings Modal ──
+async function openCompanySettings(companyId) {
+  const c = companies.find(co => co.id === companyId)
+  if (!c) return
+
+  // Load company users and blends
+  let companyUsers = []
+  let companyBlends = []
+  try {
+    const allProfiles = await listProfiles()
+    companyUsers = allProfiles.filter(p => p.company_id === companyId)
+    companyBlends = await listBlendsForCompany(companyId)
+  } catch (err) { /* ignore */ }
+
+  document.getElementById('cmTitle').textContent = c.name + ' Settings'
+  const body = document.getElementById('cmBody')
+  body.innerHTML = `
+    <!-- Branding -->
+    <div class="mb-5">
+      <h3 class="lbl mb-2">Branding</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Company Name</label>
+          <input id="cmName" type="text" class="inp" value="${c.name}" />
+        </div>
+        <div>
+          <label class="lbl">Slug</label>
+          <input id="cmSlug" type="text" class="inp" value="${c.slug}" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+        <div>
+          <label class="lbl">Logo</label>
+          ${c.logo_url ? `<img src="${c.logo_url}" class="h-12 w-auto rounded-lg bg-zinc-800 p-1 mb-2" />` : ''}
+          <input id="cmLogoFile" type="file" accept="image/*" class="inp text-xs" />
+        </div>
+        <div>
+          <label class="lbl">Primary Color</label>
+          <div class="flex gap-2 items-center">
+            <input id="cmColor" type="color" value="${c.primary_color || '#059669'}" class="w-10 h-10 rounded-lg border border-zinc-700 cursor-pointer" />
+            <input id="cmColorHex" type="text" class="inp" value="${c.primary_color || '#059669'}" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Default Prices -->
+    <div class="mb-5">
+      <h3 class="lbl mb-2">Default Product Prices ($/ton)</h3>
+      <p class="text-xs text-zinc-500 mb-2">Override default prices for this company's calculator</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        ${renderPriceInputs(c.default_prices)}
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="mb-5">
+      <h3 class="lbl mb-2">Overview</h3>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-zinc-800/50 border border-zinc-700 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold">${companyUsers.length}</div>
+          <div class="text-xs text-zinc-500">Users</div>
+        </div>
+        <div class="bg-zinc-800/50 border border-zinc-700 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold">${companyBlends.length}</div>
+          <div class="text-xs text-zinc-500">Blends</div>
+        </div>
+        <div class="bg-zinc-800/50 border border-zinc-700 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold">${c.active ? '🟢' : '🔴'}</div>
+          <div class="text-xs text-zinc-500">${c.active ? 'Active' : 'Inactive'}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users list -->
+    ${companyUsers.length > 0 ? `
+    <div class="mb-5">
+      <h3 class="lbl mb-2">Users (${companyUsers.length})</h3>
+      <div class="space-y-1">
+        ${companyUsers.map(u => `
+          <div class="flex items-center justify-between px-3 py-2 bg-zinc-800/30 rounded-lg">
+            <div>
+              <span class="text-sm font-medium">${u.full_name || 'Unnamed'}</span>
+              <span class="text-xs text-zinc-500 ml-2">${u.role}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Recent blends -->
+    ${companyBlends.length > 0 ? `
+    <div class="mb-5">
+      <h3 class="lbl mb-2">Recent Blends (${companyBlends.length})</h3>
+      <div class="space-y-1 max-h-40 overflow-y-auto">
+        ${companyBlends.slice(0, 10).map(b => `
+          <div class="flex items-center justify-between px-3 py-2 bg-zinc-800/30 rounded-lg">
+            <div>
+              <span class="text-sm font-medium">${b.name || 'Unnamed blend'}</span>
+              <span class="text-xs text-zinc-500 ml-2">${b.customer_name || ''} · ${b.mode}</span>
+            </div>
+            <div class="text-xs text-zinc-500">${new Date(b.updated_at).toLocaleDateString()}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="flex gap-2">
+      <button id="cmSave" class="btn-green">Save Changes</button>
+      <button id="cmCancel" class="btn-ghost">Cancel</button>
+    </div>`
+
+  // Sync color
+  const cmColor = body.querySelector('#cmColor')
+  const cmColorHex = body.querySelector('#cmColorHex')
+  cmColor.addEventListener('input', () => { cmColorHex.value = cmColor.value })
+  cmColorHex.addEventListener('input', () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(cmColorHex.value)) cmColor.value = cmColorHex.value
+  })
+
+  // Save
+  body.querySelector('#cmSave').addEventListener('click', async () => {
+    const btn = body.querySelector('#cmSave')
+    btn.disabled = true; btn.textContent = 'Saving...'
+    try {
+      const updates = {
+        name: body.querySelector('#cmName').value.trim(),
+        slug: body.querySelector('#cmSlug').value.trim(),
+        primary_color: cmColorHex.value,
+        default_prices: gatherPrices(body),
+      }
+
+      const fileInput = body.querySelector('#cmLogoFile')
+      if (fileInput.files[0]) {
+        updates.logo_url = await uploadLogo(fileInput.files[0], updates.slug || c.slug)
+      }
+
+      await updateCompany(companyId, updates)
+      toast('Company updated', 'success')
+      closeCompanyModal()
+      loadCompanies()
+    } catch (err) {
+      toast(err.message, 'error')
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save Changes'
+    }
+  })
+
+  body.querySelector('#cmCancel').addEventListener('click', closeCompanyModal)
+
+  document.getElementById('companyModal').classList.remove('hidden')
+}
+
+// ── Price inputs for default_prices ──
+const ALL_PRODUCTS = {
+  an:     { name: 'Nitrate (AN)',     default: 650 },
+  map:    { name: 'MAP',              default: 720 },
+  potash: { name: 'Potash',           default: 380 },
+  ams:    { name: 'AMS',              default: 420 },
+  gypsum: { name: 'Gypsum',           default: 180 },
+  uan32:  { name: 'UAN 32',           default: 300 },
+  uan28:  { name: 'UAN 28',           default: 260 },
+  app:    { name: '10-34-0 (APP)',     default: 480 },
+  ats:    { name: 'ATS',              default: 320 },
+  kts:    { name: 'KTS',              default: 380 },
+}
+
+function renderPriceInputs(prices) {
+  return Object.entries(ALL_PRODUCTS).map(([key, prod]) => {
+    const val = prices?.[key] ?? ''
+    return `
+      <div>
+        <label class="lbl">${prod.name}</label>
+        <input type="number" class="inp text-xs price-input" data-key="${key}"
+               placeholder="${prod.default}" value="${val}" step="1" />
+      </div>`
+  }).join('')
+}
+
+function gatherPrices(container) {
+  const prices = {}
+  container.querySelectorAll('.price-input').forEach(inp => {
+    const val = parseFloat(inp.value)
+    if (!isNaN(val) && val > 0) prices[inp.dataset.key] = val
+  })
+  return Object.keys(prices).length > 0 ? prices : null
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Users
+// ══════════════════════════════════════════════════════════════
 async function loadUsers() {
   try {
     profiles = await listProfiles()
@@ -190,18 +532,19 @@ async function loadUsers() {
     }
 
     el.innerHTML = profiles.map(p => `
-      <div class="card p-4 flex items-center justify-between gap-4">
+      <div class="card p-4 flex items-center justify-between gap-4 flex-wrap">
         <div class="min-w-0">
           <div class="font-semibold text-sm">${p.full_name || 'Unnamed'}</div>
           <div class="text-xs text-zinc-500">
             ${p.companies?.name || 'No company'} ·
-            <span class="px-1.5 py-0.5 rounded text-xs font-medium
+            <span class="inline-block px-1.5 py-0.5 rounded text-xs font-medium
               ${p.role === 'super_admin' ? 'bg-amber-900/60 text-amber-400' :
                 p.role === 'company_admin' ? 'bg-blue-900/60 text-blue-400' :
                 'bg-zinc-700 text-zinc-300'}">${p.role}</span>
+            · Joined ${new Date(p.created_at).toLocaleDateString()}
           </div>
         </div>
-        <div class="flex gap-2 shrink-0 items-center">
+        <div class="flex gap-2 shrink-0 items-center flex-wrap">
           <select class="inp text-xs py-1 w-28 assign-company" data-profile-id="${p.id}">
             <option value="">No company</option>
             ${companies.map(c => `<option value="${c.id}" ${p.company_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
@@ -234,5 +577,71 @@ async function loadUsers() {
     })
   } catch (err) {
     toast('Failed to load users: ' + err.message, 'error')
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Blends
+// ══════════════════════════════════════════════════════════════
+async function loadBlends(filterCompanyId) {
+  try {
+    blends = await listAllBlends()
+
+    // Populate filter dropdown
+    const filter = document.getElementById('blendCompanyFilter')
+    if (filter && filter.options.length <= 1) {
+      filter.innerHTML = `<option value="">All Companies</option>` +
+        companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+      filter.addEventListener('change', () => loadBlends(filter.value || null))
+    }
+
+    const filtered = filterCompanyId
+      ? blends.filter(b => b.company_id === filterCompanyId)
+      : blends
+
+    const el = document.getElementById('blendsList')
+    if (!el) return
+
+    if (filtered.length === 0) {
+      el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">No blends found.</div>'
+      return
+    }
+
+    el.innerHTML = filtered.map(b => {
+      const data = b.data || {}
+      const costPerAcre = data.costPerAcre ? `$${parseFloat(data.costPerAcre).toFixed(2)}/ac` : ''
+      return `
+        <div class="card p-4 flex items-center justify-between gap-4 flex-wrap">
+          <div class="min-w-0">
+            <div class="font-semibold text-sm">${b.name || 'Unnamed blend'}</div>
+            <div class="text-xs text-zinc-500">
+              ${b.companies?.name || 'Unknown'} ·
+              ${b.profiles?.full_name || 'Unknown user'} ·
+              <span class="px-1.5 py-0.5 rounded text-xs font-medium ${b.mode === 'dry' ? 'bg-amber-900/60 text-amber-400' : 'bg-blue-900/60 text-blue-400'}">${b.mode}</span>
+              ${b.customer_name ? ` · ${b.customer_name}` : ''}
+              ${costPerAcre ? ` · ${costPerAcre}` : ''}
+            </div>
+          </div>
+          <div class="flex gap-2 shrink-0 items-center">
+            <div class="text-xs text-zinc-500">${new Date(b.updated_at).toLocaleDateString()}</div>
+            <button class="btn-red text-xs delete-blend" data-id="${b.id}" data-name="${b.name || 'this blend'}">Delete</button>
+          </div>
+        </div>`
+    }).join('')
+
+    el.querySelectorAll('.delete-blend').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(`Delete "${btn.dataset.name}"?`)) return
+        try {
+          await deleteBlendFromDB(btn.dataset.id)
+          toast('Blend deleted', 'info')
+          loadBlends(filterCompanyId)
+        } catch (err) {
+          toast(err.message, 'error')
+        }
+      })
+    })
+  } catch (err) {
+    toast('Failed to load blends: ' + err.message, 'error')
   }
 }
