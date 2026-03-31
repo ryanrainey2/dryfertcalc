@@ -1,77 +1,94 @@
 @import "tailwindcss";
 
 @layer base {
-  html { background-color: #09090b; color: #e4e4e7; transition: background-color 0.2s, color 0.2s; }
-  html.light { background-color: #f4f4f5; color: #18181b; }
-  body { font-family: 'Inter', system-ui, sans-serif; margin: 0; }
+  html {
+    background-color: #0a0e1a;
+    color: #e2e8f0;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  html.light {
+    background-color: #eef2f7;
+    color: #1e293b;
+  }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+  }
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
 }
 
 @layer components {
+  /* ── Glassmorphism Card ── */
   .card {
-    background-color: #18181b;
-    border: 1px solid #27272a;
-    border-radius: 1rem;
+    background: rgba(30, 41, 70, 0.55);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(148, 163, 210, 0.15);
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  /* Base input */
+  /* ── Base Input ── */
   .inp {
-    background-color: #27272a;
-    border: 1px solid #3f3f46;
-    border-radius: 0.75rem;
+    background: rgba(30, 41, 70, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(148, 163, 210, 0.2);
+    border-radius: 0.875rem;
     padding: 0.625rem 0.75rem;
-    color: #f4f4f5;
+    color: #f1f5f9;
     width: 100%;
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
   .inp:focus {
-    border-color: #71717a;
-    box-shadow: 0 0 0 1px #71717a;
+    border-color: rgba(99, 130, 255, 0.6);
+    box-shadow: 0 0 0 3px rgba(99, 130, 255, 0.15);
   }
 
-  /* Read-only input */
+  /* ── Read-only Input ── */
   .inp-ro {
-    background-color: rgba(39, 39, 42, 0.7);
-    border: 1px solid #3f3f46;
-    border-radius: 0.75rem;
+    background: rgba(30, 41, 70, 0.35);
+    border: 1px solid rgba(148, 163, 210, 0.12);
+    border-radius: 0.875rem;
     padding: 0.625rem 0.75rem;
-    color: #d4d4d8;
+    color: #94a3b8;
     width: 100%;
     outline: none;
     cursor: not-allowed;
   }
 
-  /* XL input (target nutrient fields) */
+  /* ── XL Input (target nutrient fields) ── */
   .inp-xl {
-    background-color: #27272a;
-    border: 1px solid #3f3f46;
-    border-radius: 1rem;
+    background: rgba(30, 41, 70, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(148, 163, 210, 0.2);
+    border-radius: 1.25rem;
     padding: 1rem 0.75rem;
-    color: #f4f4f5;
+    color: #f1f5f9;
     width: 100%;
     outline: none;
     text-align: center;
     font-size: 2.25rem;
     font-weight: 600;
-    transition: border-color 0.15s;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
   .inp-xl:focus {
-    border-color: #71717a;
+    border-color: rgba(99, 130, 255, 0.6);
+    box-shadow: 0 0 0 3px rgba(99, 130, 255, 0.15);
   }
   @media (min-width: 640px) {
     .inp-xl { font-size: 3rem; }
   }
 
-  /* XL read-only (rate output fields) */
+  /* ── XL Read-only ── */
   .inp-xl-ro {
-    background-color: rgba(39, 39, 42, 0.7);
-    border: 1px solid #3f3f46;
-    border-radius: 1rem;
+    background: rgba(30, 41, 70, 0.35);
+    border: 1px solid rgba(148, 163, 210, 0.12);
+    border-radius: 1.25rem;
     padding: 1rem 0.75rem;
-    color: #d4d4d8;
+    color: #94a3b8;
     width: 100%;
     text-align: center;
     font-size: 2.25rem;
@@ -82,7 +99,7 @@
     .inp-xl-ro { font-size: 3rem; }
   }
 
-  /* Buttons */
+  /* ── Buttons ── */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -91,39 +108,76 @@
     border-radius: 0.875rem;
     font-weight: 600;
     font-size: 0.875rem;
-    transition: all 0.15s;
+    transition: all 0.2s;
     white-space: nowrap;
     cursor: pointer;
     border: none;
     text-decoration: none;
   }
-  .btn-blue  { background-color: #2563eb; color: #fff; }
-  .btn-blue:hover  { background-color: #1d4ed8; }
-  .btn-green { background-color: #059669; color: #fff; }
-  .btn-green:hover { background-color: #047857; }
-  .btn-amber { background-color: #d97706; color: #fff; }
-  .btn-amber:hover { background-color: #b45309; }
-  .btn-red   { background-color: #dc2626; color: #fff; }
-  .btn-red:hover   { background-color: #b91c1c; }
-  .btn-ghost {
-    background-color: #27272a;
-    border: 1px solid #3f3f46;
-    color: #d4d4d8;
+  .btn-blue {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.35);
   }
-  .btn-ghost:hover { background-color: #3f3f46; color: #f4f4f5; }
+  .btn-blue:hover {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
+    transform: translateY(-1px);
+  }
+  .btn-green {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
+  }
+  .btn-green:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+  }
+  .btn-amber {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+  }
+  .btn-amber:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+    transform: translateY(-1px);
+  }
+  .btn-red {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
+  }
+  .btn-red:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
+  }
+  .btn-ghost {
+    background: rgba(30, 41, 70, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(148, 163, 210, 0.18);
+    color: #cbd5e1;
+  }
+  .btn-ghost:hover {
+    background: rgba(50, 65, 105, 0.6);
+    border-color: rgba(148, 163, 210, 0.3);
+    color: #f1f5f9;
+  }
 
-  /* Label */
+  /* ── Label ── */
   .lbl {
     display: block;
     font-size: 0.7rem;
-    color: #71717a;
+    color: #64748b;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.25rem;
   }
 
-  /* Product badge */
+  /* ── Product Badge ── */
   .badge {
     width: 2rem;
     height: 2rem;
@@ -137,7 +191,7 @@
     flex-shrink: 0;
   }
 
-  /* Theme toggle */
+  /* ── Theme Toggle ── */
   .theme-toggle {
     width: 2.5rem;
     height: 2.5rem;
@@ -147,147 +201,201 @@
     border-radius: 0.75rem;
     font-size: 1.1rem;
     cursor: pointer;
-    border: 1px solid #3f3f46;
-    background-color: #27272a;
-    transition: background-color 0.15s;
+    border: 1px solid rgba(148, 163, 210, 0.18);
+    background: rgba(30, 41, 70, 0.5);
+    backdrop-filter: blur(8px);
+    transition: all 0.2s;
     padding: 0;
   }
-  .theme-toggle:hover { background-color: #3f3f46; }
-  .light .theme-toggle {
-    background-color: #e4e4e7;
-    border: none;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  .theme-toggle:hover {
+    background: rgba(50, 65, 105, 0.6);
+    border-color: rgba(148, 163, 210, 0.3);
   }
-  .light .theme-toggle:hover { background-color: #d4d4d8; }
+  .light .theme-toggle {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+  .light .theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.9);
+  }
 
-  /* Mode toggle buttons */
+  /* ── Mode Toggle Buttons ── */
   .mode-btn {
     padding: 0.375rem 0.875rem;
-    border-radius: 0.5rem;
+    border-radius: 0.625rem;
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
-    border: 1px solid #3f3f46;
+    border: 1px solid rgba(148, 163, 210, 0.15);
     background-color: transparent;
-    color: #71717a;
-    transition: all 0.15s;
+    color: #64748b;
+    transition: all 0.2s;
   }
-  .mode-btn:hover { color: #e4e4e7; background-color: #27272a; }
+  .mode-btn:hover {
+    color: #e2e8f0;
+    background: rgba(30, 41, 70, 0.4);
+  }
   .mode-btn-active {
-    background-color: #059669;
+    background: linear-gradient(135deg, #10b981, #059669);
     color: #fff;
-    border-color: #059669;
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
   }
-  .mode-btn-active:hover { background-color: #047857; }
+  .mode-btn-active:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+  }
 
-  /* ── Light mode overrides ── */
-  .light .card { background-color: #ffffff; border-color: #e4e4e7; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  /* ── Light Mode ── */
+  .light .card {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
   .light .inp {
-    background-color: #ffffff; border-color: #d4d4d8; color: #18181b;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #1e293b;
   }
-  .light .inp:focus { border-color: #a1a1aa; box-shadow: 0 0 0 1px #a1a1aa; }
-  .light .inp-ro { background-color: #f4f4f5; border-color: #d4d4d8; color: #52525b; }
-  .light .inp-xl { background-color: #ffffff; border-color: #d4d4d8; color: #18181b; }
-  .light .inp-xl:focus { border-color: #a1a1aa; }
-  .light .inp-xl-ro { background-color: #f4f4f5; border-color: #d4d4d8; color: #3f3f46; }
+  .light .inp:focus {
+    border-color: rgba(99, 130, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(99, 130, 255, 0.1);
+  }
+  .light .inp-ro {
+    background: rgba(241, 245, 249, 0.7);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: #64748b;
+  }
+  .light .inp-xl {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #1e293b;
+  }
+  .light .inp-xl:focus {
+    border-color: rgba(99, 130, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(99, 130, 255, 0.1);
+  }
+  .light .inp-xl-ro {
+    background: rgba(241, 245, 249, 0.7);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: #475569;
+  }
   .light .btn-ghost {
-    border: none;
-    color: #3f3f46;
-    background-color: #e4e4e7;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #475569;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
-  .light .btn-ghost:hover { background-color: #d4d4d8; color: #18181b; }
-  .light .mode-btn { border-color: #d4d4d8; color: #71717a; }
-  .light .mode-btn:hover { background-color: #e4e4e7; color: #18181b; }
+  .light .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.85);
+    color: #1e293b;
+  }
+  .light .mode-btn {
+    border-color: rgba(148, 163, 184, 0.25);
+    color: #64748b;
+  }
+  .light .mode-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #1e293b;
+  }
   .light .btn-blue {
-    background-color: #3b82f6;
-    box-shadow: 0 1px 3px rgba(59,130,246,0.3);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.25);
   }
-  .light .btn-blue:hover { background-color: #2563eb; }
   .light .btn-green {
-    background-color: #10b981;
-    box-shadow: 0 1px 3px rgba(16,185,129,0.3);
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.25);
   }
-  .light .btn-green:hover { background-color: #059669; }
   .light .btn-amber {
-    background-color: #f59e0b;
-    box-shadow: 0 1px 3px rgba(245,158,11,0.3);
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.25);
   }
-  .light .btn-amber:hover { background-color: #d97706; }
   .light .btn-red {
-    background-color: #ef4444;
-    box-shadow: 0 1px 3px rgba(239,68,68,0.3);
+    box-shadow: 0 2px 12px rgba(239, 68, 68, 0.25);
   }
-  .light .btn-red:hover { background-color: #dc2626; }
-  .light .lbl { color: #52525b; }
+  .light .lbl { color: #475569; }
   .light .badge { color: #fff; }
-  .light #toast { background-color: #fff; border-color: #d4d4d8; color: #18181b; }
+  .light #toast {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border-color: rgba(148, 163, 184, 0.25);
+    color: #1e293b;
+  }
 
-  /* Admin tab styling */
+  /* ── Admin Tab ── */
   .admin-tab {
     padding: 0.375rem 0.875rem;
-    border-radius: 0.5rem;
+    border-radius: 0.625rem;
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
-    border: 1px solid #3f3f46;
+    border: 1px solid rgba(148, 163, 210, 0.15);
     background-color: transparent;
-    color: #71717a;
-    transition: all 0.15s;
+    color: #64748b;
+    transition: all 0.2s;
   }
-  .admin-tab:hover { color: #e4e4e7; background-color: #27272a; }
-  .admin-tab-active { background-color: #059669; color: #fff; border-color: #059669; }
-  .admin-tab-active:hover { background-color: #047857; }
-  .light .admin-tab { border-color: #d4d4d8; color: #71717a; }
-  .light .admin-tab:hover { background-color: #e4e4e7; color: #18181b; }
+  .admin-tab:hover {
+    color: #e2e8f0;
+    background: rgba(30, 41, 70, 0.4);
+  }
+  .admin-tab-active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+  }
+  .admin-tab-active:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+  }
+  .light .admin-tab {
+    border-color: rgba(148, 163, 184, 0.25);
+    color: #64748b;
+  }
+  .light .admin-tab:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #1e293b;
+  }
 }
 
-/* ── Light mode: override inline Tailwind dark utilities ──
-   These target the hardcoded zinc-* classes used in the calculator HTML */
+/* ── Light Mode: Override Inline Tailwind Dark Utilities ── */
 html.light {
-  /* Page-level text colors */
-  & .text-zinc-100 { color: #18181b; }
-  & .text-zinc-200 { color: #27272a; }
-  & .text-zinc-300 { color: #3f3f46; }
-  & .text-zinc-400 { color: #52525b; }
-  & .text-zinc-500 { color: #71717a; }
-  & .text-zinc-600 { color: #a1a1aa; }
+  & .text-zinc-100 { color: #1e293b; }
+  & .text-zinc-200 { color: #334155; }
+  & .text-zinc-300 { color: #475569; }
+  & .text-zinc-400 { color: #64748b; }
+  & .text-zinc-500 { color: #64748b; }
+  & .text-zinc-600 { color: #94a3b8; }
 
-  /* Backgrounds */
-  & .bg-zinc-950 { background-color: #f4f4f5; }
-  & .bg-zinc-900 { background-color: #fafafa; }
-  & .bg-zinc-800 { background-color: #f4f4f5; }
-  & .bg-zinc-700 { background-color: #e4e4e7; }
+  & .bg-zinc-950 { background-color: #eef2f7; }
+  & .bg-zinc-900 { background-color: #f8fafc; }
+  & .bg-zinc-800 { background-color: #f1f5f9; }
+  & .bg-zinc-700 { background-color: #e2e8f0; }
 
-  /* Subtle backgrounds used for sub-cards and delivered nutrients */
   & [class*="bg-zinc-800\/50"],
   & [class*="bg-zinc-800\/40"],
   & [class*="bg-zinc-800\/30"] {
-    background-color: #f4f4f5 !important;
+    background-color: #f1f5f9 !important;
   }
 
-  /* Borders */
-  & .border-zinc-700 { border-color: #e4e4e7; }
-  & .border-zinc-800 { border-color: #e4e4e7; }
-  & [class*="divide-zinc-800"] > * + * { border-color: #e4e4e7; }
+  & .border-zinc-700 { border-color: #e2e8f0; }
+  & .border-zinc-800 { border-color: #e2e8f0; }
+  & [class*="divide-zinc-800"] > * + * { border-color: #e2e8f0; }
 
-  /* Table rows */
-  & tr[class*="bg-zinc-800"] { background-color: #f9fafb; }
-  & [class*="hover\\:bg-zinc-800"]:hover { background-color: #f4f4f5 !important; }
+  & tr[class*="bg-zinc-800"] { background-color: #f8fafc; }
+  & [class*="hover\\:bg-zinc-800"]:hover { background-color: #f1f5f9 !important; }
 
-  /* Breakdown table body */
-  & tbody.text-zinc-300 { color: #3f3f46; }
+  & tbody.text-zinc-300 { color: #475569; }
 
-  /* Badges — amber and emerald backgrounds */
   & [class*="bg-amber-900"] { background-color: #fef3c7 !important; }
   & [class*="text-amber-400"]:not([class*="from-emerald-700"] *) { color: #b45309; }
   & [class*="bg-emerald-900"] { background-color: #d1fae5 !important; }
   & [class*="text-emerald-400"]:not([class*="from-emerald-700"] *) { color: #047857; }
 
-  /* Cost hero gradient — keep white text inside, don't override */
   & [class*="from-emerald-700"] { color: #fff; }
   & [class*="from-emerald-700"] [class*="text-emerald-200"] { color: #d1fae5; }
 
-  /* Cost-per-lb section */
-  & [class*="text-zinc-600"][class*="text-xs"] { color: #a1a1aa; }
+  & [class*="text-zinc-600"][class*="text-xs"] { color: #94a3b8; }
 }
