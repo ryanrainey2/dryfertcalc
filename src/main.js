@@ -38,32 +38,27 @@ function costPerLb(key) { return (parseFloat($(`price_${key}`)?.value) || 0) / 2
 async function requireAuth() {
   const session = await getSession()
   if (!session) { navigate('/login'); return null }
+  // Load profile and company separately to avoid RLS join issues
   try {
-    currentProfile = await getProfile(session.user.id)
-    currentCompany = currentProfile.companies || null
+    const { data: profile, error: pErr } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .single()
+    if (pErr) throw pErr
+    currentProfile = profile
+    if (profile.company_id) {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', profile.company_id)
+        .single()
+      currentCompany = company || null
+    }
   } catch (err) {
     console.error('Profile load failed:', err)
-    // Try without company join as fallback
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single()
-      currentProfile = data || { role: 'user', full_name: session.user.email }
-      // Load company separately if profile has company_id
-      if (currentProfile.company_id) {
-        const { data: company } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('id', currentProfile.company_id)
-          .single()
-        currentCompany = company || null
-      }
-    } catch {
-      currentProfile = { role: 'user', full_name: session.user.email }
-      currentCompany = null
-    }
+    currentProfile = { role: 'user', full_name: session.user.email }
+    currentCompany = null
   }
   return session
 }
