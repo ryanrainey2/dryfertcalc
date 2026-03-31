@@ -376,7 +376,7 @@ function renderProducts() {
           <div class="badge" style="background:${p.color}">${p.abbr}</div>
           <div class="min-w-0">
             <div class="font-medium text-sm leading-tight">${p.name}</div>
-            <div class="text-xs text-zinc-500 leading-tight truncate">${p.analysis}${p.lbsPerGal ? ` · ${p.lbsPerGal} lb/gal` : ''}</div>
+            <div class="text-xs text-zinc-500 leading-tight whitespace-nowrap">${p.analysis}${p.lbsPerGal ? ` · ${p.lbsPerGal}` : ''}</div>
           </div>
         </div>
         <div class="flex items-center gap-0.5 shrink-0">
