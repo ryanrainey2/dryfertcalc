@@ -243,6 +243,6 @@ function generatePDF() {
   </div>`
 
   if (typeof html2pdf === 'undefined') { toast('PDF library not loaded', 'error'); return }
-  html2pdf().set({ margin: 0, filename: `nutrient-plan-${year}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+  html2pdf().set({ margin: 0, filename: `nutrient-plan-${year}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
   toast('PDF generated', 'success')
 }

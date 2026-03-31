@@ -202,7 +202,7 @@ export async function renderVRT(profile, company) {
       <p style="text-align:center;font-size:10px;color:#999;margin-top:24px;">© ${new Date().getFullYear()} FertCalc Pro</p>
     </div>`
 
-    html2pdf().set({ margin: 0, filename: `vrt-prescription-${fieldName.replace(/\s+/g, '-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+    html2pdf().set({ margin: 0, filename: `vrt-prescription-${fieldName.replace(/\s+/g, '-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
     toast('PDF generated', 'success')
   })
 }

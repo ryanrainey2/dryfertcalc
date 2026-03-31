@@ -773,7 +773,7 @@ function printQuote() {
   setPdfButtons(true)
   toast('Generating PDF...', 'info')
   setTimeout(() => {
-    html2pdf().set({ margin: 0, filename: `quote-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+    html2pdf().set({ margin: 0, filename: `quote-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
       .then(() => { setPdfButtons(false); toast('Quote saved!', 'success') })
       .catch(e => { setPdfButtons(false); toast('PDF error: ' + e.message, 'error') })
   }, 100)
@@ -817,7 +817,7 @@ function printBlendSheet() {
   setPdfButtons(true)
   toast('Generating PDF...', 'info')
   setTimeout(() => {
-    html2pdf().set({ margin: 0, filename: `blend-sheet-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
+    html2pdf().set({ margin: 0, filename: `blend-sheet-${blendName.replace(/\s+/g,'-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
       .then(() => { setPdfButtons(false); toast('Blend sheet saved!', 'success') })
       .catch(e => { setPdfButtons(false); toast('PDF error: ' + e.message, 'error') })
   }, 100)
