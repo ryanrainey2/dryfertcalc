@@ -48,15 +48,18 @@ async function requireAuth() {
     if (pErr) throw pErr
     currentProfile = profile
     if (profile.company_id) {
-      const { data: company } = await supabase
+      const { data: company, error: cErr } = await supabase
         .from('companies')
         .select('*')
         .eq('id', profile.company_id)
         .single()
+      if (cErr) console.error('Company load failed:', cErr)
       currentCompany = company || null
     }
+    console.log('Profile loaded:', currentProfile?.role, 'Company:', currentCompany?.name)
   } catch (err) {
     console.error('Profile load failed:', err)
+    toast('Debug: profile load error — ' + (err.message || JSON.stringify(err)), 'error')
     currentProfile = { role: 'user', full_name: session.user.email }
     currentCompany = null
   }
