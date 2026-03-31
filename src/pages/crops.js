@@ -12,7 +12,7 @@ export async function renderCrops(profile) {
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 class="text-2xl font-bold">🌿 Crop Library</h1>
-          <p class="text-xs text-zinc-500 mt-0.5">Nutrient recommendations by crop and yield goal</p>
+          <p class="text-xs text-zinc-500 mt-0.5">Nutrient recommendations by crop and yield goal · Source: ISU PM 1688</p>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
