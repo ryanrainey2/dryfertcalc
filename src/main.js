@@ -66,7 +66,7 @@ function renderApp() {
           </div>
         </div>
         <div class="hidden sm:flex flex-wrap gap-2 items-center shrink-0">
-          <button class="btn-ghost theme-toggle" title="Toggle theme">☀️</button>
+          <button class="theme-toggle" title="Toggle theme">☀️</button>
           <button id="btnSaveHeader" class="btn-blue">💾 Save</button>
           <button id="btnQuote" class="btn-green">📄 Quote</button>
           <button id="btnBlend" class="btn-amber">📦 Blend Sheet</button>
