@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dry Fertilizer Optimizer</title>
+  <title>H²AG Fertilizer Optimizer</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -22,10 +23,13 @@
   <div class="max-w-7xl mx-auto px-4 py-6">
 
     <!-- Header -->
-    <header class="flex items-start justify-between gap-4 mb-5">
-      <div class="min-w-0">
-        <h1 class="text-2xl sm:text-3xl font-bold leading-tight">Dry Fertilizer Optimizer</h1>
-        <p class="text-xs sm:text-sm text-zinc-500 mt-0.5">AN · MAP · Potash · AMS · Gypsum</p>
+    <header class="flex items-center justify-between gap-4 mb-5">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="/logo.png" alt="H²AG" class="h-10 sm:h-12 w-auto" />
+        <div class="min-w-0">
+          <h1 id="appTitle" class="text-xl sm:text-2xl font-bold leading-tight">Fertilizer Optimizer</h1>
+          <p id="appSubtitle" class="text-xs text-zinc-500 mt-0.5">AN · MAP · Potash · AMS · Gypsum</p>
+        </div>
       </div>
       <div class="hidden sm:flex flex-wrap gap-2 items-center shrink-0">
         <button id="btnSaveHeader" class="btn-blue">💾 Save</button>
@@ -46,8 +50,14 @@
       <button id="btnResetMob" class="btn-ghost w-full justify-center">↺ Reset All</button>
     </div>
 
-    <!-- Blend Bar -->
+    <!-- Mode Toggle + Blend Bar -->
     <div class="card p-4 mb-5">
+      <!-- Dry / Liquid Toggle -->
+      <div class="flex items-center gap-2 mb-3 pb-3 border-b border-zinc-800">
+        <span class="text-xs text-zinc-500 uppercase tracking-wide font-semibold mr-1">Mode:</span>
+        <button id="btnModeDry" class="mode-btn mode-btn-active">🌾 Dry</button>
+        <button id="btnModeLiquid" class="mode-btn">💧 Liquid</button>
+      </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
         <div>
           <label class="lbl">Blend Name</label>
@@ -81,7 +91,6 @@
 
       <!-- Sidebar -->
       <aside class="lg:col-span-3 space-y-3">
-        <!-- Mobile toggle -->
         <button id="sidebarToggle"
           class="lg:hidden btn-ghost w-full justify-between text-sm py-3">
           <span>⚙️ Products &amp; Field Info</span>
@@ -90,59 +99,13 @@
 
         <div id="sidebarContent" class="space-y-3 hidden lg:block">
 
-          <!-- Products & Prices -->
+          <!-- Products (rendered by JS) -->
           <div class="card p-4">
             <h2 class="text-xs font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide text-zinc-400">
               💰 Products &amp; Prices
-              <span class="bg-amber-900/60 text-amber-400 px-2 py-0.5 rounded-full text-xs">$/TON</span>
+              <span id="priceUnitBadge" class="bg-amber-900/60 text-amber-400 px-2 py-0.5 rounded-full text-xs">$/TON</span>
             </h2>
-            <div class="space-y-3">
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="useAN" checked class="w-4 h-4 accent-red-500 shrink-0" />
-                  <div class="badge bg-red-500">AN</div>
-                  <div><div class="font-medium text-sm">Nitrate</div><div class="text-xs text-zinc-500">34-0-0</div></div>
-                </div>
-                <input id="priceAN" type="number" step="1" value="650"
-                  class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
-              </div>
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="useMAP" checked class="w-4 h-4 accent-orange-500 shrink-0" />
-                  <div class="badge bg-orange-500">MAP</div>
-                  <div><div class="font-medium text-sm">MAP</div><div class="text-xs text-zinc-500">11-52-0</div></div>
-                </div>
-                <input id="priceMAP" type="number" step="1" value="720"
-                  class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
-              </div>
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="usePotash" checked class="w-4 h-4 accent-violet-500 shrink-0" />
-                  <div class="badge bg-violet-500">K</div>
-                  <div><div class="font-medium text-sm">Potash</div><div class="text-xs text-zinc-500">0-0-60</div></div>
-                </div>
-                <input id="pricePotash" type="number" step="1" value="380"
-                  class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
-              </div>
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="useAMS" checked class="w-4 h-4 accent-emerald-500 shrink-0" />
-                  <div class="badge bg-emerald-500">AMS</div>
-                  <div><div class="font-medium text-sm">AMS</div><div class="text-xs text-zinc-500">21-0-0-24S</div></div>
-                </div>
-                <input id="priceAMS" type="number" step="1" value="420"
-                  class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
-              </div>
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="useGypsum" checked class="w-4 h-4 accent-cyan-500 shrink-0" />
-                  <div class="badge bg-cyan-500">GYP</div>
-                  <div><div class="font-medium text-sm">Gypsum</div><div class="text-xs text-zinc-500">0-0-0-18S</div></div>
-                </div>
-                <input id="priceGypsum" type="number" step="1" value="180"
-                  class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
-              </div>
-            </div>
+            <div id="productsContainer" class="space-y-3"></div>
           </div>
 
           <!-- Field Info -->
@@ -174,7 +137,7 @@
             </div>
           </div>
 
-        </div><!-- /sidebarContent -->
+        </div>
       </aside>
 
       <!-- Main Content -->
@@ -214,7 +177,7 @@
             <input type="checkbox" id="allowExcess" checked class="w-4 h-4 accent-emerald-500 mt-0.5 shrink-0" />
             <div>
               <label for="allowExcess" class="font-medium text-emerald-400 text-sm cursor-pointer">Allow excess nutrients</label>
-              <p class="text-xs text-zinc-500 mt-0.5">Use MAP or AMS even if it oversupplies another nutrient</p>
+              <p class="text-xs text-zinc-500 mt-0.5">Allow multi-nutrient products even if they oversupply another nutrient</p>
             </div>
           </div>
           <div id="optimizationWarning" class="hidden mt-3 text-amber-400 text-sm flex items-center gap-2">
@@ -222,59 +185,18 @@
           </div>
         </div>
 
-        <!-- Rates & Results -->
+        <!-- Rates & Results (rendered by JS) -->
         <div class="card p-4">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400 mb-4 flex items-center justify-between">
-            🚜 Recommended Application Rates (lbs/acre)
+          <h2 id="ratesHeading" class="text-xs font-semibold uppercase tracking-wide text-zinc-400 mb-4 flex items-center justify-between">
+            <span>🚜 Recommended Application Rates (<span id="rateUnitLabel">lbs/acre</span>)</span>
             <span id="optimizationNote"
               class="hidden text-xs bg-emerald-900/60 text-emerald-400 px-2 py-0.5 rounded-full normal-case">
               ✅ Optimized
             </span>
           </h2>
 
-          <!-- Rate inputs -->
-          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
-            <div>
-              <div class="flex items-center gap-1 mb-1.5">
-                <div class="w-5 h-5 rounded-lg bg-red-500 flex items-center justify-center text-white text-xs font-bold shrink-0">AN</div>
-                <span class="text-xs font-medium truncate">Nitrate</span>
-              </div>
-              <input id="rateAN" type="number" step="0.01" value="0" readonly class="inp-xl-ro" />
-              <div class="text-center text-xs text-zinc-600 mt-1">lbs/acre</div>
-            </div>
-            <div>
-              <div class="flex items-center gap-1 mb-1.5">
-                <div class="w-5 h-5 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">M</div>
-                <span class="text-xs font-medium truncate">MAP</span>
-              </div>
-              <input id="rateMAP" type="number" step="0.01" value="0" readonly class="inp-xl-ro" />
-              <div class="text-center text-xs text-zinc-600 mt-1">lbs/acre</div>
-            </div>
-            <div>
-              <div class="flex items-center gap-1 mb-1.5">
-                <div class="w-5 h-5 rounded-lg bg-violet-500 flex items-center justify-center text-white text-xs font-bold shrink-0">K</div>
-                <span class="text-xs font-medium truncate">Potash</span>
-              </div>
-              <input id="ratePotash" type="number" step="0.01" value="0" readonly class="inp-xl-ro" />
-              <div class="text-center text-xs text-zinc-600 mt-1">lbs/acre</div>
-            </div>
-            <div>
-              <div class="flex items-center gap-1 mb-1.5">
-                <div class="w-5 h-5 rounded-lg bg-emerald-500 flex items-center justify-center text-white text-xs font-bold shrink-0">A</div>
-                <span class="text-xs font-medium truncate">AMS</span>
-              </div>
-              <input id="rateAMS" type="number" step="0.01" value="0" readonly class="inp-xl-ro" />
-              <div class="text-center text-xs text-zinc-600 mt-1">lbs/acre</div>
-            </div>
-            <div>
-              <div class="flex items-center gap-1 mb-1.5">
-                <div class="w-5 h-5 rounded-lg bg-cyan-500 flex items-center justify-center text-white text-xs font-bold shrink-0">G</div>
-                <span class="text-xs font-medium truncate">Gypsum</span>
-              </div>
-              <input id="rateGypsum" type="number" step="0.01" value="0" readonly class="inp-xl-ro" />
-              <div class="text-center text-xs text-zinc-600 mt-1">lbs/acre</div>
-            </div>
-          </div>
+          <!-- Rate inputs (rendered by JS) -->
+          <div id="ratesContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3"></div>
 
           <!-- Cost Hero Banner -->
           <div class="mt-4 bg-gradient-to-br from-emerald-700 to-teal-800 rounded-2xl p-5
@@ -314,11 +236,11 @@
           <div class="mt-4">
             <h3 class="lbl mb-2">Detailed Breakdown Per Acre</h3>
             <div class="overflow-x-auto rounded-xl border border-zinc-800">
-              <table class="w-full text-sm min-w-[480px]">
+              <table class="w-full text-sm min-w-[520px]">
                 <thead>
                   <tr class="border-b border-zinc-700 bg-zinc-800/50 text-zinc-400">
                     <th class="text-left px-3 py-2.5 font-medium">Product</th>
-                    <th class="text-right px-3 py-2.5 font-medium">lbs/acre</th>
+                    <th id="thRate" class="text-right px-3 py-2.5 font-medium">lbs/acre</th>
                     <th class="text-right px-3 py-2.5 font-medium">Cost/acre</th>
                     <th class="text-right px-3 py-2.5 font-medium">N</th>
                     <th class="text-right px-3 py-2.5 font-medium">P₂O₅</th>
@@ -370,13 +292,14 @@
           </div>
 
           <!-- Footer -->
-          <div class="mt-5 text-center text-xs text-zinc-600 pb-1">
-            © 2026 Aric Jennings · Dry Fertilizer Optimizer v2.0
+          <div class="mt-5 flex items-center justify-center gap-2 text-xs text-zinc-600 pb-1">
+            <img src="/logo.png" alt="" class="h-5 w-auto opacity-40" />
+            <span>© 2026 H²AG · Fertilizer Optimizer v2.0</span>
           </div>
         </div>
 
       </main>
-    </div><!-- /main grid -->
+    </div>
   </div>
 
   <script type="module" src="/src/main.js"></script>
