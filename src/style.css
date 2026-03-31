@@ -167,10 +167,18 @@
   .light .inp-xl { background-color: #ffffff; border-color: #d4d4d8; color: #18181b; }
   .light .inp-xl:focus { border-color: #a1a1aa; }
   .light .inp-xl-ro { background-color: #f4f4f5; border-color: #d4d4d8; color: #3f3f46; }
-  .light .btn-ghost { border-color: #d4d4d8; color: #52525b; }
+  .light .btn-ghost { border-color: #e4e4e7; color: #52525b; background-color: #f4f4f5; }
   .light .btn-ghost:hover { background-color: #e4e4e7; color: #18181b; }
   .light .mode-btn { border-color: #d4d4d8; color: #71717a; }
   .light .mode-btn:hover { background-color: #e4e4e7; color: #18181b; }
+  .light .btn-blue { background-color: #3b82f6; }
+  .light .btn-blue:hover { background-color: #2563eb; }
+  .light .btn-green { background-color: #10b981; }
+  .light .btn-green:hover { background-color: #059669; }
+  .light .btn-amber { background-color: #f59e0b; }
+  .light .btn-amber:hover { background-color: #d97706; }
+  .light .btn-red { background-color: #ef4444; }
+  .light .btn-red:hover { background-color: #dc2626; }
   .light .lbl { color: #52525b; }
   .light .badge { color: #fff; }
   .light #toast { background-color: #fff; border-color: #d4d4d8; color: #18181b; }
