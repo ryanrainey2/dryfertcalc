@@ -240,15 +240,13 @@ html.light {
 
   /* Badges — amber and emerald backgrounds */
   & [class*="bg-amber-900"] { background-color: #fef3c7 !important; }
-  & [class*="text-amber-400"] { color: #b45309; }
+  & [class*="text-amber-400"]:not([class*="from-emerald-700"] *) { color: #b45309; }
   & [class*="bg-emerald-900"] { background-color: #d1fae5 !important; }
-  & [class*="text-emerald-400"] { color: #047857; }
-  & [class*="text-emerald-200"] { color: #065f46; }
+  & [class*="text-emerald-400"]:not([class*="from-emerald-700"] *) { color: #047857; }
 
-  /* The cost hero gradient — keep it vivid but adjust text */
-  & [class*="from-emerald-700"] {
-    color: #fff;
-  }
+  /* Cost hero gradient — keep white text inside, don't override */
+  & [class*="from-emerald-700"] { color: #fff; }
+  & [class*="from-emerald-700"] [class*="text-emerald-200"] { color: #d1fae5; }
 
   /* Cost-per-lb section */
   & [class*="text-zinc-600"][class*="text-xs"] { color: #a1a1aa; }
