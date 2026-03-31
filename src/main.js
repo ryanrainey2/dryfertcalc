@@ -203,17 +203,17 @@ function renderApp() {
                 <div>
                   <label class="lbl">Acres</label>
                   <div class="stepper-wrap">
-                    <button class="stepper-btn stepper-lg" data-target="acres" data-step="1">+</button>
-                    <input id="acres" type="number" value="120" min="1" class="inp-xl" />
                     <button class="stepper-btn stepper-lg" data-target="acres" data-step="-1">−</button>
+                    <input id="acres" type="number" value="120" min="1" class="inp-xl" />
+                    <button class="stepper-btn stepper-lg" data-target="acres" data-step="1">+</button>
                   </div>
                 </div>
                 <div>
                   <label class="lbl">Number of Batches</label>
                   <div class="stepper-wrap">
-                    <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="1">+</button>
-                    <input id="numBatches" type="number" value="1" min="1" class="inp-xl" />
                     <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="-1">−</button>
+                    <input id="numBatches" type="number" value="1" min="1" class="inp-xl" />
+                    <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="1">+</button>
                   </div>
                 </div>
                 <div class="pt-2 border-t border-zinc-800 space-y-2">
@@ -246,10 +246,10 @@ function renderApp() {
               </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div><label class="lbl" style="color:#60a5fa">Nitrogen (N)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetN" data-step="1">+</button><input id="targetN" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetN" data-step="-1">−</button></div></div>
-              <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button></div></div>
-              <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button></div></div>
-              <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button></div></div>
+              <div><label class="lbl" style="color:#60a5fa">Nitrogen (N)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetN" data-step="-1">−</button><input id="targetN" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetN" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button></div></div>
             </div>
             <div class="mt-3 flex items-start gap-3 bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3">
               <input type="checkbox" id="allowExcess" checked class="w-4 h-4 accent-emerald-500 mt-0.5 shrink-0" />
@@ -381,10 +381,10 @@ function renderProducts() {
           </div>
         </div>
         <div class="flex items-center gap-0.5 shrink-0">
-          <button class="stepper-btn" data-target="price_${key}" data-step="1">+</button>
+          <button class="stepper-btn" data-target="price_${key}" data-step="-1">−</button>
           <input id="price_${key}" type="number" step="1" value="${priceVal}"
             class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
-          <button class="stepper-btn" data-target="price_${key}" data-step="-1">−</button>
+          <button class="stepper-btn" data-target="price_${key}" data-step="1">+</button>
         </div>
       </div>`
   }).join('')
