@@ -265,6 +265,28 @@ export async function deleteField(id) {
   if (error) throw error
 }
 
+export async function uploadFieldFile(fieldId, file, type) {
+  const ext = file.name.split('.').pop()
+  const path = `${fieldId}/${type}-${Date.now()}.${ext}`
+  const { error: uploadErr } = await supabase.storage.from('field-files').upload(path, file)
+  if (uploadErr) throw uploadErr
+  const col = type === 'boundary' ? { boundary_file_path: path, boundary_file_name: file.name } : { soil_sample_file_path: path, soil_sample_file_name: file.name }
+  await updateField(fieldId, col)
+  return path
+}
+
+export async function getFieldFileUrl(path) {
+  const { data, error } = await supabase.storage.from('field-files').createSignedUrl(path, 3600)
+  if (error) throw error
+  return data.signedUrl
+}
+
+export async function deleteFieldFile(fieldId, path, type) {
+  await supabase.storage.from('field-files').remove([path])
+  const col = type === 'boundary' ? { boundary_file_path: null, boundary_file_name: null } : { soil_sample_file_path: null, soil_sample_file_name: null }
+  await updateField(fieldId, col)
+}
+
 // ── Soil Tests ─────────────────────────────────────────────
 export async function listSoilTests(companyId, fieldId = null) {
   let q = supabase.from('soil_tests').select('*').eq('company_id', companyId)

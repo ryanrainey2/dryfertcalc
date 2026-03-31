@@ -1,4 +1,4 @@
-import { listFields, createField, updateField, deleteField, listSoilTests, listFieldApplications, signOut } from '../supabase.js'
+import { listFields, createField, updateField, deleteField, uploadFieldFile, getFieldFileUrl, deleteFieldFile, listSoilTests, listFieldApplications, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
 import { toast } from '../ui.js'
 
@@ -174,6 +174,28 @@ function renderFieldsList() {
             ${f.legal_description ? `<span>📋 ${f.legal_description}</span>` : ''}
           </div>
           ${f.notes ? `<p class="text-xs text-zinc-400 mt-1.5">${f.notes}</p>` : ''}
+          <div class="flex flex-wrap gap-2 mt-2">
+            <div class="flex items-center gap-1.5">
+              ${f.boundary_file_name
+                ? `<span class="text-xs text-emerald-400 cursor-pointer hover:underline download-file" data-path="${f.boundary_file_path}" title="Download">📐 ${f.boundary_file_name}</span>
+                   <button class="text-red-400 text-xs cursor-pointer bg-transparent border-none hover:text-red-300 remove-file" data-id="${f.id}" data-path="${f.boundary_file_path}" data-type="boundary" title="Remove">✕</button>`
+                : `<label class="text-xs text-zinc-500 cursor-pointer hover:text-zinc-300 flex items-center gap-1">
+                    📐 Upload Boundary (.zip/.shp)
+                    <input type="file" accept=".zip,.shp,.dbf,.shx,.prj" class="hidden upload-file" data-id="${f.id}" data-type="boundary" />
+                  </label>`
+              }
+            </div>
+            <div class="flex items-center gap-1.5">
+              ${f.soil_sample_file_name
+                ? `<span class="text-xs text-blue-400 cursor-pointer hover:underline download-file" data-path="${f.soil_sample_file_path}" title="Download">🧪 ${f.soil_sample_file_name}</span>
+                   <button class="text-red-400 text-xs cursor-pointer bg-transparent border-none hover:text-red-300 remove-file" data-id="${f.id}" data-path="${f.soil_sample_file_path}" data-type="soil_sample" title="Remove">✕</button>`
+                : `<label class="text-xs text-zinc-500 cursor-pointer hover:text-zinc-300 flex items-center gap-1">
+                    🧪 Upload Soil Samples (.zip/.csv/.pdf)
+                    <input type="file" accept=".zip,.csv,.pdf,.xlsx,.xls" class="hidden upload-file" data-id="${f.id}" data-type="soil_sample" />
+                  </label>`
+              }
+            </div>
+          </div>
         </div>
         <div class="flex gap-1 shrink-0">
           <button class="btn-ghost text-xs edit-field" data-id="${f.id}">Edit</button>
@@ -189,6 +211,44 @@ function renderFieldsList() {
     try { await deleteField(btn.dataset.id); toast('Deleted', 'info'); loadFields() }
     catch (err) { toast(err.message, 'error') }
   }))
+
+  // File uploads
+  el.querySelectorAll('.upload-file').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+      const maxSize = 50 * 1024 * 1024 // 50MB
+      if (file.size > maxSize) { toast('File must be under 50MB', 'error'); return }
+      try {
+        toast('Uploading...', 'info')
+        await uploadFieldFile(input.dataset.id, file, input.dataset.type)
+        toast(`${input.dataset.type === 'boundary' ? 'Boundary' : 'Soil sample'} uploaded`, 'success')
+        loadFields()
+      } catch (err) { toast('Upload failed: ' + err.message, 'error') }
+    })
+  })
+
+  // File downloads
+  el.querySelectorAll('.download-file').forEach(span => {
+    span.addEventListener('click', async () => {
+      try {
+        const url = await getFieldFileUrl(span.dataset.path)
+        window.open(url, '_blank')
+      } catch (err) { toast('Download failed: ' + err.message, 'error') }
+    })
+  })
+
+  // File removals
+  el.querySelectorAll('.remove-file').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Remove this file?')) return
+      try {
+        await deleteFieldFile(btn.dataset.id, btn.dataset.path, btn.dataset.type)
+        toast('File removed', 'info')
+        loadFields()
+      } catch (err) { toast('Remove failed: ' + err.message, 'error') }
+    })
+  })
 }
 
 function openEditField(id) {
