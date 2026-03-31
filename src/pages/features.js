@@ -239,8 +239,9 @@ function renderList() {
             ${r.admin_notes ? `<div class="mt-2 text-xs text-zinc-500 bg-zinc-800/50 border border-zinc-700 rounded-lg px-3 py-2"><strong>Notes:</strong> ${r.admin_notes}</div>` : ''}
             ${r.progress_log && isInProgress ? `<div class="mt-2 text-xs text-zinc-500 bg-zinc-800/50 border border-zinc-700 rounded-lg px-3 py-2 max-h-24 overflow-y-auto whitespace-pre-line"><strong>Progress:</strong>\n${r.progress_log}</div>` : ''}
             <div class="text-xs text-zinc-600 mt-2">
-              ${r.requested_by_name || 'Unknown'} · ${new Date(r.created_at).toLocaleDateString()}
-              ${isCompleted && r.completed_at ? ` · Completed ${new Date(r.completed_at).toLocaleDateString()}` : ''}
+              ${r.requested_by_name || 'Unknown'} · Submitted ${new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
+              ${r.updated_at && r.updated_at !== r.created_at ? ` · Updated ${new Date(r.updated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}` : ''}
+              ${isCompleted && r.completed_at ? ` · Completed ${new Date(r.completed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}` : ''}
             </div>
           </div>
           <div class="flex gap-1 shrink-0 flex-wrap justify-end">
