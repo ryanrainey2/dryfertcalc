@@ -204,8 +204,7 @@ function renderApp() {
                   <label class="lbl">Acres</label>
                   <div class="stepper-wrap">
                     <button class="stepper-btn stepper-lg" data-target="acres" data-step="1">+</button>
-                    <input id="acres" type="number" value="120" min="1"
-                      class="flex-1 text-4xl font-bold bg-transparent focus:outline-none py-1 border-b-2 border-zinc-700 focus:border-zinc-400 transition-colors text-center" />
+                    <input id="acres" type="number" value="120" min="1" class="inp-xl" />
                     <button class="stepper-btn stepper-lg" data-target="acres" data-step="-1">−</button>
                   </div>
                 </div>
@@ -213,8 +212,7 @@ function renderApp() {
                   <label class="lbl">Number of Batches</label>
                   <div class="stepper-wrap">
                     <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="1">+</button>
-                    <input id="numBatches" type="number" value="1" min="1"
-                      class="flex-1 text-4xl font-bold bg-transparent focus:outline-none py-1 border-b-2 border-zinc-700 focus:border-zinc-400 transition-colors text-center" />
+                    <input id="numBatches" type="number" value="1" min="1" class="inp-xl" />
                     <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="-1">−</button>
                   </div>
                 </div>
