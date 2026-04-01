@@ -2,7 +2,8 @@ import {
   listCompanies, createCompany, updateCompany, deleteCompany,
   listProfiles, updateProfile, uploadLogo,
   listBlendsForCompany, listAllBlends, deleteBlendFromDB,
-  inviteUser, signOut
+  inviteUser, signOut,
+  adminListUsers, adminDeleteUser, adminSendPasswordReset
 } from '../supabase.js'
 import { navigate } from '../router.js'
 import { toast } from '../ui.js'
@@ -522,29 +523,51 @@ function gatherPrices(container) {
 // ══════════════════════════════════════════════════════════════
 async function loadUsers() {
   try {
-    profiles = await listProfiles()
     const el = document.getElementById('usersList')
     if (!el) return
+    el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">Loading...</div>'
+
+    const [profileList, authUsers] = await Promise.all([
+      listProfiles(),
+      adminListUsers().catch(() => []),
+    ])
+    profiles = profileList
+
+    // Build a map of user_id → auth data
+    const authMap = {}
+    authUsers.forEach(u => { authMap[u.id] = u })
 
     if (profiles.length === 0) {
       el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">No users yet.</div>'
       return
     }
 
-    el.innerHTML = profiles.map(p => `
-      <div class="card p-4 flex items-center justify-between gap-4 flex-wrap">
-        <div class="min-w-0">
+    el.innerHTML = profiles.map(p => {
+      const auth = authMap[p.user_id] || {}
+      const email = auth.email || ''
+      const confirmed = !!auth.email_confirmed_at
+      const lastSeen = auth.last_sign_in_at
+        ? new Date(auth.last_sign_in_at).toLocaleDateString()
+        : 'Never'
+      const statusBadge = confirmed
+        ? '<span class="px-1.5 py-0.5 rounded text-xs bg-emerald-900/60 text-emerald-400">✓ Confirmed</span>'
+        : '<span class="px-1.5 py-0.5 rounded text-xs bg-red-900/60 text-red-400">⚠ Unconfirmed</span>'
+
+      return `
+      <div class="card p-4 flex items-start justify-between gap-4 flex-wrap">
+        <div class="min-w-0 flex-1">
           <div class="font-semibold text-sm">${p.full_name || 'Unnamed'}</div>
-          <div class="text-xs text-zinc-500">
-            ${p.companies?.name || 'No company'} ·
+          <div class="text-xs text-zinc-400 mt-0.5">${email || '<em class="text-zinc-600">no email</em>'}</div>
+          <div class="flex flex-wrap gap-1.5 mt-1.5 items-center">
             <span class="inline-block px-1.5 py-0.5 rounded text-xs font-medium
               ${p.role === 'super_admin' ? 'bg-amber-900/60 text-amber-400' :
                 p.role === 'company_admin' ? 'bg-blue-900/60 text-blue-400' :
                 'bg-zinc-700 text-zinc-300'}">${p.role}</span>
-            · Joined ${new Date(p.created_at).toLocaleDateString()}
+            ${statusBadge}
+            <span class="text-zinc-600 text-xs">${p.companies?.name || 'No company'} · Last sign in: ${lastSeen}</span>
           </div>
         </div>
-        <div class="flex gap-2 shrink-0 items-center flex-wrap">
+        <div class="flex flex-wrap gap-2 shrink-0 items-center">
           <select class="inp text-xs py-1 w-28 assign-company" data-profile-id="${p.id}">
             <option value="">No company</option>
             ${companies.map(c => `<option value="${c.id}" ${p.company_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
@@ -554,9 +577,11 @@ async function loadUsers() {
             <option value="company_admin" ${p.role === 'company_admin' ? 'selected' : ''}>Company Admin</option>
             <option value="super_admin" ${p.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
           </select>
+          ${email ? `<button class="btn-ghost text-xs reset-pw" data-email="${email}" data-name="${p.full_name || email}">Reset Password</button>` : ''}
+          <button class="btn-red text-xs delete-user" data-user-id="${p.user_id}" data-name="${p.full_name || email || 'this user'}">Delete</button>
         </div>
       </div>`
-    ).join('')
+    }).join('')
 
     // Wire company/role assignment
     el.querySelectorAll('.assign-company').forEach(sel => {
@@ -573,6 +598,38 @@ async function loadUsers() {
           await updateProfile(sel.dataset.profileId, { role: sel.value })
           toast('Role updated', 'success')
         } catch (err) { toast(err.message, 'error') }
+      })
+    })
+
+    // Reset password
+    el.querySelectorAll('.reset-pw').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(`Send a password reset email to ${btn.dataset.name}?`)) return
+        btn.disabled = true; btn.textContent = 'Sending...'
+        try {
+          await adminSendPasswordReset(btn.dataset.email)
+          toast(`Password reset sent to ${btn.dataset.email}`, 'success')
+        } catch (err) {
+          toast(err.message, 'error')
+        } finally {
+          btn.disabled = false; btn.textContent = 'Reset Password'
+        }
+      })
+    })
+
+    // Delete user
+    el.querySelectorAll('.delete-user').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(`Permanently delete "${btn.dataset.name}"? This cannot be undone.`)) return
+        btn.disabled = true; btn.textContent = 'Deleting...'
+        try {
+          await adminDeleteUser(btn.dataset.userId)
+          toast('User deleted', 'info')
+          loadUsers()
+        } catch (err) {
+          toast(err.message, 'error')
+          btn.disabled = false; btn.textContent = 'Delete'
+        }
       })
     })
   } catch (err) {

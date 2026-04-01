@@ -432,3 +432,33 @@ export async function deleteSpreader(id) {
   const { error } = await supabase.from('spreader_settings').delete().eq('id', id)
   if (error) throw error
 }
+
+// ── Admin User Actions (requires super_admin, uses Edge Function) ──
+async function callAdminUserAction(action, params = {}) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  const res = await fetch(`${supabaseUrl}/functions/v1/admin-user-actions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ action, ...params }),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error || 'Admin action failed')
+  return json
+}
+
+export async function adminListUsers() {
+  const { users } = await callAdminUserAction('list_users')
+  return users
+}
+
+export async function adminDeleteUser(userId) {
+  return callAdminUserAction('delete_user', { user_id: userId })
+}
+
+export async function adminSendPasswordReset(email) {
+  return callAdminUserAction('reset_password', { email })
+}
