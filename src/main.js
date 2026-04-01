@@ -291,10 +291,10 @@ function renderApp() {
 
             <!-- Delivered -->
             <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div id="nDelivered" class="text-3xl sm:text-4xl font-bold text-blue-400">0.0</div><div class="text-xs text-zinc-500 mt-1">N lbs/acre</div></div>
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div id="pDelivered" class="text-3xl sm:text-4xl font-bold text-orange-400">0.0</div><div class="text-xs text-zinc-500 mt-1">P₂O₅ lbs/acre</div></div>
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div id="kDelivered" class="text-3xl sm:text-4xl font-bold text-violet-400">0.0</div><div class="text-xs text-zinc-500 mt-1">K₂O lbs/acre</div></div>
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div id="sDelivered" class="text-3xl sm:text-4xl font-bold text-emerald-400">0.0</div><div class="text-xs text-zinc-500 mt-1">S lbs/acre</div></div>
+              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">N</div><div id="nDelivered" class="text-3xl sm:text-4xl font-bold text-blue-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
+              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">P₂O₅</div><div id="pDelivered" class="text-3xl sm:text-4xl font-bold text-orange-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
+              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">K₂O</div><div id="kDelivered" class="text-3xl sm:text-4xl font-bold text-violet-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
+              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">S</div><div id="sDelivered" class="text-3xl sm:text-4xl font-bold text-emerald-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
             </div>
 
             <!-- Breakdown Table -->
@@ -428,9 +428,9 @@ function renderRates() {
     const p = prods[key]
     return `
       <div>
-        <div class="flex items-center gap-1 mb-1.5">
+        <div class="flex flex-col items-center gap-1 mb-1.5">
           <div class="w-5 h-5 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0" style="background:${p.color}">${p.abbr.substring(0,2)}</div>
-          <span class="text-xs font-medium truncate">${p.name}</span>
+          <span class="text-xs font-medium truncate text-center">${p.name}</span>
         </div>
         <input id="rate_${key}" type="number" step="0.01" value="0" readonly class="inp-xl-ro" />
         <div class="text-center text-xs text-zinc-600 mt-1">${unit}</div>
