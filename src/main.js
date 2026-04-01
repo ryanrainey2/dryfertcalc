@@ -19,6 +19,7 @@ import { toast, applyTheme, toggleTheme } from './ui.js'
 // ── Product Definitions ────────────────────────────────────────────────────
 const DRY_PRODUCTS = {
   an:     { n: 0.34, p: 0,    k: 0,    s: 0,    name: 'Nitrate',  abbr: 'AN',  analysis: '34-0-0',      color: '#ef4444', defaultPrice: 650 },
+  urea:   { n: 0.46, p: 0,    k: 0,    s: 0,    name: 'Urea',     abbr: 'UR',  analysis: '46-0-0',      color: '#eab308', defaultPrice: 580 },
   map:    { n: 0.11, p: 0.52, k: 0,    s: 0,    name: 'MAP',      abbr: 'MAP', analysis: '11-52-0',     color: '#f97316', defaultPrice: 720 },
   potash: { n: 0,    p: 0,    k: 0.60, s: 0,    name: 'Potash',   abbr: 'K',   analysis: '0-0-60',      color: '#8b5cf6', defaultPrice: 380 },
   ams:    { n: 0.21, p: 0,    k: 0,    s: 0.24, name: 'AMS',      abbr: 'AMS', analysis: '21-0-0-24S',  color: '#10b981', defaultPrice: 420 },
