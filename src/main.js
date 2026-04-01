@@ -269,8 +269,11 @@ function renderApp() {
               <span>🚜 Rates (<span id="rateUnitLabel">lbs/acre</span>)</span>
               <span id="optimizationNote" class="hidden text-xs bg-emerald-900/60 text-emerald-400 px-2 py-0.5 rounded-full normal-case">✅ Optimized</span>
             </h2>
+            <div class="mb-3 bg-zinc-800/60 border border-zinc-600 rounded-xl px-4 py-2.5 flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Total Spread Rate</span>
+              <span class="text-xl font-bold text-white"><span id="spreadRateValue">0.00</span> <span id="spreadRateUnit" class="text-sm font-medium text-zinc-300">lbs/acre</span></span>
+            </div>
             <div id="ratesContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3"></div>
-            <div class="mt-2 text-center text-sm text-zinc-400">Total Spread Rate: <span id="spreadRateValue" class="font-semibold text-zinc-200">0.00</span> <span id="spreadRateUnit">lbs/acre</span></div>
 
             <!-- Cost Hero -->
             <div class="mt-4 bg-gradient-to-br from-emerald-700 to-teal-800 rounded-2xl p-5 flex items-center justify-between gap-4">
@@ -808,6 +811,10 @@ function printBlendSheet() {
   const html = `<div style="padding:36px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
     <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRate.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}</div></div>
     <hr style="border-color:#ddd;margin-bottom:20px;">
+    <div style="background:#fef3c7;border:2px solid #d97706;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;">Total Spread Rate</span>
+      <span style="font-size:22px;font-weight:bold;color:#d97706;">${totalSpreadRate.toFixed(2)} <span style="font-size:14px;font-weight:600;">${rateUnit}</span></span>
+    </div>
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
     <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}</table>
