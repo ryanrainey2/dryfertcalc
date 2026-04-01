@@ -236,6 +236,15 @@ function openCropDetail(id) {
   // Yield presets
   body.querySelectorAll('.yield-preset').forEach(p => {
     p.addEventListener('click', () => {
+      // Update bubble styling
+      body.querySelectorAll('.yield-preset').forEach(el => {
+        el.classList.remove('bg-emerald-900/30', 'border', 'border-emerald-700/30')
+        el.classList.add('hover:bg-zinc-700/50')
+        el.querySelector('.font-bold').classList.remove('text-emerald-400')
+      })
+      p.classList.add('bg-emerald-900/30', 'border', 'border-emerald-700/30')
+      p.classList.remove('hover:bg-zinc-700/50')
+      p.querySelector('.font-bold').classList.add('text-emerald-400')
       yieldInput.value = p.dataset.yield
       updateCalc()
     })
