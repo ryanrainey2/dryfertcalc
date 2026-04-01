@@ -126,21 +126,38 @@ async function fetchWeather() {
   document.getElementById('wxContent').classList.add('hidden')
 
   try {
-    // Use Open-Meteo (free, no API key needed)
-    // First geocode the location
-    let lat, lon
+    // Geocode the location
+    let lat, lon, locationName = ''
     if (location.includes(',') && !isNaN(location.split(',')[0])) {
+      // Lat,lon pair
       [lat, lon] = location.split(',').map(s => parseFloat(s.trim()))
+    } else if (/^\d{5}$/.test(location)) {
+      // US ZIP code — use Nominatim (free, no key)
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${location}&country=US&format=json&limit=1`, { headers: { 'User-Agent': 'FertCalcPro/1.0' } })
+      const geoData = await geoRes.json()
+      if (!geoData.length) { toast('ZIP code not found', 'error'); return }
+      lat = parseFloat(geoData[0].lat)
+      lon = parseFloat(geoData[0].lon)
+      locationName = geoData[0].display_name?.split(',').slice(0, 2).join(',') || ''
     } else {
+      // City name — use Open-Meteo geocoding
       const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`)
       const geoData = await geoRes.json()
       if (!geoData.results?.length) { toast('Location not found', 'error'); return }
       lat = geoData.results[0].latitude
       lon = geoData.results[0].longitude
+      locationName = geoData.results[0].name + (geoData.results[0].admin1 ? ', ' + geoData.results[0].admin1 : '')
     }
 
-    const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,weather_code,soil_temperature_0cm&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=7`)
+    // Fetch weather — soil_temperature_0cm returns in Celsius regardless of temperature_unit, so fetch it separately
+    const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,weather_code&hourly=temperature_2m,wind_speed_10m,cloud_cover&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=7`)
     const wx = await wxRes.json()
+
+    // Fetch soil temp separately in Celsius, then convert manually
+    const soilRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=soil_temperature_0cm&timezone=America/Chicago`)
+    const soilData = await soilRes.json()
+    wx._soilTempF = soilData.current?.soil_temperature_0cm != null ? Math.round(soilData.current.soil_temperature_0cm * 9/5 + 32) : null
+    wx._locationName = locationName
 
     displayWeather(wx)
   } catch (err) {
@@ -153,6 +170,38 @@ async function fetchWeather() {
 const WMO_ICONS = { 0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️', 51: '🌦️', 53: '🌧️', 55: '🌧️', 61: '🌧️', 63: '🌧️', 65: '🌧️', 71: '🌨️', 73: '🌨️', 75: '🌨️', 80: '🌦️', 81: '🌧️', 82: '🌧️', 95: '⛈️', 96: '⛈️', 99: '⛈️' }
 const WMO_DESC = { 0: 'Clear', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Rime Fog', 51: 'Light Drizzle', 53: 'Drizzle', 55: 'Heavy Drizzle', 61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain', 71: 'Light Snow', 73: 'Snow', 75: 'Heavy Snow', 80: 'Showers', 81: 'Mod Showers', 82: 'Heavy Showers', 95: 'Thunderstorm', 96: 'T-Storm + Hail', 99: 'Severe T-Storm' }
 
+function checkInversion(wx) {
+  // Detect temperature inversion conditions:
+  // - Low wind speed (< 5 mph)
+  // - Clear or mostly clear skies (WMO code 0-1)
+  // - Early morning or evening hours (before 9am or after 5pm)
+  // - Surface temp dropping (hourly data shows temp decreasing)
+  const c = wx.current
+  const wind = c.wind_speed_10m || 0
+  const code = c.weather_code || 0
+  const hour = new Date().getHours()
+  const isLowWind = wind < 5
+  const isClearSky = code <= 2
+  const isInversionTime = hour < 9 || hour >= 17
+
+  // Check hourly data for temp gradient if available
+  let tempDropping = false
+  if (wx.hourly?.temperature_2m) {
+    const currentIdx = wx.hourly.time.findIndex(t => new Date(t) >= new Date()) - 1
+    if (currentIdx > 0) {
+      const prev = wx.hourly.temperature_2m[currentIdx - 1]
+      const curr = wx.hourly.temperature_2m[currentIdx]
+      tempDropping = curr < prev
+    }
+  }
+
+  const riskFactors = [isLowWind, isClearSky, isInversionTime, tempDropping].filter(Boolean).length
+
+  if (riskFactors >= 3) return { risk: 'high', label: 'High Risk' }
+  if (riskFactors >= 2) return { risk: 'moderate', label: 'Moderate Risk' }
+  return { risk: 'low', label: 'Low Risk' }
+}
+
 function displayWeather(wx) {
   const c = wx.current
   const code = c.weather_code || 0
@@ -162,8 +211,9 @@ function displayWeather(wx) {
   document.getElementById('wxWind').textContent = Math.round(c.wind_speed_10m) + ' mph'
   document.getElementById('wxHumidity').textContent = c.relative_humidity_2m + '%'
 
-  const soilTemp = c.soil_temperature_0cm != null ? Math.round(c.soil_temperature_0cm * 9/5 + 32) : null
-  document.getElementById('wxSoilTemp').textContent = soilTemp ? soilTemp + '°F' : '—'
+  // Soil temp — fetched separately in Celsius and converted
+  const soilTemp = wx._soilTempF
+  document.getElementById('wxSoilTemp').textContent = soilTemp != null ? soilTemp + '°F' : '—'
 
   // Assessment
   const assessments = []
@@ -179,11 +229,17 @@ function displayWeather(wx) {
   else if (temp >= 32) assessments.push({ label: 'Temperature', value: `${Math.round(temp)}°F`, status: 'caution', note: 'Cool — watch for frost' })
   else assessments.push({ label: 'Temperature', value: `${Math.round(temp)}°F`, status: 'bad', note: 'Below freezing — ground may be frozen' })
 
-  if (soilTemp && soilTemp < 50) assessments.push({ label: 'Soil Temp', value: `${soilTemp}°F`, status: 'good', note: 'Safe for fall N application' })
-  else if (soilTemp && soilTemp < 60) assessments.push({ label: 'Soil Temp', value: `${soilTemp}°F`, status: 'caution', note: 'Use N stabilizer' })
-  else if (soilTemp) assessments.push({ label: 'Soil Temp', value: `${soilTemp}°F`, status: 'bad', note: 'Active nitrification — time sensitive' })
+  if (soilTemp != null && soilTemp < 50) assessments.push({ label: 'Soil Temp', value: `${soilTemp}°F`, status: 'good', note: 'Safe for fall N application' })
+  else if (soilTemp != null && soilTemp < 60) assessments.push({ label: 'Soil Temp', value: `${soilTemp}°F`, status: 'caution', note: 'Use N stabilizer' })
+  else if (soilTemp != null) assessments.push({ label: 'Soil Temp', value: `${soilTemp}°F`, status: 'bad', note: 'Active nitrification — time sensitive' })
 
-  // Check next 24h precip
+  // Inversion warning
+  const inversion = checkInversion(wx)
+  if (inversion.risk === 'high') assessments.push({ label: '⚠️ Inversion', value: inversion.label, status: 'bad', note: 'Calm winds + clear sky + evening/morning — spray drift will not disperse. Do NOT spray.' })
+  else if (inversion.risk === 'moderate') assessments.push({ label: '⚠️ Inversion', value: inversion.label, status: 'caution', note: 'Conditions may favor inversion — watch for fog, calm air, and temperature drop' })
+  else assessments.push({ label: 'Inversion', value: inversion.label, status: 'good', note: 'Low inversion risk — good mixing conditions' })
+
+  // Check next 48h precip
   const todayPrecip = wx.daily?.precipitation_sum?.[0] || 0
   const tmrwPrecip = wx.daily?.precipitation_sum?.[1] || 0
   if (todayPrecip + tmrwPrecip < 0.1) assessments.push({ label: 'Precip (48hr)', value: `${(todayPrecip + tmrwPrecip).toFixed(1)}"`, status: 'good', note: 'Dry window — good to go' })
