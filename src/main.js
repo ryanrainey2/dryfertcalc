@@ -180,6 +180,11 @@ function renderApp() {
             <label for="cartRental" class="text-amber-400 font-medium text-sm cursor-pointer">Cart Rental</label>
           </div>
         </div>
+        <div id="stabilizerRow" class="hidden mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3">
+          <input type="checkbox" id="useStabilizer" class="w-5 h-5 accent-teal-500 shrink-0" />
+          <label for="useStabilizer" class="text-teal-400 font-medium text-sm cursor-pointer">🧪 Nitrogen Stabilizer</label>
+          <span id="stabQuickInfo" class="text-xs text-zinc-500"></span>
+        </div>
       </div>
 
       <!-- Main Grid -->
@@ -286,6 +291,18 @@ function renderApp() {
               <div class="text-right shrink-0">
                 <div class="text-4xl sm:text-5xl">💵</div>
                 <div id="totalLbs" class="text-emerald-200 text-xs mt-1.5">0 lbs total</div>
+              </div>
+            </div>
+
+            <!-- Stabilizer Info -->
+            <div id="stabilizerInfo" class="hidden mt-3 bg-teal-900/30 border border-teal-700 rounded-xl px-4 py-3">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <span class="text-xs font-semibold text-teal-400 uppercase tracking-wide">🧪 N Stabilizer</span>
+                <div class="flex flex-wrap gap-4 text-sm">
+                  <span class="text-zinc-400">Rate: <strong class="text-teal-300" id="stabRatePerTon">—</strong> oz/ton</span>
+                  <span class="text-zinc-400">Per Acre: <strong class="text-teal-300" id="stabRatePerAcre">—</strong> oz</span>
+                  <span class="text-zinc-400">Add'l Cost: <strong class="text-teal-300" id="stabCostPerAcre">—</strong>/acre</span>
+                </div>
               </div>
             </div>
 
@@ -497,6 +514,15 @@ function optimizeBlend() {
   calculateAll()
 }
 
+// ── Nitrogen Stabilizer ────────────────────────────────────────────────────
+function getStabilizerSettings() {
+  const cp = currentCompany?.default_prices || {}
+  return {
+    rate:  parseFloat(cp.stabilizer_rate)  || parseFloat(localStorage.getItem('dfc_stabilizer_rate'))  || 0,
+    price: parseFloat(cp.stabilizer_price) || parseFloat(localStorage.getItem('dfc_stabilizer_price')) || 0,
+  }
+}
+
 // ── Calculate ──────────────────────────────────────────────────────────────
 function calculateAll() {
   const prods = products(); const keys = productKeys()
@@ -509,6 +535,35 @@ function calculateAll() {
 
   const costs = {}; let totalCostPerAcre = 0
   keys.forEach(k => { costs[k] = lbsPerAcre[k] * costPerLb(k); totalCostPerAcre += costs[k] })
+
+  // Nitrogen Stabilizer (liquid mode only)
+  const useStab = isLiquid && checked('useStabilizer')
+  let stabCostPerAcre = 0, stabRatePerAcre = 0
+  if (useStab) {
+    const stab = getStabilizerSettings()
+    if (stab.rate > 0 && stab.price > 0) {
+      const totalLbsLiquidPerAcre = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
+      const tonsPerAcre = totalLbsLiquidPerAcre / 2000
+      stabRatePerAcre = stab.rate * tonsPerAcre
+      stabCostPerAcre = (stabRatePerAcre / 128) * stab.price
+      totalCostPerAcre += stabCostPerAcre
+    }
+    const stabInfoEl = $('stabilizerInfo')
+    if (stabInfoEl) {
+      const stab2 = getStabilizerSettings()
+      if (stabRatePerAcre > 0) {
+        stabInfoEl.classList.remove('hidden')
+        if ($('stabRatePerTon')) $('stabRatePerTon').textContent = stab2.rate.toFixed(1)
+        if ($('stabRatePerAcre')) $('stabRatePerAcre').textContent = stabRatePerAcre.toFixed(2)
+        if ($('stabCostPerAcre')) $('stabCostPerAcre').textContent = '$' + stabCostPerAcre.toFixed(2)
+      } else {
+        stabInfoEl.classList.add('hidden')
+        const q = $('stabQuickInfo'); if (q) q.textContent = stab2.rate > 0 || stab2.price > 0 ? '' : '(configure rate & price in Admin)'
+      }
+    }
+  } else {
+    $('stabilizerInfo')?.classList.add('hidden')
+  }
 
   let totalN = 0, totalP = 0, totalK = 0, totalS = 0
   keys.forEach(k => { totalN += lbsPerAcre[k] * prods[k].n; totalP += lbsPerAcre[k] * prods[k].p; totalK += lbsPerAcre[k] * prods[k].k; totalS += lbsPerAcre[k] * prods[k].s })
@@ -559,6 +614,15 @@ function calculateAll() {
 
   // Breakdown table
   if ($('breakdownBody')) {
+    const stabTableRow = (useStab && stabRatePerAcre > 0) ? `<tr class="hover:bg-teal-900/20 transition-colors border-t-2 border-teal-800/60 text-teal-300">
+        <td class="px-3 py-2.5 font-medium flex items-center gap-2"><span class="w-3 h-3 rounded-full inline-block shrink-0 bg-teal-500"></span>N Stabilizer</td>
+        <td class="px-3 py-2.5 text-right">${stabRatePerAcre.toFixed(2)} oz</td>
+        <td class="px-3 py-2.5 text-right">$${stabCostPerAcre.toFixed(2)}</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+      </tr>` : ''
     $('breakdownBody').innerHTML = keys.map(k => {
       const p = prods[k]
       return `<tr class="hover:bg-zinc-800/30 transition-colors">
@@ -570,7 +634,7 @@ function calculateAll() {
         <td class="px-3 py-2.5 text-right">${(lbsPerAcre[k] * p.k).toFixed(1)}</td>
         <td class="px-3 py-2.5 text-right">${(lbsPerAcre[k] * p.s).toFixed(1)}</td>
       </tr>`
-    }).join('')
+    }).join('') + stabTableRow
   }
 
   // Cost per lb
@@ -601,6 +665,8 @@ function setMode(newMode) {
   mode = newMode
   $('btnModeDry')?.classList.toggle('mode-btn-active', mode === 'dry')
   $('btnModeLiquid')?.classList.toggle('mode-btn-active', mode === 'liquid')
+  const stabRow = $('stabilizerRow')
+  if (stabRow) stabRow.classList.toggle('hidden', mode !== 'liquid')
   renderProducts(); renderRates(); optimizeBlend()
 }
 
@@ -621,7 +687,7 @@ async function saveBlend() {
   const blendData = {
     mode, prices, selected, rates,
     acres: $('acres')?.value, numBatches: $('numBatches')?.value,
-    cartRental: checked('cartRental'), customerName: $('customerName')?.value,
+    cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), customerName: $('customerName')?.value,
     targets: { n: $('targetN')?.value, p: $('targetP')?.value, k: $('targetK')?.value, s: $('targetS')?.value },
     allowExcess: checked('allowExcess'), notes: $('notes')?.value,
   }
@@ -700,6 +766,7 @@ async function loadBlend() {
   if ($('acres')) $('acres').value = d.acres || 120
   if ($('numBatches')) $('numBatches').value = d.numBatches || 1
   if ($('cartRental')) $('cartRental').checked = d.cartRental || false
+  if ($('useStabilizer')) $('useStabilizer').checked = d.useStabilizer || false
   if ($('customerName')) $('customerName').value = d.customerName || ''
   if ($('targetN')) $('targetN').value = d.targets?.n || 0
   if ($('targetP')) $('targetP').value = d.targets?.p || 0
@@ -770,13 +837,25 @@ function printQuote() {
     return `<tr><td style="padding:8px 12px;border:1px solid #ddd;">${p.name} ${p.analysis}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${rate.toFixed(2)} ${rateUnit}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">$${(lbs * costPerLb(k)).toFixed(2)}</td></tr>`
   }).join('')
 
+  let stabQuoteRow = ''
+  if (mode === 'liquid' && checked('useStabilizer')) {
+    const stab = getStabilizerSettings()
+    if (stab.rate > 0 && stab.price > 0) {
+      const totalLbsPerAcre = keys.reduce((sum, k) => val(`rate_${k}`) * prods[k].lbsPerGal + sum, 0)
+      const tonsPerAcre = totalLbsPerAcre / 2000
+      const stabOzPerAcre = stab.rate * tonsPerAcre
+      const stabCostPerAcre = (stabOzPerAcre / 128) * stab.price
+      stabQuoteRow = `<tr style="background:#f0fdfa;"><td style="padding:8px 12px;border:1px solid #ddd;color:#0f766e;">🧪 N Stabilizer</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#0f766e;">${stabOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#0f766e;">$${stabCostPerAcre.toFixed(2)}</td></tr>`
+    }
+  }
+
   const html = `<div style="padding:40px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
     <div style="display:flex;justify-content:space-between;margin-bottom:24px;"><div><h1 style="color:#059669;font-size:26px;margin:0;">${modeLabel} Fertilizer Quote</h1><p style="color:#666;margin:4px 0 0;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div></div></div>
     <hr style="border-color:#ddd;margin-bottom:24px;">
     <h2 style="font-size:16px;margin:0 0 8px;">Notes</h2><p style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${notes}</p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Target (lbs/acre)</h2><p>N: <strong>${$('targetN')?.value}</strong> · P₂O₅: <strong>${$('targetP')?.value}</strong> · K₂O: <strong>${$('targetK')?.value}</strong> · S: <strong>${$('targetS')?.value}</strong></p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Rates</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}</table>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}</table>
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
@@ -807,10 +886,34 @@ function printBlendSheet() {
     ${numBatches > 1 ? `<div style="margin-top:6px;">Total Tons (${numBatches} batches): <strong>${totalTonsAllBatches.toFixed(2)}</strong></div>` : ''}
   </div>`
 
+  // Nitrogen Stabilizer blend sheet section
+  let stabBlendRow = ''
+  let stabBlendBlock = ''
+  if (isLiquid && checked('useStabilizer')) {
+    const stab = getStabilizerSettings()
+    if (stab.rate > 0 && stab.price > 0) {
+      const totalTonsField = totalTons  // total tons for whole field
+      const stabOzField = stab.rate * totalTonsField
+      const stabOzPerBatch = stabOzField / numBatches
+      const stabGalPerBatch = stabOzPerBatch / 128
+      const stabCostPerAcreBlend = (stabOzField / acres / 128) * stab.price
+      stabBlendRow = `<tr style="background:#f0fdfa;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#14b8a6;margin-right:6px;"></span>🧪 N Stabilizer</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${(stabOzField/acres).toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${stabOzPerBatch.toFixed(1)} oz (${stabGalPerBatch.toFixed(2)} gal)</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ccfbf1;font-weight:bold;">+$${stabCostPerAcreBlend.toFixed(2)}/acre</td></tr>`
+      stabBlendBlock = `<div style="margin-top:16px;padding:12px 16px;border-radius:8px;background:#f0fdfa;border:1px solid #99f6e4;font-size:14px;">
+        <strong style="color:#0f766e;">🧪 Nitrogen Stabilizer</strong>
+        <div style="margin-top:6px;display:flex;gap:24px;flex-wrap:wrap;">
+          <span>Rate: <strong>${stab.rate} oz/ton</strong></span>
+          <span>Per Acre: <strong>${(stabOzField/acres).toFixed(2)} oz</strong></span>
+          <span>Per Batch: <strong>${stabOzPerBatch.toFixed(1)} oz (${stabGalPerBatch.toFixed(2)} gal)</strong></span>
+          <span>Add'l Cost: <strong>$${stabCostPerAcreBlend.toFixed(2)}/acre</strong></span>
+        </div>
+      </div>`
+    }
+  }
+
   const checks = Array.from({length:numBatches},(_,i)=>`<tr><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">${i+1}</td><td style="padding:6px 12px;border:1px solid #ddd;width:120px;"></td><td style="padding:6px 12px;border:1px solid #ddd;width:80px;"></td><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">☐</td></tr>`).join('')
 
   const html = `<div style="padding:36px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRate.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}</div></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRate.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}${checked('useStabilizer') && isLiquid ? '<div style="color:#0f766e;font-weight:bold;">🧪 N STABILIZER</div>' : ''}</div></div>
     <hr style="border-color:#ddd;margin-bottom:20px;">
     <div style="background:#fef3c7;border:2px solid #d97706;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">
       <span style="font-size:13px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;">Total Spread Rate</span>
@@ -818,8 +921,9 @@ function printBlendSheet() {
     </div>
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}</table>
-    <h2 style="font-size:15px;margin:0 0 8px;">Batch Log</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}${stabBlendRow}</table>
+    ${stabBlendBlock}
+    <h2 style="font-size:15px;margin:${stabBlendBlock ? '20px' : '0'} 0 8px;">Batch Log</h2>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;"><tr style="background:#f5f5f5;"><th style="padding:6px 12px;border:1px solid #ddd;">Batch #</th><th style="padding:6px 12px;border:1px solid #ddd;">Date/Time</th><th style="padding:6px 12px;border:1px solid #ddd;">Initials</th><th style="padding:6px 12px;border:1px solid #ddd;">Done</th></tr>${checks}</table>
     ${totalTonsBlock}
     <p style="font-size:11px;color:#999;text-align:center;margin-top:24px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
@@ -846,6 +950,7 @@ function wireAppEvents() {
   $('btnDelete')?.addEventListener('click', deleteBlend)
   $('btnOptimize')?.addEventListener('click', optimizeBlend)
   $('btnResetMob')?.addEventListener('click', resetAll)
+  $('useStabilizer')?.addEventListener('change', calculateAll)
   // Tools dropdown
   $('btnToolsMenu')?.addEventListener('click', (e) => {
     e.stopPropagation()

@@ -385,6 +385,24 @@ async function openCompanySettings(companyId) {
       </div>
     </div>
 
+    <!-- Nitrogen Stabilizer -->
+    <div class="mb-5">
+      <h3 class="lbl mb-2">🧪 Nitrogen Stabilizer (Liquid Mode)</h3>
+      <p class="text-xs text-zinc-500 mb-2">Used when the N Stabilizer checkbox is enabled on the liquid calculator</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Rate (oz/ton of liquid)</label>
+          <input id="cmStabRate" type="number" step="0.1" min="0" class="inp"
+                 placeholder="e.g. 64" value="${c.default_prices?.stabilizer_rate ?? ''}" />
+        </div>
+        <div>
+          <label class="lbl">Price ($/gal)</label>
+          <input id="cmStabPrice" type="number" step="0.01" min="0" class="inp"
+                 placeholder="e.g. 48.00" value="${c.default_prices?.stabilizer_price ?? ''}" />
+        </div>
+      </div>
+    </div>
+
     <!-- Stats -->
     <div class="mb-5">
       <h3 class="lbl mb-2">Overview</h3>
@@ -455,11 +473,16 @@ async function openCompanySettings(companyId) {
     const btn = body.querySelector('#cmSave')
     btn.disabled = true; btn.textContent = 'Saving...'
     try {
+      const gatheredPrices = gatherPrices(body) || {}
+      const stabRate = parseFloat(body.querySelector('#cmStabRate').value)
+      const stabPrice = parseFloat(body.querySelector('#cmStabPrice').value)
+      if (!isNaN(stabRate) && stabRate >= 0) gatheredPrices.stabilizer_rate = stabRate
+      if (!isNaN(stabPrice) && stabPrice >= 0) gatheredPrices.stabilizer_price = stabPrice
       const updates = {
         name: body.querySelector('#cmName').value.trim(),
         slug: body.querySelector('#cmSlug').value.trim(),
         primary_color: cmColorHex.value,
-        default_prices: gatherPrices(body),
+        default_prices: Object.keys(gatheredPrices).length > 0 ? gatheredPrices : null,
       }
 
       const fileInput = body.querySelector('#cmLogoFile')
