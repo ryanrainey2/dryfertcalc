@@ -1,4 +1,4 @@
-import { signIn, signUp } from '../supabase.js'
+import { signIn, signUp, resetPassword } from '../supabase.js'
 import { navigate } from '../router.js'
 import { toast } from '../ui.js'
 
@@ -23,6 +23,11 @@ export function renderLogin() {
             <input id="loginPassword" type="password" required class="inp" placeholder="••••••••" />
           </div>
           <button type="submit" id="btnLogin" class="btn-green w-full justify-center py-3">Sign In</button>
+          <div class="text-center mt-2">
+            <button type="button" id="btnForgotPassword" class="text-xs text-zinc-500 hover:text-zinc-300 cursor-pointer bg-transparent border-none">
+              Forgot password?
+            </button>
+          </div>
         </form>
 
         <div class="text-center mt-4">
@@ -89,23 +94,31 @@ export function renderLogin() {
     }
   })
 
-  // Signup
+  // Forgot password
+  document.getElementById('btnForgotPassword').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim()
+    if (!email) { toast('Enter your email first', 'error'); return }
+    try {
+      await resetPassword(email)
+      toast('Password reset email sent — check your inbox', 'success')
+    } catch (err) {
+      toast(err.message, 'error')
+    }
+  })
+
+  // Signup — auto sign-in after account creation
   document.getElementById('signupForm').addEventListener('submit', async (e) => {
     e.preventDefault()
     const btn = document.getElementById('btnSignup')
     btn.disabled = true; btn.textContent = 'Creating account...'
+    const email = document.getElementById('signupEmail').value
+    const password = document.getElementById('signupPassword').value
     try {
-      await signUp(
-        document.getElementById('signupEmail').value,
-        document.getElementById('signupPassword').value,
-        document.getElementById('signupName').value
-      )
-      toast('Account created! You can now sign in.', 'success')
-      // Switch to login view
-      document.getElementById('loginForm').classList.remove('hidden')
-      document.getElementById('signupForm').classList.add('hidden')
-      document.getElementById('btnToggleSignup').classList.remove('hidden')
-      btn.disabled = false; btn.textContent = 'Create Account'
+      await signUp(email, password, document.getElementById('signupName').value)
+      // Auto sign-in immediately
+      await signIn(email, password)
+      toast('Welcome to FertCalc Pro!', 'success')
+      navigate('/app')
     } catch (err) {
       toast(err.message, 'error')
       btn.disabled = false; btn.textContent = 'Create Account'
