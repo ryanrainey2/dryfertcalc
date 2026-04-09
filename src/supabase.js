@@ -470,3 +470,7 @@ export async function adminDeleteUser(userId) {
 export async function adminSendPasswordReset(email) {
   return callAdminUserAction('reset_password', { email })
 }
+
+export async function adminApproveUser(userId) {
+  return callAdminUserAction('approve_user', { user_id: userId })
+}

@@ -58,6 +58,11 @@ async function requireAuth() {
       .eq('user_id', session.user.id)
       .single()
     if (pErr) throw pErr
+    if (profile.approved === false) {
+      await supabase.auth.signOut()
+      navigate('/login')
+      return null
+    }
     currentProfile = profile
     if (profile.company_id) {
       const { data: company, error: cErr } = await supabase

@@ -3,7 +3,7 @@ import {
   listProfiles, updateProfile, uploadLogo,
   listBlendsForCompany, listAllBlends, deleteBlendFromDB,
   inviteUser, signOut,
-  adminListUsers, adminDeleteUser, adminSendPasswordReset
+  adminListUsers, adminDeleteUser, adminSendPasswordReset, adminApproveUser
 } from '../supabase.js'
 import { navigate } from '../router.js'
 import { toast } from '../ui.js'
@@ -114,6 +114,12 @@ export async function renderAdmin(profile) {
           </div>
         </div>
 
+        <div id="pendingUsersSection" class="hidden mb-5">
+          <h3 class="text-sm font-semibold text-amber-400 uppercase tracking-wide mb-3">⏳ Pending Approval</h3>
+          <div id="pendingUsersList" class="space-y-2"></div>
+        </div>
+
+        <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">Active Users</h3>
         <div id="usersList" class="space-y-2"></div>
       </div>
 
@@ -579,17 +585,81 @@ function gatherPrices(container) {
 async function loadUsers() {
   try {
     const el = document.getElementById('usersList')
+    const pendingEl = document.getElementById('pendingUsersList')
+    const pendingSection = document.getElementById('pendingUsersSection')
     if (!el) return
     el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">Loading...</div>'
 
     profiles = await listProfiles()
 
-    if (profiles.length === 0) {
-      el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">No users yet.</div>'
+    const pendingProfiles = profiles.filter(p => p.approved === false)
+    const approvedProfiles = profiles.filter(p => p.approved !== false)
+
+    // Update tab badge
+    const usersTab = document.querySelector('[data-tab="users"]')
+    if (usersTab) {
+      usersTab.textContent = pendingProfiles.length > 0 ? 'Users (' + pendingProfiles.length + ' pending)' : 'Users'
+    }
+
+    // Render pending users
+    if (pendingProfiles.length > 0 && pendingEl && pendingSection) {
+      pendingSection.classList.remove('hidden')
+      pendingEl.innerHTML = pendingProfiles.map(p => {
+        const email = p.email || ''
+        const signedUp = new Date(p.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
+        return '<div class="card p-4 border border-amber-800/40 flex items-center justify-between gap-4 flex-wrap">' +
+          '<div class="min-w-0 flex-1">' +
+          '<div class="font-semibold text-sm">' + (p.full_name || 'Unnamed') + '</div>' +
+          '<div class="text-xs text-zinc-400 mt-0.5">' + email + '</div>' +
+          '<div class="text-xs text-zinc-600 mt-1">Signed up: ' + signedUp + '</div>' +
+          '</div>' +
+          '<div class="flex gap-2 shrink-0">' +
+          '<button class="btn-green text-xs approve-user" data-user-id="' + p.user_id + '" data-name="' + (p.full_name || email) + '">✓ Approve</button>' +
+          '<button class="btn-red text-xs deny-user" data-user-id="' + p.user_id + '" data-name="' + (p.full_name || email) + '">✕ Deny</button>' +
+          '</div></div>'
+      }).join('')
+
+      // Wire approve buttons
+      pendingEl.querySelectorAll('.approve-user').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true; btn.textContent = 'Approving...'
+          try {
+            await adminApproveUser(btn.dataset.userId)
+            toast(btn.dataset.name + ' approved — notification email sent', 'success')
+            loadUsers()
+          } catch (err) {
+            toast(err.message, 'error')
+            btn.disabled = false; btn.textContent = '✓ Approve'
+          }
+        })
+      })
+
+      // Wire deny buttons
+      pendingEl.querySelectorAll('.deny-user').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Deny and delete "' + btn.dataset.name + '"? This cannot be undone.')) return
+          btn.disabled = true; btn.textContent = 'Denying...'
+          try {
+            await adminDeleteUser(btn.dataset.userId)
+            toast(btn.dataset.name + ' denied and removed', 'info')
+            loadUsers()
+          } catch (err) {
+            toast(err.message, 'error')
+            btn.disabled = false; btn.textContent = '✕ Deny'
+          }
+        })
+      })
+    } else if (pendingSection) {
+      pendingSection.classList.add('hidden')
+    }
+
+    // Render approved users
+    if (approvedProfiles.length === 0) {
+      el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">No active users yet.</div>'
       return
     }
 
-    el.innerHTML = profiles.map(p => {
+    el.innerHTML = approvedProfiles.map(p => {
       const email = p.email || ''
 
       return `

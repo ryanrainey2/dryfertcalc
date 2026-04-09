@@ -1,4 +1,4 @@
-import { signIn, signUp, resetPassword } from '../supabase.js'
+import { signIn, signUp, resetPassword, supabase, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
 import { toast } from '../ui.js'
 
@@ -63,9 +63,18 @@ export function renderLogin() {
           <div class="text-4xl">📧</div>
           <h3 class="font-semibold text-emerald-400">Check Your Email</h3>
           <p class="text-sm text-zinc-400">We sent a verification link to <span id="verifyEmailAddr" class="text-zinc-200 font-medium"></span></p>
-          <p class="text-xs text-zinc-500">Click the link in the email to activate your account, then come back here and sign in.</p>
+          <p class="text-xs text-zinc-500">Click the link in the email to verify your address. After verification, an administrator will review and activate your account.</p>
           <p class="text-xs text-zinc-600 mt-2">Didn't get it? Check your spam folder.</p>
           <button id="btnBackToLogin" type="button" class="btn-ghost w-full justify-center py-2 mt-2">← Back to Sign In</button>
+        </div>
+
+        <!-- Pending approval message (hidden by default) -->
+        <div id="pendingApprovalMsg" class="hidden mt-4 text-center space-y-3">
+          <div class="text-4xl">⏳</div>
+          <h3 class="font-semibold text-amber-400">Pending Approval</h3>
+          <p class="text-sm text-zinc-400">Your account is verified but waiting for administrator approval.</p>
+          <p class="text-xs text-zinc-500">You'll receive an email once your account has been activated.</p>
+          <button id="btnBackFromPending" type="button" class="btn-ghost w-full justify-center py-2 mt-2">← Back to Sign In</button>
         </div>
 
         <div class="text-center mt-6 text-xs text-zinc-600">
@@ -93,10 +102,27 @@ export function renderLogin() {
     const btn = document.getElementById('btnLogin')
     btn.disabled = true; btn.textContent = 'Signing in...'
     try {
-      await signIn(
+      const { session } = await signIn(
         document.getElementById('loginEmail').value,
         document.getElementById('loginPassword').value
       )
+      // Check if user is approved
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('approved')
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (profile && profile.approved === false) {
+        await signOut()
+        // Show pending approval screen
+        document.getElementById('loginForm').classList.add('hidden')
+        document.getElementById('btnToggleSignup').classList.add('hidden')
+        document.getElementById('pendingApprovalMsg').classList.remove('hidden')
+        btn.disabled = false; btn.textContent = 'Sign In'
+        return
+      }
+
       navigate('/app')
     } catch (err) {
       const msg = err.message?.includes('Email not confirmed')
@@ -143,6 +169,13 @@ export function renderLogin() {
   // Back to login from verification screen
   document.getElementById('btnBackToLogin').addEventListener('click', () => {
     document.getElementById('verifyEmailMsg').classList.add('hidden')
+    document.getElementById('loginForm').classList.remove('hidden')
+    document.getElementById('btnToggleSignup').classList.remove('hidden')
+  })
+
+  // Back to login from pending approval screen
+  document.getElementById('btnBackFromPending').addEventListener('click', () => {
+    document.getElementById('pendingApprovalMsg').classList.add('hidden')
     document.getElementById('loginForm').classList.remove('hidden')
     document.getElementById('btnToggleSignup').classList.remove('hidden')
   })
