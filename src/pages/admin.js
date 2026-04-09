@@ -346,6 +346,27 @@ async function openCompanySettings(companyId) {
 
   document.getElementById('cmTitle').textContent = c.name + ' Settings'
   const body = document.getElementById('cmBody')
+
+  const toolsDef = [
+    { key: 'crops',         label: '🌿 Crop Library' },
+    { key: 'fields',        label: '🗺️ Fields' },
+    { key: 'soil-tests',    label: '🧪 Soil Tests' },
+    { key: 'planner',       label: '📅 App Planner' },
+    { key: 'inventory',     label: '📦 Inventory' },
+    { key: 'spreader',      label: '⚙️ Spreader Cal' },
+    { key: 'weather',       label: '🌤️ Weather' },
+    { key: 'vrt',           label: '🗺️ VRT Rx' },
+    { key: 'nutrient-plan', label: '📋 4R Plan' },
+    { key: 'grower',        label: '👤 Grower Portal' },
+  ]
+  const toolTogglesHtml = toolsDef.map(t => {
+    const enabled = !c.enabled_tools || (Array.isArray(c.enabled_tools) && c.enabled_tools.includes(t.key))
+    return '<label class="flex items-center gap-2 px-3 py-2 bg-zinc-800/30 rounded-lg cursor-pointer hover:bg-zinc-800/50">' +
+      '<input type="checkbox" class="cm-tool-toggle w-4 h-4 accent-emerald-500" data-tool="' + t.key + '" ' + (enabled ? 'checked' : '') + ' />' +
+      '<span class="text-sm">' + t.label + '</span>' +
+      '</label>'
+  }).join('')
+
   body.innerHTML = `
     <!-- Branding -->
     <div class="mb-5">
@@ -408,24 +429,7 @@ async function openCompanySettings(companyId) {
       <h3 class="lbl mb-2">🔧 Tool Access</h3>
       <p class="text-xs text-zinc-500 mb-2">Select which tools this company's users can access</p>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        ${[
-          { key: 'crops',         label: '🌿 Crop Library' },
-          { key: 'fields',        label: '🗺️ Fields' },
-          { key: 'soil-tests',    label: '🧪 Soil Tests' },
-          { key: 'planner',       label: '📅 App Planner' },
-          { key: 'inventory',     label: '📦 Inventory' },
-          { key: 'spreader',      label: '⚙️ Spreader Cal' },
-          { key: 'weather',       label: '🌤️ Weather' },
-          { key: 'vrt',           label: '🗺️ VRT Rx' },
-          { key: 'nutrient-plan', label: '📋 4R Plan' },
-          { key: 'grower',        label: '👤 Grower Portal' },
-        ].map(t => {
-          const enabled = !c.enabled_tools || (Array.isArray(c.enabled_tools) && c.enabled_tools.includes(t.key))
-          return \`<label class="flex items-center gap-2 px-3 py-2 bg-zinc-800/30 rounded-lg cursor-pointer hover:bg-zinc-800/50">
-            <input type="checkbox" class="cm-tool-toggle w-4 h-4 accent-emerald-500" data-tool="\${t.key}" \${enabled ? 'checked' : ''} />
-            <span class="text-sm">\${t.label}</span>
-          </label>\`
-        }).join('')}
+        ${toolTogglesHtml}
       </div>
     </div>
 
