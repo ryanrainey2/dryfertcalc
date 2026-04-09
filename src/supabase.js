@@ -449,6 +449,7 @@ async function callAdminUserAction(action, params = {}) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': supabaseKey,
     },
     body: JSON.stringify({ action, ...params }),
   })
