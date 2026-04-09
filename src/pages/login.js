@@ -58,6 +58,16 @@ export function renderLogin() {
           </div>
         </form>
 
+        <!-- Email verification message (hidden by default) -->
+        <div id="verifyEmailMsg" class="hidden mt-4 text-center space-y-3">
+          <div class="text-4xl">📧</div>
+          <h3 class="font-semibold text-emerald-400">Check Your Email</h3>
+          <p class="text-sm text-zinc-400">We sent a verification link to <span id="verifyEmailAddr" class="text-zinc-200 font-medium"></span></p>
+          <p class="text-xs text-zinc-500">Click the link in the email to activate your account, then come back here and sign in.</p>
+          <p class="text-xs text-zinc-600 mt-2">Didn't get it? Check your spam folder.</p>
+          <button id="btnBackToLogin" type="button" class="btn-ghost w-full justify-center py-2 mt-2">← Back to Sign In</button>
+        </div>
+
         <div class="text-center mt-6 text-xs text-zinc-600">
           © 2026 FertCalc Pro
         </div>
@@ -89,7 +99,10 @@ export function renderLogin() {
       )
       navigate('/app')
     } catch (err) {
-      toast(err.message, 'error')
+      const msg = err.message?.includes('Email not confirmed')
+        ? 'Please verify your email first — check your inbox for a confirmation link'
+        : err.message
+      toast(msg, 'error')
       btn.disabled = false; btn.textContent = 'Sign In'
     }
   })
@@ -106,7 +119,7 @@ export function renderLogin() {
     }
   })
 
-  // Signup — auto sign-in after account creation
+  // Signup — show verification message
   document.getElementById('signupForm').addEventListener('submit', async (e) => {
     e.preventDefault()
     const btn = document.getElementById('btnSignup')
@@ -115,13 +128,22 @@ export function renderLogin() {
     const password = document.getElementById('signupPassword').value
     try {
       await signUp(email, password, document.getElementById('signupName').value)
-      // Auto sign-in immediately
-      await signIn(email, password)
-      toast('Welcome to FertCalc Pro!', 'success')
-      navigate('/app')
+      // Show email verification message
+      document.getElementById('signupForm').classList.add('hidden')
+      document.getElementById('loginForm').classList.add('hidden')
+      document.getElementById('btnToggleSignup').classList.add('hidden')
+      document.getElementById('verifyEmailAddr').textContent = email
+      document.getElementById('verifyEmailMsg').classList.remove('hidden')
     } catch (err) {
       toast(err.message, 'error')
       btn.disabled = false; btn.textContent = 'Create Account'
     }
+  })
+
+  // Back to login from verification screen
+  document.getElementById('btnBackToLogin').addEventListener('click', () => {
+    document.getElementById('verifyEmailMsg').classList.add('hidden')
+    document.getElementById('loginForm').classList.remove('hidden')
+    document.getElementById('btnToggleSignup').classList.remove('hidden')
   })
 }
