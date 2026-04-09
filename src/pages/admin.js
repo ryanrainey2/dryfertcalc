@@ -550,15 +550,7 @@ async function loadUsers() {
     if (!el) return
     el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">Loading...</div>'
 
-    const [profileList, authUsers] = await Promise.all([
-      listProfiles(),
-      adminListUsers().catch(() => []),
-    ])
-    profiles = profileList
-
-    // Build a map of user_id → auth data
-    const authMap = {}
-    authUsers.forEach(u => { authMap[u.id] = u })
+    profiles = await listProfiles()
 
     if (profiles.length === 0) {
       el.innerHTML = '<div class="text-zinc-500 text-sm text-center py-8">No users yet.</div>'
@@ -566,15 +558,7 @@ async function loadUsers() {
     }
 
     el.innerHTML = profiles.map(p => {
-      const auth = authMap[p.user_id] || {}
-      const email = auth.email || ''
-      const confirmed = !!auth.email_confirmed_at
-      const lastSeen = auth.last_sign_in_at
-        ? new Date(auth.last_sign_in_at).toLocaleDateString()
-        : 'Never'
-      const statusBadge = confirmed
-        ? '<span class="px-1.5 py-0.5 rounded text-xs bg-emerald-900/60 text-emerald-400">✓ Confirmed</span>'
-        : '<span class="px-1.5 py-0.5 rounded text-xs bg-red-900/60 text-red-400">⚠ Unconfirmed</span>'
+      const email = p.email || ''
 
       return `
       <div class="card p-4 flex items-start justify-between gap-4 flex-wrap">
@@ -586,8 +570,7 @@ async function loadUsers() {
               ${p.role === 'super_admin' ? 'bg-amber-900/60 text-amber-400' :
                 p.role === 'company_admin' ? 'bg-blue-900/60 text-blue-400' :
                 'bg-zinc-700 text-zinc-300'}">${p.role}</span>
-            ${statusBadge}
-            <span class="text-zinc-600 text-xs">${p.companies?.name || 'No company'} · Last sign in: ${lastSeen}</span>
+            <span class="text-zinc-600 text-xs">${p.companies?.name || 'No company'}</span>
           </div>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0 items-center">
