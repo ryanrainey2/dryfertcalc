@@ -76,11 +76,34 @@ async function requireAuth() {
   return session
 }
 
+// ── Tool Access Control ───────────────────────────────────────────────────
+const ALL_TOOLS = [
+  { key: 'crops',         route: '/crops',         label: '🌿 Crop Library' },
+  { key: 'fields',        route: '/fields',        label: '🗺️ Fields' },
+  { key: 'soil-tests',    route: '/soil-tests',    label: '🧪 Soil Tests' },
+  { key: 'planner',       route: '/planner',       label: '📅 App Planner' },
+  { key: 'inventory',     route: '/inventory',     label: '📦 Inventory' },
+  { key: 'spreader',      route: '/spreader',      label: '⚙️ Spreader Cal' },
+  { key: 'weather',       route: '/weather',       label: '🌤️ Weather' },
+  { key: 'vrt',           route: '/vrt',           label: '🗺️ VRT Rx' },
+  { key: 'nutrient-plan', route: '/nutrient-plan', label: '📋 4R Plan' },
+  { key: 'grower',        route: '/grower',        label: '👤 Grower Portal' },
+]
+
+function getEnabledTools() {
+  const isAdmin = currentProfile?.role === 'super_admin'
+  if (isAdmin) return ALL_TOOLS // admins see everything
+  const allowed = currentCompany?.enabled_tools
+  if (!allowed || !Array.isArray(allowed)) return ALL_TOOLS // no restrictions = all
+  return ALL_TOOLS.filter(t => allowed.includes(t.key))
+}
+
 // ── Render Calculator App ──────────────────────────────────────────────────
 function renderApp() {
   const companyLogo = currentCompany?.logo_url || null
   const companyName = currentCompany?.name || null
   const isAdmin = currentProfile?.role === 'super_admin'
+  const enabledTools = getEnabledTools()
 
   document.getElementById('app').innerHTML = `
     <div class="max-w-7xl mx-auto px-4 py-6">
@@ -102,17 +125,8 @@ function renderApp() {
           <div class="relative" id="toolsDropdown">
             <button id="btnToolsMenu" class="btn-ghost">🧰 Tools ▾</button>
             <div id="toolsPanel" class="hidden absolute right-0 top-full mt-1 w-52 card p-2 z-50 shadow-xl space-y-0.5">
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/crops">🌿 Crop Library</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/fields">🗺️ Fields</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/soil-tests">🧪 Soil Tests</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/planner">📅 App Planner</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/inventory">📦 Inventory</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/spreader">⚙️ Spreader Cal</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/weather">🌤️ Weather</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/vrt">🗺️ VRT Rx</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/nutrient-plan">📋 4R Plan</button>
-              <button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/grower">👤 Grower Portal</button>
-              <div class="border-t border-zinc-700 my-1"></div>
+              ${enabledTools.map(t => `<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="${t.route}">${t.label}</button>`).join('')}
+              ${isAdmin ? '<div class="border-t border-zinc-700 my-1"></div>' : ''}
               ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/features">📋 Features</button>' : ''}
               ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/admin">🛠️ Admin</button>' : ''}
             </div>
@@ -131,16 +145,7 @@ function renderApp() {
         <button class="btn-ghost w-full justify-center theme-toggle">☀️ Toggle Theme</button>
         <button id="btnSaveMob" class="btn-blue w-full justify-center">💾 Save Blend</button>
         <div class="border-t border-zinc-700 my-1"></div>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/crops">🌿 Crop Library</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/fields">🗺️ Fields</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/soil-tests">🧪 Soil Tests</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/planner">📅 Planner</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/inventory">📦 Inventory</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/spreader">⚙️ Spreader</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/weather">🌤️ Weather</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/vrt">🗺️ VRT Rx</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/nutrient-plan">📋 4R Plan</button>
-        <button class="btn-ghost w-full justify-center nav-tool" data-route="/grower">👤 Grower Portal</button>
+        ${enabledTools.map(t => `<button class="btn-ghost w-full justify-center nav-tool" data-route="${t.route}">${t.label}</button>`).join('')}
         <div class="border-t border-zinc-700 my-1"></div>
         ${isAdmin ? '<button id="btnAdminMob" class="btn-ghost w-full justify-center">🛠️ Admin</button>' : ''}
         <button id="btnResetMob" class="btn-ghost w-full justify-center">↺ Reset All</button>

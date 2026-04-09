@@ -403,6 +403,32 @@ async function openCompanySettings(companyId) {
       </div>
     </div>
 
+    <!-- Tool Access -->
+    <div class="mb-5">
+      <h3 class="lbl mb-2">🔧 Tool Access</h3>
+      <p class="text-xs text-zinc-500 mb-2">Select which tools this company's users can access</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        ${[
+          { key: 'crops',         label: '🌿 Crop Library' },
+          { key: 'fields',        label: '🗺️ Fields' },
+          { key: 'soil-tests',    label: '🧪 Soil Tests' },
+          { key: 'planner',       label: '📅 App Planner' },
+          { key: 'inventory',     label: '📦 Inventory' },
+          { key: 'spreader',      label: '⚙️ Spreader Cal' },
+          { key: 'weather',       label: '🌤️ Weather' },
+          { key: 'vrt',           label: '🗺️ VRT Rx' },
+          { key: 'nutrient-plan', label: '📋 4R Plan' },
+          { key: 'grower',        label: '👤 Grower Portal' },
+        ].map(t => {
+          const enabled = !c.enabled_tools || (Array.isArray(c.enabled_tools) && c.enabled_tools.includes(t.key))
+          return \`<label class="flex items-center gap-2 px-3 py-2 bg-zinc-800/30 rounded-lg cursor-pointer hover:bg-zinc-800/50">
+            <input type="checkbox" class="cm-tool-toggle w-4 h-4 accent-emerald-500" data-tool="\${t.key}" \${enabled ? 'checked' : ''} />
+            <span class="text-sm">\${t.label}</span>
+          </label>\`
+        }).join('')}
+      </div>
+    </div>
+
     <!-- Stats -->
     <div class="mb-5">
       <h3 class="lbl mb-2">Overview</h3>
@@ -478,11 +504,13 @@ async function openCompanySettings(companyId) {
       const stabPrice = parseFloat(body.querySelector('#cmStabPrice').value)
       if (!isNaN(stabRate) && stabRate >= 0) gatheredPrices.stabilizer_rate = stabRate
       if (!isNaN(stabPrice) && stabPrice >= 0) gatheredPrices.stabilizer_price = stabPrice
+      const enabledTools = [...body.querySelectorAll('.cm-tool-toggle:checked')].map(cb => cb.dataset.tool)
       const updates = {
         name: body.querySelector('#cmName').value.trim(),
         slug: body.querySelector('#cmSlug').value.trim(),
         primary_color: cmColorHex.value,
         default_prices: Object.keys(gatheredPrices).length > 0 ? gatheredPrices : null,
+        enabled_tools: enabledTools,
       }
 
       const fileInput = body.querySelector('#cmLogoFile')
