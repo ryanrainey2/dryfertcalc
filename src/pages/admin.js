@@ -403,6 +403,26 @@ async function openCompanySettings(companyId) {
       </div>
     </div>
 
+    <!-- Product Visibility -->
+    <div class="mb-5">
+      <h3 class="lbl mb-2">📦 Product Visibility</h3>
+      <p class="text-xs text-zinc-500 mb-2">Toggle which products are available in the calculator for this company</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">Dry Products</div>
+          <div class="space-y-1">
+            ${renderProductToggles(c.enabled_products, 'dry')}
+          </div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">Liquid Products</div>
+          <div class="space-y-1">
+            ${renderProductToggles(c.enabled_products, 'liquid')}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Default Prices -->
     <div class="mb-5">
       <h3 class="lbl mb-2">Default Product Prices ($/ton)</h3>
@@ -515,12 +535,14 @@ async function openCompanySettings(companyId) {
       if (!isNaN(stabRate) && stabRate >= 0) gatheredPrices.stabilizer_rate = stabRate
       if (!isNaN(stabPrice) && stabPrice >= 0) gatheredPrices.stabilizer_price = stabPrice
       const enabledTools = [...body.querySelectorAll('.cm-tool-toggle:checked')].map(cb => cb.dataset.tool)
+      const enabledProducts = [...body.querySelectorAll('.cm-product-toggle:checked')].map(cb => cb.dataset.product)
       const updates = {
         name: body.querySelector('#cmName').value.trim(),
         slug: body.querySelector('#cmSlug').value.trim(),
         primary_color: cmColorHex.value,
         default_prices: Object.keys(gatheredPrices).length > 0 ? gatheredPrices : null,
         enabled_tools: enabledTools,
+        enabled_products: enabledProducts,
       }
 
       const fileInput = body.querySelector('#cmLogoFile')
@@ -546,16 +568,30 @@ async function openCompanySettings(companyId) {
 
 // ── Price inputs for default_prices ──
 const ALL_PRODUCTS = {
-  an:     { name: 'Nitrate (AN)',     default: 650 },
-  map:    { name: 'MAP',              default: 720 },
-  potash: { name: 'Potash',           default: 380 },
-  ams:    { name: 'AMS',              default: 420 },
-  gypsum: { name: 'Gypsum',           default: 180 },
-  uan32:  { name: 'UAN 32',           default: 300 },
-  uan28:  { name: 'UAN 28',           default: 260 },
-  app:    { name: '10-34-0 (APP)',     default: 480 },
-  ats:    { name: 'ATS',              default: 320 },
-  kts:    { name: 'KTS',              default: 380 },
+  an:     { name: 'Nitrate (AN)',     default: 650, type: 'dry' },
+  urea:   { name: 'Urea',            default: 580, type: 'dry' },
+  map:    { name: 'MAP',              default: 720, type: 'dry' },
+  potash: { name: 'Potash',           default: 380, type: 'dry' },
+  ams:    { name: 'AMS',              default: 420, type: 'dry' },
+  gypsum: { name: 'Gypsum',           default: 180, type: 'dry' },
+  uan32:  { name: 'UAN 32',           default: 300, type: 'liquid' },
+  uan28:  { name: 'UAN 28',           default: 260, type: 'liquid' },
+  app:    { name: '10-34-0 (APP)',     default: 480, type: 'liquid' },
+  ats:    { name: 'ATS',              default: 320, type: 'liquid' },
+  kts:    { name: 'KTS',              default: 380, type: 'liquid' },
+}
+
+function renderProductToggles(enabledProducts, type) {
+  const allKeys = Object.keys(ALL_PRODUCTS)
+  return Object.entries(ALL_PRODUCTS)
+    .filter(([, prod]) => prod.type === type)
+    .map(([key, prod]) => {
+      const enabled = !enabledProducts || (Array.isArray(enabledProducts) && enabledProducts.includes(key)) || !Array.isArray(enabledProducts)
+      return '<label class="flex items-center gap-2 px-3 py-2 bg-zinc-800/30 rounded-lg cursor-pointer hover:bg-zinc-800/50">' +
+        '<input type="checkbox" class="cm-product-toggle w-4 h-4 accent-emerald-500" data-product="' + key + '" ' + (enabled ? 'checked' : '') + ' />' +
+        '<span class="text-sm">' + prod.name + '</span>' +
+        '</label>'
+    }).join('')
 }
 
 function renderPriceInputs(prices) {

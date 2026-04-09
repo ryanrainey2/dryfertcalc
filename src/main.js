@@ -1,5 +1,5 @@
 import './style.css'
-import { getSession, getProfile, signOut, supabase, listBlends, saveBlendToDB, deleteBlendFromDB } from './supabase.js'
+import { getSession, getProfile, signOut, supabase, listBlends, saveBlendToDB, deleteBlendFromDB, updateCompany } from './supabase.js'
 import { route, navigate, startRouter } from './router.js'
 import { renderLogin } from './pages/login.js'
 import { renderAdmin } from './pages/admin.js'
@@ -39,7 +39,17 @@ let mode = 'dry'
 let currentProfile = null
 let currentCompany = null
 
-function products() { return mode === 'dry' ? DRY_PRODUCTS : LIQUID_PRODUCTS }
+function allProducts() { return mode === 'dry' ? DRY_PRODUCTS : LIQUID_PRODUCTS }
+function products() {
+  const all = allProducts()
+  const allowed = currentCompany?.enabled_products
+  if (!allowed || !Array.isArray(allowed)) return all
+  const filtered = {}
+  for (const key of Object.keys(all)) {
+    if (allowed.includes(key)) filtered[key] = all[key]
+  }
+  return Object.keys(filtered).length > 0 ? filtered : all
+}
 function productKeys() { return Object.keys(products()) }
 const $ = id => document.getElementById(id)
 const val = id => parseFloat($(id)?.value) || 0
@@ -210,6 +220,7 @@ function renderApp() {
               <h2 class="text-xs font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide text-zinc-400">
                 💰 Products &amp; Prices
                 <span id="priceUnitBadge" class="bg-amber-900/60 text-amber-400 px-2 py-0.5 rounded-full text-xs">$/TON</span>
+                ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? '<button id="btnProductSettings" class="ml-auto text-zinc-500 hover:text-zinc-300 transition-colors" title="Manage visible products">⚙️</button>' : ''}
               </h2>
               <div id="productsContainer" class="space-y-2"></div>
             </div>
@@ -366,6 +377,31 @@ function renderApp() {
             </div>
           </div>
         </main>
+      </div>
+
+      <!-- Product Settings Modal -->
+      <div id="productSettingsOverlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="card p-5 w-full max-w-md max-h-[80vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-zinc-300">📦 Product Visibility</h2>
+            <button id="btnCloseProductSettings" class="text-zinc-500 hover:text-zinc-300 text-lg">✕</button>
+          </div>
+          <p class="text-xs text-zinc-500 mb-4">Toggle which products appear in the calculator for your company</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Dry Products</div>
+              <div id="prodToggleDry" class="space-y-1"></div>
+            </div>
+            <div>
+              <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Liquid Products</div>
+              <div id="prodToggleLiquid" class="space-y-1"></div>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-5">
+            <button id="btnSaveProductSettings" class="btn-green">Save</button>
+            <button id="btnCancelProductSettings" class="btn-ghost">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>`
 
@@ -943,6 +979,56 @@ function printBlendSheet() {
 }
 
 // ── Wire Events ────────────────────────────────────────────────────────────
+// ── Product Settings (per-company visibility) ────────────────────────────
+function openProductSettings() {
+  const dryContainer = $('prodToggleDry')
+  const liqContainer = $('prodToggleLiquid')
+  if (!dryContainer || !liqContainer) return
+  const enabled = currentCompany?.enabled_products
+  const allDry = DRY_PRODUCTS
+  const allLiq = LIQUID_PRODUCTS
+
+  function renderToggles(prods, container) {
+    container.innerHTML = Object.entries(prods).map(([key, p]) => {
+      const isOn = !enabled || !Array.isArray(enabled) || enabled.includes(key)
+      return '<label class="flex items-center gap-2 px-3 py-2 bg-zinc-800/30 rounded-lg cursor-pointer hover:bg-zinc-800/50">' +
+        '<input type="checkbox" class="prod-vis-toggle w-4 h-4 accent-emerald-500" data-product="' + key + '" ' + (isOn ? 'checked' : '') + ' />' +
+        '<div class="w-4 h-4 rounded shrink-0" style="background:' + p.color + '"></div>' +
+        '<span class="text-sm">' + p.name + ' <span class="text-zinc-500 text-xs">' + p.analysis + '</span></span>' +
+        '</label>'
+    }).join('')
+  }
+
+  renderToggles(allDry, dryContainer)
+  renderToggles(allLiq, liqContainer)
+  $('productSettingsOverlay')?.classList.remove('hidden')
+}
+
+function closeProductSettings() {
+  $('productSettingsOverlay')?.classList.add('hidden')
+}
+
+async function saveProductSettings() {
+  if (!currentCompany) return
+  const btn = $('btnSaveProductSettings')
+  btn.disabled = true; btn.textContent = 'Saving...'
+  try {
+    const enabledProducts = [...document.querySelectorAll('.prod-vis-toggle:checked')].map(cb => cb.dataset.product)
+    if (enabledProducts.length === 0) { toast('At least one product must be enabled', 'error'); return }
+    await updateCompany(currentCompany.id, { enabled_products: enabledProducts })
+    currentCompany.enabled_products = enabledProducts
+    renderProducts()
+    renderRates()
+    if (checked('autoOptimize')) optimizeBlend(); else calculateAll()
+    closeProductSettings()
+    toast('Product visibility updated', 'success')
+  } catch (err) {
+    toast(err.message, 'error')
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save'
+  }
+}
+
 function wireAppEvents() {
   // Theme
   document.querySelectorAll('.theme-toggle').forEach(b => b.addEventListener('click', toggleTheme))
@@ -980,6 +1066,11 @@ function wireAppEvents() {
   $('btnMenuToggle')?.addEventListener('click', () => { const m = $('mobileMenu'); m?.classList.toggle('hidden'); m?.classList.toggle('flex') })
   // Sidebar
   $('sidebarToggle')?.addEventListener('click', () => { const c = $('sidebarContent'); c?.classList.toggle('hidden'); if ($('sidebarArrow')) $('sidebarArrow').textContent = c?.classList.contains('hidden') ? '▼' : '▲' })
+  // Product settings (company_admin + super_admin)
+  $('btnProductSettings')?.addEventListener('click', openProductSettings)
+  $('btnCloseProductSettings')?.addEventListener('click', closeProductSettings)
+  $('btnCancelProductSettings')?.addEventListener('click', closeProductSettings)
+  $('btnSaveProductSettings')?.addEventListener('click', saveProductSettings)
   // Auto-optimize
   ;['targetN','targetP','targetK','targetS'].forEach(id => $(id)?.addEventListener('input', () => { if (checked('autoOptimize')) optimizeBlend() }))
   ;['acres','numBatches'].forEach(id => $(id)?.addEventListener('input', calculateAll))
