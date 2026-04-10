@@ -3,7 +3,7 @@ import {
   listProfiles, updateProfile, uploadLogo,
   listBlendsForCompany, listAllBlends, deleteBlendFromDB,
   inviteUser, signOut,
-  adminListUsers, adminDeleteUser, adminSendPasswordReset, adminApproveUser
+  adminListUsers, adminDeleteUser, adminSendPasswordReset, adminApproveUser, adminSetUserPassword
 } from '../supabase.js'
 import { navigate } from '../router.js'
 import { toast } from '../ui.js'
@@ -721,7 +721,8 @@ async function loadUsers() {
             <option value="company_admin" ${p.role === 'company_admin' ? 'selected' : ''}>Company Admin</option>
             <option value="super_admin" ${p.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
           </select>
-          ${email ? `<button class="btn-ghost text-xs reset-pw" data-email="${email}" data-name="${p.full_name || email}">Reset Password</button>` : ''}
+          ${email ? `<button class="btn-ghost text-xs reset-pw" data-email="${email}" data-name="${p.full_name || email}">Reset Link</button>` : ''}
+          <button class="btn-blue text-xs set-pw" data-user-id="${p.user_id}" data-name="${p.full_name || email || 'this user'}">Set Password</button>
           <button class="btn-red text-xs delete-user" data-user-id="${p.user_id}" data-name="${p.full_name || email || 'this user'}">Delete</button>
         </div>
       </div>`
@@ -745,18 +746,42 @@ async function loadUsers() {
       })
     })
 
-    // Reset password
+    // Reset password - generates recovery link for admin to share
     el.querySelectorAll('.reset-pw').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (!confirm(`Send a password reset email to ${btn.dataset.name}?`)) return
-        btn.disabled = true; btn.textContent = 'Sending...'
+        if (!confirm(`Generate a password reset link for ${btn.dataset.name}?\n\nThe link will be shown for you to copy and share with the user (via text, Slack, etc.)`)) return
+        btn.disabled = true; btn.textContent = 'Generating...'
         try {
-          await adminSendPasswordReset(btn.dataset.email)
-          toast(`Password reset sent to ${btn.dataset.email}`, 'success')
+          const res = await adminSendPasswordReset(btn.dataset.email)
+          if (res.action_link) {
+            // Copy to clipboard automatically
+            try { await navigator.clipboard.writeText(res.action_link) } catch (_) {}
+            prompt(`Password reset link for ${btn.dataset.email}\n(Already copied to clipboard - share with the user)`, res.action_link)
+          } else {
+            toast('Link generated but empty response', 'error')
+          }
         } catch (err) {
           toast(err.message, 'error')
         } finally {
-          btn.disabled = false; btn.textContent = 'Reset Password'
+          btn.disabled = false; btn.textContent = 'Reset Link'
+        }
+      })
+    })
+
+    // Set password directly
+    el.querySelectorAll('.set-pw').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const newPw = prompt(`Set a new password for ${btn.dataset.name}\n\nMinimum 6 characters. Share this password with the user via a secure channel.`)
+        if (!newPw) return
+        if (newPw.length < 6) { toast('Password must be at least 6 characters', 'error'); return }
+        btn.disabled = true; btn.textContent = 'Setting...'
+        try {
+          await adminSetUserPassword(btn.dataset.userId, newPw)
+          toast(`Password set for ${btn.dataset.name}`, 'success')
+        } catch (err) {
+          toast(err.message, 'error')
+        } finally {
+          btn.disabled = false; btn.textContent = 'Set Password'
         }
       })
     })

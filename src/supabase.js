@@ -471,6 +471,10 @@ export async function adminSendPasswordReset(email) {
   return callAdminUserAction('reset_password', { email })
 }
 
+export async function adminSetUserPassword(userId, newPassword) {
+  return callAdminUserAction('set_password', { user_id: userId, new_password: newPassword })
+}
+
 export async function adminApproveUser(userId) {
   return callAdminUserAction('approve_user', { user_id: userId })
 }
