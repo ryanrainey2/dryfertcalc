@@ -354,6 +354,12 @@ function renderApp() {
               </div>
             </div>
 
+            <!-- 1-Gallon Blend Analysis (liquid mode only) -->
+            <div id="galAnalysis" class="hidden mt-4 bg-blue-900/30 border border-blue-700 rounded-2xl p-4">
+              <h3 class="lbl mb-3">💧 Blend Analysis <span class="text-blue-400 normal-case text-xs font-normal ml-1">(per 1 gallon of blend)</span></h3>
+              <div id="galAnalysisContent" class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center"></div>
+            </div>
+
             <!-- Cost per lb -->
             <div class="mt-4 bg-zinc-800/40 border border-zinc-700 rounded-2xl p-4">
               <h3 class="lbl mb-3">Cost Per Pound of Nutrient <span class="text-emerald-400 normal-case text-xs font-normal ml-1">(effective after N credit)</span></h3>
@@ -619,6 +625,29 @@ function calculateAll() {
   const totalSpreadRate = keys.reduce((a, k) => a + rawRates[k], 0)
   const totalProduct = totalSpreadRate * acres
   const perBatch = numBatches > 0 ? totalProduct / numBatches : 0
+
+  // 1-gallon blend analysis (liquid mode only)
+  const galAnalysisEl = $('galAnalysis')
+  if (galAnalysisEl) {
+    if (isLiquid && totalSpreadRate > 0) {
+      const totalLbsBlend = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
+      const lbsPerGalBlend = totalLbsBlend / totalSpreadRate
+      const nPerGal = totalN / totalSpreadRate
+      const pPerGal = totalP / totalSpreadRate
+      const kPerGal = totalK / totalSpreadRate
+      const sPerGal = totalS / totalSpreadRate
+      galAnalysisEl.classList.remove('hidden')
+      const c = $('galAnalysisContent')
+      if (c) c.innerHTML =
+        `<div><div class="text-xs text-zinc-500">Weight</div><div class="text-2xl sm:text-3xl font-bold text-white mt-1">${lbsPerGalBlend.toFixed(2)}</div><div class="text-xs text-zinc-600">lbs/gal</div></div>` +
+        `<div><div class="text-xs text-zinc-500">Nitrogen</div><div class="text-2xl sm:text-3xl font-bold text-blue-400 mt-1">${nPerGal.toFixed(3)}</div><div class="text-xs text-zinc-600">lbs N/gal</div></div>` +
+        `<div><div class="text-xs text-zinc-500">Phosphate</div><div class="text-2xl sm:text-3xl font-bold text-orange-400 mt-1">${pPerGal.toFixed(3)}</div><div class="text-xs text-zinc-600">lbs P₂O₅/gal</div></div>` +
+        `<div><div class="text-xs text-zinc-500">Potash</div><div class="text-2xl sm:text-3xl font-bold text-violet-400 mt-1">${kPerGal.toFixed(3)}</div><div class="text-xs text-zinc-600">lbs K₂O/gal</div></div>` +
+        `<div><div class="text-xs text-zinc-500">Sulfur</div><div class="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1">${sPerGal.toFixed(3)}</div><div class="text-xs text-zinc-600">lbs S/gal</div></div>`
+    } else {
+      galAnalysisEl.classList.add('hidden')
+    }
+  }
 
   if ($('spreadRateValue')) $('spreadRateValue').textContent = totalSpreadRate.toFixed(2)
   if ($('totalProductNeeded')) $('totalProductNeeded').textContent = totalProduct.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' ' + pUnit
@@ -895,6 +924,28 @@ function printQuote() {
     }
   }
 
+  let galQuoteBlock = ''
+  if (mode === 'liquid') {
+    const activeKeys = keys.filter(k => val(`rate_${k}`) > 0)
+    const totalGalPerAcre = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`), 0)
+    if (totalGalPerAcre > 0) {
+      const totalLbsPerAcre = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal, 0)
+      const qN = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].n, 0)
+      const qP = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].p, 0)
+      const qK = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].k, 0)
+      const qS = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].s, 0)
+      galQuoteBlock = `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin:20px 0;">` +
+        `<div style="font-size:13px;font-weight:600;color:#1d4ed8;text-transform:uppercase;margin-bottom:10px;">💧 Blend Analysis — Per 1 Gallon</div>` +
+        `<div style="display:flex;gap:24px;flex-wrap:wrap;font-size:14px;">` +
+        `<span>Weight: <strong>${(totalLbsPerAcre/totalGalPerAcre).toFixed(2)} lbs/gal</strong></span>` +
+        `<span>N: <strong>${(qN/totalGalPerAcre).toFixed(3)} lbs/gal</strong></span>` +
+        `<span>P₂O₅: <strong>${(qP/totalGalPerAcre).toFixed(3)} lbs/gal</strong></span>` +
+        `<span>K₂O: <strong>${(qK/totalGalPerAcre).toFixed(3)} lbs/gal</strong></span>` +
+        `<span>S: <strong>${(qS/totalGalPerAcre).toFixed(3)} lbs/gal</strong></span>` +
+        `</div></div>`
+    }
+  }
+
   const html = `<div style="padding:40px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
     <div style="display:flex;justify-content:space-between;margin-bottom:24px;"><div><h1 style="color:#059669;font-size:26px;margin:0;">${modeLabel} Fertilizer Quote</h1><p style="color:#666;margin:4px 0 0;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div></div></div>
     <hr style="border-color:#ddd;margin-bottom:24px;">
@@ -902,6 +953,7 @@ function printQuote() {
     <h2 style="font-size:16px;margin:20px 0 8px;">Target (lbs/acre)</h2><p>N: <strong>${$('targetN')?.value}</strong> · P₂O₅: <strong>${$('targetP')?.value}</strong> · K₂O: <strong>${$('targetK')?.value}</strong> · S: <strong>${$('targetS')?.value}</strong></p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Rates</h2>
     <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}</table>
+    ${galQuoteBlock}
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
@@ -956,6 +1008,25 @@ function printBlendSheet() {
     }
   }
 
+  let galBlendBlock = ''
+  if (isLiquid && totalSpreadRate > 0) {
+    const activeKeys = keys.filter(k => val(`rate_${k}`) > 0)
+    const bTotalLbs = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal, 0)
+    const bN = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].n, 0)
+    const bP = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].p, 0)
+    const bK = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].k, 0)
+    const bS = activeKeys.reduce((sum, k) => sum + val(`rate_${k}`) * prods[k].lbsPerGal * prods[k].s, 0)
+    galBlendBlock = `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:14px;">` +
+      `<div style="font-size:13px;font-weight:600;color:#1d4ed8;text-transform:uppercase;margin-bottom:8px;">💧 Blend Analysis — Per 1 Gallon</div>` +
+      `<div style="display:flex;gap:20px;flex-wrap:wrap;">` +
+      `<span>Weight: <strong>${(bTotalLbs/totalSpreadRate).toFixed(2)} lbs/gal</strong></span>` +
+      `<span>N: <strong>${(bN/totalSpreadRate).toFixed(3)} lbs/gal</strong></span>` +
+      `<span>P₂O₅: <strong>${(bP/totalSpreadRate).toFixed(3)} lbs/gal</strong></span>` +
+      `<span>K₂O: <strong>${(bK/totalSpreadRate).toFixed(3)} lbs/gal</strong></span>` +
+      `<span>S: <strong>${(bS/totalSpreadRate).toFixed(3)} lbs/gal</strong></span>` +
+      `</div></div>`
+  }
+
   const checks = Array.from({length:numBatches},(_,i)=>`<tr><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">${i+1}</td><td style="padding:6px 12px;border:1px solid #ddd;width:120px;"></td><td style="padding:6px 12px;border:1px solid #ddd;width:80px;"></td><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">☐</td></tr>`).join('')
 
   const html = `<div style="padding:36px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
@@ -965,6 +1036,7 @@ function printBlendSheet() {
       <span style="font-size:13px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;">Total Spread Rate</span>
       <span style="font-size:22px;font-weight:bold;color:#d97706;">${totalSpreadRate.toFixed(2)} <span style="font-size:14px;font-weight:600;">${rateUnit}</span></span>
     </div>
+    ${galBlendBlock}
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
     <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}${stabBlendRow}</table>
