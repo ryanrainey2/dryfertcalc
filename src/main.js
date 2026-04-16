@@ -979,9 +979,14 @@ function printBlendSheet() {
   const totalTons = batchRows.reduce((sum, r) => sum + r.tons, 0)
   const totalTonsAllBatches = totalTons * numBatches
   const isCart = checked('cartRental')
+  const productTonsRows = batchRows.map(r => {
+    const productTotalTons = r.tons * numBatches
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid ${isCart ? '#fde68a' : '#e5e5e5'};font-size:13px;"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</span><span>${productTotalTons.toFixed(2)} tons</span></div>`
+  }).join('')
   const totalTonsBlock = `<div style="margin-top:20px;padding:14px 18px;border-radius:8px;background:${isCart ? '#fffbeb' : '#f5f5f5'};border:1px solid ${isCart ? '#fde68a' : '#ddd'};font-size:15px;">
     <div style="font-weight:bold;">${isCart ? '🚜 CART RENTAL — ' : ''}Total Tons (per batch): ${totalTons.toFixed(2)}</div>
     ${numBatches > 1 ? `<div style="margin-top:6px;">Total Tons (${numBatches} batches): <strong>${totalTonsAllBatches.toFixed(2)}</strong></div>` : ''}
+    ${batchRows.length > 0 ? `<div style="margin-top:10px;font-size:13px;font-weight:600;color:#555;">Tons by Product${numBatches > 1 ? ' (all batches)' : ''}:</div><div style="margin-top:4px;">${productTonsRows}</div>` : ''}
   </div>`
 
   // Nitrogen Stabilizer blend sheet section
