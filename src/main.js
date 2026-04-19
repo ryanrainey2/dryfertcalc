@@ -205,6 +205,11 @@ function renderApp() {
           <label for="useStabilizer" class="text-teal-400 font-medium text-sm cursor-pointer">🧪 Nitrogen Stabilizer</label>
           <span id="stabQuickInfo" class="text-xs text-zinc-500"></span>
         </div>
+        <div id="dryChemicalRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3">
+          <input type="checkbox" id="useDryChemical" class="w-5 h-5 accent-orange-500 shrink-0" />
+          <label for="useDryChemical" class="text-orange-400 font-medium text-sm cursor-pointer">🧪 Chemical Additive</label>
+          <span id="dryChemQuickInfo" class="text-xs text-zinc-500"></span>
+        </div>
       </div>
 
       <!-- Main Grid -->
@@ -323,6 +328,18 @@ function renderApp() {
                   <span class="text-zinc-400">Rate: <strong class="text-teal-300" id="stabRatePerTon">—</strong> oz/ton</span>
                   <span class="text-zinc-400">Per Acre: <strong class="text-teal-300" id="stabRatePerAcre">—</strong> oz</span>
                   <span class="text-zinc-400">Add'l Cost: <strong class="text-teal-300" id="stabCostPerAcre">—</strong>/acre</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dry Chemical Info -->
+            <div id="dryChemInfo" class="hidden mt-3 bg-orange-900/30 border border-orange-700 rounded-xl px-4 py-3">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <span class="text-xs font-semibold text-orange-400 uppercase tracking-wide">🧪 Chemical Additive</span>
+                <div class="flex flex-wrap gap-4 text-sm">
+                  <span class="text-zinc-400">Rate: <strong class="text-orange-300" id="dryChemRatePerTon">—</strong> oz/ton</span>
+                  <span class="text-zinc-400">Per Acre: <strong class="text-orange-300" id="dryChemRatePerAcre">—</strong> oz</span>
+                  <span class="text-zinc-400">Add'l Cost: <strong class="text-orange-300" id="dryChemCostPerAcre">—</strong>/acre</span>
                 </div>
               </div>
             </div>
@@ -575,6 +592,15 @@ function getStabilizerSettings() {
   }
 }
 
+// ── Dry Chemical Additive ──────────────────────────────────────────────────
+function getDryChemicalSettings() {
+  const cp = currentCompany?.default_prices || {}
+  return {
+    rate:  parseFloat(cp.dry_chemical_rate)  || parseFloat(localStorage.getItem('dfc_dry_chemical_rate'))  || 0,
+    price: parseFloat(cp.dry_chemical_price) || parseFloat(localStorage.getItem('dfc_dry_chemical_price')) || 0,
+  }
+}
+
 // ── Calculate ──────────────────────────────────────────────────────────────
 function calculateAll() {
   const prods = products(); const keys = productKeys()
@@ -615,6 +641,34 @@ function calculateAll() {
     }
   } else {
     $('stabilizerInfo')?.classList.add('hidden')
+  }
+
+  // Chemical Additive (dry mode only)
+  const useDryChem = !isLiquid && checked('useDryChemical')
+  let dryChemCostPerAcre = 0, dryChemRatePerAcre = 0
+  if (useDryChem) {
+    const dc = getDryChemicalSettings()
+    if (dc.rate > 0 && dc.price > 0) {
+      const totalDryLbsPerAcre = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
+      const tonsPerAcre = totalDryLbsPerAcre / 2000
+      dryChemRatePerAcre = dc.rate * tonsPerAcre
+      dryChemCostPerAcre = (dryChemRatePerAcre / 128) * dc.price
+      totalCostPerAcre += dryChemCostPerAcre
+    }
+    const dryChemInfoEl = $('dryChemInfo')
+    if (dryChemInfoEl) {
+      if (dryChemRatePerAcre > 0) {
+        dryChemInfoEl.classList.remove('hidden')
+        if ($('dryChemRatePerTon')) $('dryChemRatePerTon').textContent = getDryChemicalSettings().rate.toFixed(1)
+        if ($('dryChemRatePerAcre')) $('dryChemRatePerAcre').textContent = dryChemRatePerAcre.toFixed(2)
+        if ($('dryChemCostPerAcre')) $('dryChemCostPerAcre').textContent = '$' + dryChemCostPerAcre.toFixed(2)
+      } else {
+        dryChemInfoEl.classList.add('hidden')
+        const q = $('dryChemQuickInfo'); if (q) q.textContent = '(configure rate & price in Admin)'
+      }
+    }
+  } else {
+    $('dryChemInfo')?.classList.add('hidden')
   }
 
   let totalN = 0, totalP = 0, totalK = 0, totalS = 0
@@ -698,6 +752,15 @@ function calculateAll() {
         <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
         <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
       </tr>` : ''
+    const dryChemTableRow = (useDryChem && dryChemRatePerAcre > 0) ? `<tr class="hover:bg-orange-900/20 transition-colors border-t-2 border-orange-800/60 text-orange-300">
+        <td class="px-3 py-2.5 font-medium flex items-center gap-2"><span class="w-3 h-3 rounded-full inline-block shrink-0 bg-orange-500"></span>Chemical Additive</td>
+        <td class="px-3 py-2.5 text-right">${dryChemRatePerAcre.toFixed(2)} oz</td>
+        <td class="px-3 py-2.5 text-right">$${dryChemCostPerAcre.toFixed(2)}</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+      </tr>` : ''
     $('breakdownBody').innerHTML = keys.map(k => {
       const p = prods[k]
       return `<tr class="hover:bg-zinc-800/30 transition-colors">
@@ -709,7 +772,7 @@ function calculateAll() {
         <td class="px-3 py-2.5 text-right">${(lbsPerAcre[k] * p.k).toFixed(1)}</td>
         <td class="px-3 py-2.5 text-right">${(lbsPerAcre[k] * p.s).toFixed(1)}</td>
       </tr>`
-    }).join('') + stabTableRow
+    }).join('') + stabTableRow + dryChemTableRow
   }
 
   // Cost per lb
@@ -742,6 +805,8 @@ function setMode(newMode) {
   $('btnModeLiquid')?.classList.toggle('mode-btn-active', mode === 'liquid')
   const stabRow = $('stabilizerRow')
   if (stabRow) stabRow.classList.toggle('hidden', mode !== 'liquid')
+  const dryChemRow = $('dryChemicalRow')
+  if (dryChemRow) dryChemRow.classList.toggle('hidden', mode !== 'dry')
   renderProducts(); renderRates(); optimizeBlend()
 }
 
@@ -762,7 +827,7 @@ async function saveBlend() {
   const blendData = {
     mode, prices, selected, rates,
     acres: $('acres')?.value, numBatches: $('numBatches')?.value,
-    cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), customerName: $('customerName')?.value,
+    cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), useDryChemical: checked('useDryChemical'), customerName: $('customerName')?.value,
     targets: { n: $('targetN')?.value, p: $('targetP')?.value, k: $('targetK')?.value, s: $('targetS')?.value },
     allowExcess: checked('allowExcess'), notes: $('notes')?.value,
   }
@@ -842,6 +907,7 @@ async function loadBlend() {
   if ($('numBatches')) $('numBatches').value = d.numBatches || 1
   if ($('cartRental')) $('cartRental').checked = d.cartRental || false
   if ($('useStabilizer')) $('useStabilizer').checked = d.useStabilizer || false
+  if ($('useDryChemical')) $('useDryChemical').checked = d.useDryChemical || false
   if ($('customerName')) $('customerName').value = d.customerName || ''
   if ($('targetN')) $('targetN').value = d.targets?.n || 0
   if ($('targetP')) $('targetP').value = d.targets?.p || 0
@@ -924,6 +990,18 @@ function printQuote() {
     }
   }
 
+  let dryChemQuoteRow = ''
+  if (mode === 'dry' && checked('useDryChemical')) {
+    const dc = getDryChemicalSettings()
+    if (dc.rate > 0 && dc.price > 0) {
+      const totalDryLbsPerAcre = keys.reduce((sum, k) => val(`rate_${k}`) + sum, 0)
+      const tonsPerAcre = totalDryLbsPerAcre / 2000
+      const dcOzPerAcre = dc.rate * tonsPerAcre
+      const dcCostPerAcre = (dcOzPerAcre / 128) * dc.price
+      dryChemQuoteRow = `<tr style="background:#fff7ed;"><td style="padding:8px 12px;border:1px solid #ddd;color:#c2410c;">🧪 Chemical Additive</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#c2410c;">${dcOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#c2410c;">$${dcCostPerAcre.toFixed(2)}</td></tr>`
+    }
+  }
+
   let galQuoteBlock = ''
   if (mode === 'liquid') {
     const activeKeys = keys.filter(k => val(`rate_${k}`) > 0)
@@ -952,7 +1030,7 @@ function printQuote() {
     <h2 style="font-size:16px;margin:0 0 8px;">Notes</h2><p style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${notes}</p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Target (lbs/acre)</h2><p>N: <strong>${$('targetN')?.value}</strong> · P₂O₅: <strong>${$('targetP')?.value}</strong> · K₂O: <strong>${$('targetK')?.value}</strong> · S: <strong>${$('targetS')?.value}</strong></p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Rates</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}</table>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}${dryChemQuoteRow}</table>
     ${galQuoteBlock}
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
@@ -992,6 +1070,28 @@ function printBlendSheet() {
   // Nitrogen Stabilizer blend sheet section
   let stabBlendRow = ''
   let stabBlendBlock = ''
+  let dryChemBlendRow = ''
+  let dryChemBlendBlock = ''
+  if (!isLiquid && checked('useDryChemical')) {
+    const dc = getDryChemicalSettings()
+    if (dc.rate > 0 && dc.price > 0) {
+      const totalTonsField = totalTons
+      const dcOzField = dc.rate * totalTonsField
+      const dcOzPerBatch = dcOzField / numBatches
+      const dcGalPerBatch = dcOzPerBatch / 128
+      const dcCostPerAcreBlend = (dcOzField / acres / 128) * dc.price
+      dryChemBlendRow = `<tr style="background:#fff7ed;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:6px;"></span>🧪 Chemical Additive</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${(dcOzField/acres).toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${dcOzPerBatch.toFixed(1)} oz (${dcGalPerBatch.toFixed(2)} gal)</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ffedd5;font-weight:bold;">+$${dcCostPerAcreBlend.toFixed(2)}/acre</td></tr>`
+      dryChemBlendBlock = `<div style="margin-top:16px;padding:12px 16px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;font-size:14px;">
+        <strong style="color:#c2410c;">🧪 Chemical Additive</strong>
+        <div style="margin-top:6px;display:flex;gap:24px;flex-wrap:wrap;">
+          <span>Rate: <strong>${dc.rate} oz/ton</strong></span>
+          <span>Per Acre: <strong>${(dcOzField/acres).toFixed(2)} oz</strong></span>
+          <span>Per Batch: <strong>${dcOzPerBatch.toFixed(1)} oz (${dcGalPerBatch.toFixed(2)} gal)</strong></span>
+          <span>Add'l Cost: <strong>$${dcCostPerAcreBlend.toFixed(2)}/acre</strong></span>
+        </div>
+      </div>`
+    }
+  }
   if (isLiquid && checked('useStabilizer')) {
     const stab = getStabilizerSettings()
     if (stab.rate > 0 && stab.price > 0) {
@@ -1035,7 +1135,7 @@ function printBlendSheet() {
   const checks = Array.from({length:numBatches},(_,i)=>`<tr><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">${i+1}</td><td style="padding:6px 12px;border:1px solid #ddd;width:120px;"></td><td style="padding:6px 12px;border:1px solid #ddd;width:80px;"></td><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">☐</td></tr>`).join('')
 
   const html = `<div style="padding:36px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRate.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}${checked('useStabilizer') && isLiquid ? '<div style="color:#0f766e;font-weight:bold;">🧪 N STABILIZER</div>' : ''}</div></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRate.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}${checked('useStabilizer') && isLiquid ? '<div style="color:#0f766e;font-weight:bold;">🧪 N STABILIZER</div>' : ''}${checked('useDryChemical') && !isLiquid ? '<div style="color:#c2410c;font-weight:bold;">🧪 CHEMICAL ADDITIVE</div>' : ''}</div></div>
     <hr style="border-color:#ddd;margin-bottom:20px;">
     <div style="background:#fef3c7;border:2px solid #d97706;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">
       <span style="font-size:13px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;">Total Spread Rate</span>
@@ -1044,9 +1144,9 @@ function printBlendSheet() {
     ${galBlendBlock}
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}${stabBlendRow}</table>
-    ${stabBlendBlock}
-    <h2 style="font-size:15px;margin:${stabBlendBlock ? '20px' : '0'} 0 8px;">Batch Log</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}${stabBlendRow}${dryChemBlendRow}</table>
+    ${stabBlendBlock}${dryChemBlendBlock}
+    <h2 style="font-size:15px;margin:${stabBlendBlock || dryChemBlendBlock ? '20px' : '0'} 0 8px;">Batch Log</h2>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;"><tr style="background:#f5f5f5;"><th style="padding:6px 12px;border:1px solid #ddd;">Batch #</th><th style="padding:6px 12px;border:1px solid #ddd;">Date/Time</th><th style="padding:6px 12px;border:1px solid #ddd;">Initials</th><th style="padding:6px 12px;border:1px solid #ddd;">Done</th></tr>${checks}</table>
     ${totalTonsBlock}
     <p style="font-size:11px;color:#999;text-align:center;margin-top:24px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
@@ -1124,6 +1224,7 @@ function wireAppEvents() {
   $('btnOptimize')?.addEventListener('click', optimizeBlend)
   $('btnResetMob')?.addEventListener('click', resetAll)
   $('useStabilizer')?.addEventListener('change', calculateAll)
+  $('useDryChemical')?.addEventListener('change', calculateAll)
   // Tools dropdown
   $('btnToolsMenu')?.addEventListener('click', (e) => {
     e.stopPropagation()

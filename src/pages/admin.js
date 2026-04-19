@@ -450,6 +450,24 @@ async function openCompanySettings(companyId) {
       </div>
     </div>
 
+    <!-- Chemical Additive (Dry Mode) -->
+    <div class="mb-5">
+      <h3 class="lbl mb-2">🧪 Chemical Additive (Dry Mode)</h3>
+      <p class="text-xs text-zinc-500 mb-2">Used when the Chemical Additive checkbox is enabled on the dry calculator</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Rate (oz/ton of dry)</label>
+          <input id="cmDryChemRate" type="number" step="0.1" min="0" class="inp"
+                 placeholder="e.g. 32" value="${c.default_prices?.dry_chemical_rate ?? ''}" />
+        </div>
+        <div>
+          <label class="lbl">Price ($/gal)</label>
+          <input id="cmDryChemPrice" type="number" step="0.01" min="0" class="inp"
+                 placeholder="e.g. 24.00" value="${c.default_prices?.dry_chemical_price ?? ''}" />
+        </div>
+      </div>
+    </div>
+
     <!-- Tool Access -->
     <div class="mb-5">
       <h3 class="lbl mb-2">🔧 Tool Access</h3>
@@ -534,6 +552,10 @@ async function openCompanySettings(companyId) {
       const stabPrice = parseFloat(body.querySelector('#cmStabPrice').value)
       if (!isNaN(stabRate) && stabRate >= 0) gatheredPrices.stabilizer_rate = stabRate
       if (!isNaN(stabPrice) && stabPrice >= 0) gatheredPrices.stabilizer_price = stabPrice
+      const dryChemRate = parseFloat(body.querySelector('#cmDryChemRate').value)
+      const dryChemPrice = parseFloat(body.querySelector('#cmDryChemPrice').value)
+      if (!isNaN(dryChemRate) && dryChemRate >= 0) gatheredPrices.dry_chemical_rate = dryChemRate
+      if (!isNaN(dryChemPrice) && dryChemPrice >= 0) gatheredPrices.dry_chemical_price = dryChemPrice
       const enabledTools = [...body.querySelectorAll('.cm-tool-toggle:checked')].map(cb => cb.dataset.tool)
       const enabledProducts = [...body.querySelectorAll('.cm-product-toggle:checked')].map(cb => cb.dataset.product)
       const updates = {
