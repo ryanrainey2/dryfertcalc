@@ -24,6 +24,7 @@ const DRY_PRODUCTS = {
   potash: { n: 0,    p: 0,    k: 0.60, s: 0,    name: 'Potash',   abbr: 'K',   analysis: '0-0-60',      color: '#8b5cf6', defaultPrice: 380 },
   ams:    { n: 0.21, p: 0,    k: 0,    s: 0.24, name: 'AMS',      abbr: 'AMS', analysis: '21-0-0-24S',  color: '#10b981', defaultPrice: 420 },
   gypsum: { n: 0,    p: 0,    k: 0,    s: 0.18, name: 'Gypsum',   abbr: 'GYP', analysis: '0-0-0-18S',   color: '#06b6d4', defaultPrice: 180 },
+  boron15: { n: 0,   p: 0,    k: 0,    s: 0,    b: 0.15,          name: 'Boron 15%', abbr: 'BOR', analysis: '0-0-0-15B',   color: '#a16207', defaultPrice: 750 },
 }
 
 const LIQUID_PRODUCTS = {
