@@ -283,6 +283,7 @@ function renderApp() {
               <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button></div></div>
               <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button></div></div>
               <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button></div></div>
+              <div id="boronTargetRow" class="hidden"><label class="lbl" style="color:#a16207">Boron (B)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetB" data-step="-0.5">−</button><input id="targetB" type="number" step="0.5" value="1" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetB" data-step="0.5">+</button></div></div>
             </div>
             <div class="mt-3 flex items-start gap-3 bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3">
               <input type="checkbox" id="allowExcess" checked class="w-4 h-4 accent-emerald-500 mt-0.5 shrink-0" />
@@ -351,6 +352,7 @@ function renderApp() {
               <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">P₂O₅</div><div id="pDelivered" class="text-3xl sm:text-4xl font-bold text-orange-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
               <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">K₂O</div><div id="kDelivered" class="text-3xl sm:text-4xl font-bold text-violet-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
               <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">S</div><div id="sDelivered" class="text-3xl sm:text-4xl font-bold text-emerald-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
+              <div id="bDeliveredCard" class="hidden bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">B</div><div id="bDelivered" class="text-3xl sm:text-4xl font-bold" style="color:#a16207">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
             </div>
 
             <!-- Breakdown Table -->
@@ -444,6 +446,7 @@ function renderApp() {
       if ($('targetP')) $('targetP').value = t.p || 0
       if ($('targetK')) $('targetK').value = t.k || 0
       if ($('targetS')) $('targetS').value = t.s || 0
+      if ($('targetB')) $('targetB').value = t.b || 1
       if ($('notes') && t.crop) $('notes').value = `${t.crop} @ ${t.yield} ${t.yieldUnit} yield goal`
       sessionStorage.removeItem('cropTargets')
     } catch {}
@@ -527,7 +530,7 @@ function renderRates() {
 
 // ── Optimize ───────────────────────────────────────────────────────────────
 function optimizeBlend() {
-  const targetN = val('targetN'), targetP = val('targetP'), targetK = val('targetK'), targetS = val('targetS')
+  const targetN = val('targetN'), targetP = val('targetP'), targetK = val('targetK'), targetS = val('targetS'), targetB = val('targetB')
   const allowExcess = checked('allowExcess')
   const sel = {}
   const prods = products(); const keys = productKeys()
@@ -572,6 +575,10 @@ function optimizeBlend() {
     let bestCost = Infinity, bestKey = null
     pool.forEach(k => { const c = costPerLb(k) / prods[k].n; if (c < bestCost) { bestCost = c; bestKey = k } })
     if (bestKey) lbs[bestKey] += remainingN / prods[bestKey].n
+  }
+
+  if (targetB > 0 && sel['boron15'] && prods['boron15']) {
+    lbs['boron15'] = targetB / prods['boron15'].b
   }
 
   keys.forEach(k => {
@@ -672,8 +679,8 @@ function calculateAll() {
     $('dryChemInfo')?.classList.add('hidden')
   }
 
-  let totalN = 0, totalP = 0, totalK = 0, totalS = 0
-  keys.forEach(k => { totalN += lbsPerAcre[k] * prods[k].n; totalP += lbsPerAcre[k] * prods[k].p; totalK += lbsPerAcre[k] * prods[k].k; totalS += lbsPerAcre[k] * prods[k].s })
+  let totalN = 0, totalP = 0, totalK = 0, totalS = 0, totalB = 0
+  keys.forEach(k => { totalN += lbsPerAcre[k] * prods[k].n; totalP += lbsPerAcre[k] * prods[k].p; totalK += lbsPerAcre[k] * prods[k].k; totalS += lbsPerAcre[k] * prods[k].s; totalB += lbsPerAcre[k] * (prods[k].b || 0) })
 
   const totalFieldCost = totalCostPerAcre * acres
   const pUnit = isLiquid ? 'gal' : 'lbs'
@@ -715,12 +722,18 @@ function calculateAll() {
   if ($('kDelivered')) $('kDelivered').textContent = totalK.toFixed(1)
   if ($('sDelivered')) $('sDelivered').textContent = totalS.toFixed(1)
 
+  const boronSelected = mode === 'dry' && checked('use_boron15')
+  if ($('boronTargetRow')) $('boronTargetRow').classList.toggle('hidden', !boronSelected)
+  if ($('bDeliveredCard')) $('bDeliveredCard').classList.toggle('hidden', !boronSelected)
+  if ($('bDelivered')) $('bDelivered').textContent = totalB.toFixed(1)
+
   // Nutrient target flagging
-  const targets = { n: val('targetN'), p: val('targetP'), k: val('targetK'), s: val('targetS') }
-  const delivered = { n: totalN, p: totalP, k: totalK, s: totalS }
-  const ids = { n: 'nDelivered', p: 'pDelivered', k: 'kDelivered', s: 'sDelivered' }
-  const tolerance = 0.5 // half a lb tolerance
-  for (const nut of ['n', 'p', 'k', 's']) {
+  const targets = { n: val('targetN'), p: val('targetP'), k: val('targetK'), s: val('targetS'), b: val('targetB') }
+  const delivered = { n: totalN, p: totalP, k: totalK, s: totalS, b: totalB }
+  const ids = { n: 'nDelivered', p: 'pDelivered', k: 'kDelivered', s: 'sDelivered', b: 'bDelivered' }
+  const tolerance = 0.5
+  const activeNuts = boronSelected ? ['n', 'p', 'k', 's', 'b'] : ['n', 'p', 'k', 's']
+  for (const nut of activeNuts) {
     const el = $(ids[nut])
     if (!el) continue
     const parent = el.parentElement
@@ -829,7 +842,7 @@ async function saveBlend() {
     mode, prices, selected, rates,
     acres: $('acres')?.value, numBatches: $('numBatches')?.value,
     cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), useDryChemical: checked('useDryChemical'), customerName: $('customerName')?.value,
-    targets: { n: $('targetN')?.value, p: $('targetP')?.value, k: $('targetK')?.value, s: $('targetS')?.value },
+    targets: { n: $('targetN')?.value, p: $('targetP')?.value, k: $('targetK')?.value, s: $('targetS')?.value, b: $('targetB')?.value },
     allowExcess: checked('allowExcess'), notes: $('notes')?.value,
   }
 
@@ -914,6 +927,7 @@ async function loadBlend() {
   if ($('targetP')) $('targetP').value = d.targets?.p || 0
   if ($('targetK')) $('targetK').value = d.targets?.k || 0
   if ($('targetS')) $('targetS').value = d.targets?.s || 0
+  if ($('targetB')) $('targetB').value = d.targets?.b || 1
   if ($('allowExcess')) $('allowExcess').checked = d.allowExcess !== false
   if ($('notes')) $('notes').value = d.notes || ''
   if (d.rates) keys.forEach(k => { if ($(`rate_${k}`) && d.rates[k] != null) $(`rate_${k}`).value = d.rates[k] })
@@ -947,7 +961,7 @@ function resetAll() {
   if ($('acres')) $('acres').value = 120
   if ($('numBatches')) $('numBatches').value = 1
   if ($('targetN')) $('targetN').value = 40; if ($('targetP')) $('targetP').value = 40
-  if ($('targetK')) $('targetK').value = 40; if ($('targetS')) $('targetS').value = 20
+  if ($('targetK')) $('targetK').value = 40; if ($('targetS')) $('targetS').value = 20; if ($('targetB')) $('targetB').value = 1
   if ($('allowExcess')) $('allowExcess').checked = true
   if ($('autoOptimize')) $('autoOptimize').checked = true
   if ($('optimizationNote')) $('optimizationNote').classList.add('hidden')
@@ -1029,7 +1043,7 @@ function printQuote() {
     <div style="display:flex;justify-content:space-between;margin-bottom:24px;"><div><h1 style="color:#059669;font-size:26px;margin:0;">${modeLabel} Fertilizer Quote</h1><p style="color:#666;margin:4px 0 0;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div></div></div>
     <hr style="border-color:#ddd;margin-bottom:24px;">
     <h2 style="font-size:16px;margin:0 0 8px;">Notes</h2><p style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${notes}</p>
-    <h2 style="font-size:16px;margin:20px 0 8px;">Target (lbs/acre)</h2><p>N: <strong>${$('targetN')?.value}</strong> · P₂O₅: <strong>${$('targetP')?.value}</strong> · K₂O: <strong>${$('targetK')?.value}</strong> · S: <strong>${$('targetS')?.value}</strong></p>
+    <h2 style="font-size:16px;margin:20px 0 8px;">Target (lbs/acre)</h2><p>N: <strong>${$('targetN')?.value}</strong> · P₂O₅: <strong>${$('targetP')?.value}</strong> · K₂O: <strong>${$('targetK')?.value}</strong> · S: <strong>${$('targetS')?.value}</strong>${checked('use_boron15') ? ` · B: <strong>${$('targetB')?.value}</strong>` : ''}</p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Rates</h2>
     <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}${dryChemQuoteRow}</table>
     ${galQuoteBlock}
@@ -1251,7 +1265,7 @@ function wireAppEvents() {
   $('btnCancelProductSettings')?.addEventListener('click', closeProductSettings)
   $('btnSaveProductSettings')?.addEventListener('click', saveProductSettings)
   // Auto-optimize
-  ;['targetN','targetP','targetK','targetS'].forEach(id => $(id)?.addEventListener('input', () => { if (checked('autoOptimize')) optimizeBlend() }))
+  ;['targetN','targetP','targetK','targetS','targetB'].forEach(id => $(id)?.addEventListener('input', () => { if (checked('autoOptimize')) optimizeBlend() }))
   ;['acres','numBatches'].forEach(id => $(id)?.addEventListener('input', calculateAll))
   $('allowExcess')?.addEventListener('change', () => { if (checked('autoOptimize')) optimizeBlend(); else calculateAll() })
 
