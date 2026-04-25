@@ -436,6 +436,11 @@ async function openCompanySettings(companyId) {
     <div class="mb-5">
       <h3 class="lbl mb-2">🧪 Nitrogen Stabilizer (Liquid Mode)</h3>
       <p class="text-xs text-zinc-500 mb-2">Used when the N Stabilizer checkbox is enabled on the liquid calculator</p>
+      <div class="mb-2">
+        <label class="lbl">Chemical Name</label>
+        <input id="cmStabName" type="text" class="inp"
+               placeholder="e.g. Instinct II" value="${c.default_prices?.stabilizer_name ?? ''}" />
+      </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="lbl">Rate (oz/ton of liquid)</label>
@@ -454,6 +459,11 @@ async function openCompanySettings(companyId) {
     <div class="mb-5">
       <h3 class="lbl mb-2">🧪 Chemical Additive (Dry Mode)</h3>
       <p class="text-xs text-zinc-500 mb-2">Used when the Chemical Additive checkbox is enabled on the dry calculator</p>
+      <div class="mb-2">
+        <label class="lbl">Chemical Name</label>
+        <input id="cmDryChemName" type="text" class="inp"
+               placeholder="e.g. Agrotain" value="${c.default_prices?.dry_chemical_name ?? ''}" />
+      </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="lbl">Rate (oz/ton of dry)</label>
@@ -548,12 +558,16 @@ async function openCompanySettings(companyId) {
     btn.disabled = true; btn.textContent = 'Saving...'
     try {
       const gatheredPrices = gatherPrices(body) || {}
+      const stabName = body.querySelector('#cmStabName').value.trim()
       const stabRate = parseFloat(body.querySelector('#cmStabRate').value)
       const stabPrice = parseFloat(body.querySelector('#cmStabPrice').value)
+      if (stabName) gatheredPrices.stabilizer_name = stabName
       if (!isNaN(stabRate) && stabRate >= 0) gatheredPrices.stabilizer_rate = stabRate
       if (!isNaN(stabPrice) && stabPrice >= 0) gatheredPrices.stabilizer_price = stabPrice
+      const dryChemName = body.querySelector('#cmDryChemName').value.trim()
       const dryChemRate = parseFloat(body.querySelector('#cmDryChemRate').value)
       const dryChemPrice = parseFloat(body.querySelector('#cmDryChemPrice').value)
+      if (dryChemName) gatheredPrices.dry_chemical_name = dryChemName
       if (!isNaN(dryChemRate) && dryChemRate >= 0) gatheredPrices.dry_chemical_rate = dryChemRate
       if (!isNaN(dryChemPrice) && dryChemPrice >= 0) gatheredPrices.dry_chemical_price = dryChemPrice
       const enabledTools = [...body.querySelectorAll('.cm-tool-toggle:checked')].map(cb => cb.dataset.tool)

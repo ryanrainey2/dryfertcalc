@@ -201,15 +201,17 @@ function renderApp() {
             <label for="cartRental" class="text-amber-400 font-medium text-sm cursor-pointer">Cart Rental</label>
           </div>
         </div>
-        <div id="stabilizerRow" class="hidden mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3">
+        <div id="stabilizerRow" class="hidden mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
           <input type="checkbox" id="useStabilizer" class="w-5 h-5 accent-teal-500 shrink-0" />
-          <label for="useStabilizer" class="text-teal-400 font-medium text-sm cursor-pointer">🧪 Nitrogen Stabilizer</label>
+          <label for="useStabilizer" id="stabLabel" class="text-teal-400 font-medium text-sm cursor-pointer">🧪 Nitrogen Stabilizer</label>
           <span id="stabQuickInfo" class="text-xs text-zinc-500"></span>
+          <button id="btnConfigStabilizer" class="ml-auto text-zinc-500 hover:text-teal-400 text-xs transition-colors" title="Configure stabilizer settings">⚙️</button>
         </div>
-        <div id="dryChemicalRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3">
+        <div id="dryChemicalRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
           <input type="checkbox" id="useDryChemical" class="w-5 h-5 accent-orange-500 shrink-0" />
-          <label for="useDryChemical" class="text-orange-400 font-medium text-sm cursor-pointer">🧪 Chemical Additive</label>
+          <label for="useDryChemical" id="dryChemLabel" class="text-orange-400 font-medium text-sm cursor-pointer">🧪 Chemical Additive</label>
           <span id="dryChemQuickInfo" class="text-xs text-zinc-500"></span>
+          <button id="btnConfigDryChem" class="ml-auto text-zinc-500 hover:text-orange-400 text-xs transition-colors" title="Configure chemical settings">⚙️</button>
         </div>
       </div>
 
@@ -226,7 +228,7 @@ function renderApp() {
               <h2 class="text-xs font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide text-zinc-400">
                 💰 Products &amp; Prices
                 <span id="priceUnitBadge" class="bg-amber-900/60 text-amber-400 px-2 py-0.5 rounded-full text-xs">$/TON</span>
-                ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? '<button id="btnProductSettings" class="ml-auto text-zinc-500 hover:text-zinc-300 transition-colors" title="Manage visible products">⚙️</button>' : ''}
+                ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? '<button id="btnProductSettings" class="ml-auto text-zinc-500 hover:text-zinc-300 transition-colors" title="Manage products & prices">⚙️</button>' : ''}
               </h2>
               <div id="productsContainer" class="space-y-2"></div>
             </div>
@@ -325,7 +327,7 @@ function renderApp() {
             <!-- Stabilizer Info -->
             <div id="stabilizerInfo" class="hidden mt-3 bg-teal-900/30 border border-teal-700 rounded-xl px-4 py-3">
               <div class="flex items-center justify-between flex-wrap gap-2">
-                <span class="text-xs font-semibold text-teal-400 uppercase tracking-wide">🧪 N Stabilizer</span>
+                <span id="stabInfoTitle" class="text-xs font-semibold text-teal-400 uppercase tracking-wide">🧪 N Stabilizer</span>
                 <div class="flex flex-wrap gap-4 text-sm">
                   <span class="text-zinc-400">Rate: <strong class="text-teal-300" id="stabRatePerTon">—</strong> oz/ton</span>
                   <span class="text-zinc-400">Per Acre: <strong class="text-teal-300" id="stabRatePerAcre">—</strong> oz</span>
@@ -337,7 +339,7 @@ function renderApp() {
             <!-- Dry Chemical Info -->
             <div id="dryChemInfo" class="hidden mt-3 bg-orange-900/30 border border-orange-700 rounded-xl px-4 py-3">
               <div class="flex items-center justify-between flex-wrap gap-2">
-                <span class="text-xs font-semibold text-orange-400 uppercase tracking-wide">🧪 Chemical Additive</span>
+                <span id="dryChemInfoTitle" class="text-xs font-semibold text-orange-400 uppercase tracking-wide">🧪 Chemical Additive</span>
                 <div class="flex flex-wrap gap-4 text-sm">
                   <span class="text-zinc-400">Rate: <strong class="text-orange-300" id="dryChemRatePerTon">—</strong> oz/ton</span>
                   <span class="text-zinc-400">Per Acre: <strong class="text-orange-300" id="dryChemRatePerAcre">—</strong> oz</span>
@@ -407,25 +409,72 @@ function renderApp() {
 
       <!-- Product Settings Modal -->
       <div id="productSettingsOverlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-        <div class="card p-5 w-full max-w-md max-h-[80vh] overflow-y-auto">
+        <div class="card p-5 w-full max-w-lg max-h-[85vh] overflow-y-auto">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-bold uppercase tracking-wide text-zinc-300">📦 Product Visibility</h2>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-zinc-300">⚙️ Company Settings</h2>
             <button id="btnCloseProductSettings" class="text-zinc-500 hover:text-zinc-300 text-lg">✕</button>
           </div>
-          <p class="text-xs text-zinc-500 mb-4">Toggle which products appear in the calculator for your company</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Dry Products</div>
-              <div id="prodToggleDry" class="space-y-1"></div>
-            </div>
-            <div>
-              <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Liquid Products</div>
-              <div id="prodToggleLiquid" class="space-y-1"></div>
+          <!-- Tabs (only for company_admin / super_admin) -->
+          ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? `
+          <div class="flex gap-1 mb-4 border-b border-zinc-700 pb-3">
+            <button class="prod-settings-tab text-xs px-3 py-1.5 rounded-lg font-medium transition-colors prod-settings-tab-active" data-pstab="visibility">📦 Products</button>
+            <button class="prod-settings-tab text-xs px-3 py-1.5 rounded-lg font-medium transition-colors" data-pstab="prices">💰 Prices</button>
+          </div>` : ''}
+          <!-- Visibility tab -->
+          <div id="psTabVisibility">
+            <p class="text-xs text-zinc-500 mb-4">Toggle which products appear in the calculator for your company</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Dry Products</div>
+                <div id="prodToggleDry" class="space-y-1"></div>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Liquid Products</div>
+                <div id="prodToggleLiquid" class="space-y-1"></div>
+              </div>
             </div>
           </div>
+          <!-- Prices tab (company_admin / super_admin only) -->
+          ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? `
+          <div id="psTabPrices" class="hidden">
+            <p class="text-xs text-zinc-500 mb-3">Set default prices ($/ton) for your company. Leave blank to use system defaults.</p>
+            <div id="psPriceInputs" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+          </div>` : ''}
           <div class="flex gap-2 mt-5">
             <button id="btnSaveProductSettings" class="btn-green">Save</button>
             <button id="btnCancelProductSettings" class="btn-ghost">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chemical Config Modal (all users) -->
+      <div id="chemicalConfigOverlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="card p-5 w-full max-w-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 id="chemConfigTitle" class="text-sm font-bold uppercase tracking-wide text-zinc-300">🧪 Chemical Settings</h2>
+            <button id="btnCloseChemConfig" class="text-zinc-500 hover:text-zinc-300 text-lg">✕</button>
+          </div>
+          <input type="hidden" id="chemConfigType" value="" />
+          <div class="space-y-3">
+            <div>
+              <label class="lbl">Chemical Name</label>
+              <input id="chemConfigName" type="text" class="inp" placeholder="e.g. Instinct II" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="lbl">Rate (oz/ton)</label>
+                <input id="chemConfigRate" type="number" step="0.1" min="0" class="inp" placeholder="e.g. 64" />
+              </div>
+              <div>
+                <label class="lbl">Price ($/gal)</label>
+                <input id="chemConfigPrice" type="number" step="0.01" min="0" class="inp" placeholder="e.g. 48.00" />
+              </div>
+            </div>
+            <p class="text-xs text-zinc-500">${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? 'Changes apply to all users in your company.' : 'Changes are saved locally to your device.'}</p>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button id="btnSaveChemConfig" class="btn-green">Save</button>
+            <button id="btnCancelChemConfig" class="btn-ghost">Cancel</button>
           </div>
         </div>
       </div>
@@ -436,6 +485,7 @@ function renderApp() {
   renderRates()
   loadSavedList()
   wireAppEvents()
+  refreshChemicalLabels()
 
   // Check for crop targets from crop library
   const cropTargets = sessionStorage.getItem('cropTargets')
@@ -595,6 +645,7 @@ function optimizeBlend() {
 function getStabilizerSettings() {
   const cp = currentCompany?.default_prices || {}
   return {
+    name:  cp.stabilizer_name  || localStorage.getItem('dfc_stabilizer_name')  || 'Nitrogen Stabilizer',
     rate:  parseFloat(cp.stabilizer_rate)  || parseFloat(localStorage.getItem('dfc_stabilizer_rate'))  || 0,
     price: parseFloat(cp.stabilizer_price) || parseFloat(localStorage.getItem('dfc_stabilizer_price')) || 0,
   }
@@ -604,6 +655,7 @@ function getStabilizerSettings() {
 function getDryChemicalSettings() {
   const cp = currentCompany?.default_prices || {}
   return {
+    name:  cp.dry_chemical_name  || localStorage.getItem('dfc_dry_chemical_name')  || 'Chemical Additive',
     rate:  parseFloat(cp.dry_chemical_rate)  || parseFloat(localStorage.getItem('dfc_dry_chemical_rate'))  || 0,
     price: parseFloat(cp.dry_chemical_price) || parseFloat(localStorage.getItem('dfc_dry_chemical_price')) || 0,
   }
@@ -637,6 +689,7 @@ function calculateAll() {
     const stabInfoEl = $('stabilizerInfo')
     if (stabInfoEl) {
       const stab2 = getStabilizerSettings()
+      if ($('stabInfoTitle')) $('stabInfoTitle').textContent = '🧪 ' + stab2.name
       if (stabRatePerAcre > 0) {
         stabInfoEl.classList.remove('hidden')
         if ($('stabRatePerTon')) $('stabRatePerTon').textContent = stab2.rate.toFixed(1)
@@ -644,7 +697,7 @@ function calculateAll() {
         if ($('stabCostPerAcre')) $('stabCostPerAcre').textContent = '$' + stabCostPerAcre.toFixed(2)
       } else {
         stabInfoEl.classList.add('hidden')
-        const q = $('stabQuickInfo'); if (q) q.textContent = stab2.rate > 0 || stab2.price > 0 ? '' : '(configure rate & price in Admin)'
+        const q = $('stabQuickInfo'); if (q) q.textContent = stab2.rate > 0 || stab2.price > 0 ? '' : '(click ⚙️ to configure)'
       }
     }
   } else {
@@ -665,14 +718,16 @@ function calculateAll() {
     }
     const dryChemInfoEl = $('dryChemInfo')
     if (dryChemInfoEl) {
+      const dc2 = getDryChemicalSettings()
+      if ($('dryChemInfoTitle')) $('dryChemInfoTitle').textContent = '🧪 ' + dc2.name
       if (dryChemRatePerAcre > 0) {
         dryChemInfoEl.classList.remove('hidden')
-        if ($('dryChemRatePerTon')) $('dryChemRatePerTon').textContent = getDryChemicalSettings().rate.toFixed(1)
+        if ($('dryChemRatePerTon')) $('dryChemRatePerTon').textContent = dc2.rate.toFixed(1)
         if ($('dryChemRatePerAcre')) $('dryChemRatePerAcre').textContent = dryChemRatePerAcre.toFixed(2)
         if ($('dryChemCostPerAcre')) $('dryChemCostPerAcre').textContent = '$' + dryChemCostPerAcre.toFixed(2)
       } else {
         dryChemInfoEl.classList.add('hidden')
-        const q = $('dryChemQuickInfo'); if (q) q.textContent = '(configure rate & price in Admin)'
+        const q = $('dryChemQuickInfo'); if (q) q.textContent = dc2.rate > 0 || dc2.price > 0 ? '' : '(click ⚙️ to configure)'
       }
     }
   } else {
@@ -758,7 +813,7 @@ function calculateAll() {
   // Breakdown table
   if ($('breakdownBody')) {
     const stabTableRow = (useStab && stabRatePerAcre > 0) ? `<tr class="hover:bg-teal-900/20 transition-colors border-t-2 border-teal-800/60 text-teal-300">
-        <td class="px-3 py-2.5 font-medium flex items-center gap-2"><span class="w-3 h-3 rounded-full inline-block shrink-0 bg-teal-500"></span>N Stabilizer</td>
+        <td class="px-3 py-2.5 font-medium flex items-center gap-2"><span class="w-3 h-3 rounded-full inline-block shrink-0 bg-teal-500"></span>${getStabilizerSettings().name}</td>
         <td class="px-3 py-2.5 text-right">${stabRatePerAcre.toFixed(2)} oz</td>
         <td class="px-3 py-2.5 text-right">$${stabCostPerAcre.toFixed(2)}</td>
         <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
@@ -767,7 +822,7 @@ function calculateAll() {
         <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
       </tr>` : ''
     const dryChemTableRow = (useDryChem && dryChemRatePerAcre > 0) ? `<tr class="hover:bg-orange-900/20 transition-colors border-t-2 border-orange-800/60 text-orange-300">
-        <td class="px-3 py-2.5 font-medium flex items-center gap-2"><span class="w-3 h-3 rounded-full inline-block shrink-0 bg-orange-500"></span>Chemical Additive</td>
+        <td class="px-3 py-2.5 font-medium flex items-center gap-2"><span class="w-3 h-3 rounded-full inline-block shrink-0 bg-orange-500"></span>${getDryChemicalSettings().name}</td>
         <td class="px-3 py-2.5 text-right">${dryChemRatePerAcre.toFixed(2)} oz</td>
         <td class="px-3 py-2.5 text-right">$${dryChemCostPerAcre.toFixed(2)}</td>
         <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
@@ -1171,14 +1226,83 @@ function printBlendSheet() {
 }
 
 // ── Wire Events ────────────────────────────────────────────────────────────
-// ── Product Settings (per-company visibility) ────────────────────────────
+// ── Chemical labels ──────────────────────────────────────────────────────
+function refreshChemicalLabels() {
+  const stab = getStabilizerSettings()
+  const dc = getDryChemicalSettings()
+  const stabLbl = $('stabLabel')
+  const dcLbl = $('dryChemLabel')
+  if (stabLbl) stabLbl.textContent = '🧪 ' + stab.name
+  if (dcLbl) dcLbl.textContent = '🧪 ' + dc.name
+}
+
+// ── Chemical Config Modal (all users) ────────────────────────────────────
+function openChemicalConfig(type) {
+  const isStab = type === 'stabilizer'
+  const s = isStab ? getStabilizerSettings() : getDryChemicalSettings()
+  const title = $('chemConfigTitle')
+  if (title) title.textContent = '🧪 ' + (isStab ? 'Stabilizer Settings' : 'Chemical Additive Settings')
+  const typeEl = $('chemConfigType')
+  if (typeEl) typeEl.value = type
+  const nameEl = $('chemConfigName')
+  const rateEl = $('chemConfigRate')
+  const priceEl = $('chemConfigPrice')
+  if (nameEl) nameEl.value = s.name === (isStab ? 'Nitrogen Stabilizer' : 'Chemical Additive') ? '' : s.name
+  if (nameEl) nameEl.placeholder = isStab ? 'e.g. Instinct II' : 'e.g. LCO Polymer'
+  if (rateEl) rateEl.value = s.rate || ''
+  if (priceEl) priceEl.value = s.price || ''
+  $('chemicalConfigOverlay')?.classList.remove('hidden')
+}
+
+function closeChemicalConfig() {
+  $('chemicalConfigOverlay')?.classList.add('hidden')
+}
+
+async function saveChemicalConfig() {
+  const type = $('chemConfigType')?.value
+  const isStab = type === 'stabilizer'
+  const name  = $('chemConfigName')?.value.trim()
+  const rate  = parseFloat($('chemConfigRate')?.value) || 0
+  const price = parseFloat($('chemConfigPrice')?.value) || 0
+  const isAdmin = currentProfile?.role === 'super_admin' || currentProfile?.role === 'company_admin'
+  const btn = $('btnSaveChemConfig')
+  btn.disabled = true; btn.textContent = 'Saving...'
+  try {
+    if (isAdmin && currentCompany) {
+      const existing = currentCompany.default_prices || {}
+      const updates = isStab
+        ? { stabilizer_name: name || null, stabilizer_rate: rate || null, stabilizer_price: price || null }
+        : { dry_chemical_name: name || null, dry_chemical_rate: rate || null, dry_chemical_price: price || null }
+      const newPrices = { ...existing, ...updates }
+      Object.keys(newPrices).forEach(k => { if (newPrices[k] === null) delete newPrices[k] })
+      await updateCompany(currentCompany.id, { default_prices: Object.keys(newPrices).length > 0 ? newPrices : null })
+      currentCompany.default_prices = Object.keys(newPrices).length > 0 ? newPrices : null
+    } else {
+      const prefix = isStab ? 'dfc_stabilizer' : 'dfc_dry_chemical'
+      if (name) localStorage.setItem(prefix + '_name', name)
+      else localStorage.removeItem(prefix + '_name')
+      if (rate > 0) localStorage.setItem(prefix + '_rate', rate)
+      else localStorage.removeItem(prefix + '_rate')
+      if (price > 0) localStorage.setItem(prefix + '_price', price)
+      else localStorage.removeItem(prefix + '_price')
+    }
+    refreshChemicalLabels()
+    calculateAll()
+    closeChemicalConfig()
+    toast('Chemical settings saved', 'success')
+  } catch (err) {
+    toast(err.message, 'error')
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save'
+  }
+}
+
+// ── Product Settings (per-company visibility + prices) ────────────────────
 function openProductSettings() {
   const dryContainer = $('prodToggleDry')
   const liqContainer = $('prodToggleLiquid')
   if (!dryContainer || !liqContainer) return
   const enabled = currentCompany?.enabled_products
-  const allDry = DRY_PRODUCTS
-  const allLiq = LIQUID_PRODUCTS
 
   function renderToggles(prods, container) {
     container.innerHTML = Object.entries(prods).map(([key, p]) => {
@@ -1191,8 +1315,44 @@ function openProductSettings() {
     }).join('')
   }
 
-  renderToggles(allDry, dryContainer)
-  renderToggles(allLiq, liqContainer)
+  renderToggles(DRY_PRODUCTS, dryContainer)
+  renderToggles(LIQUID_PRODUCTS, liqContainer)
+
+  // Populate prices tab if it exists
+  const priceContainer = $('psPriceInputs')
+  if (priceContainer && currentCompany) {
+    const allProds = { ...DRY_PRODUCTS, ...LIQUID_PRODUCTS }
+    const savedPrices = currentCompany.default_prices || {}
+    priceContainer.innerHTML = Object.entries(allProds).map(([key, p]) => {
+      const val = savedPrices[key] ?? ''
+      return `<div>
+        <label class="lbl">${p.name}</label>
+        <input type="number" class="inp text-xs ps-price-input" data-key="${key}"
+               placeholder="${p.defaultPrice}" value="${val}" step="1" min="0" />
+      </div>`
+    }).join('')
+  }
+
+  // Wire tabs
+  document.querySelectorAll('.prod-settings-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.prod-settings-tab').forEach(t => t.classList.remove('admin-tab-active'))
+      tab.classList.add('admin-tab-active')
+      const which = tab.dataset.pstab
+      const visTab = $('psTabVisibility')
+      const priceTab = $('psTabPrices')
+      if (visTab) visTab.classList.toggle('hidden', which !== 'visibility')
+      if (priceTab) priceTab.classList.toggle('hidden', which !== 'prices')
+    })
+  })
+
+  // Show first tab
+  $('psTabVisibility')?.classList.remove('hidden')
+  $('psTabPrices')?.classList.add('hidden')
+  document.querySelectorAll('.prod-settings-tab').forEach((t, i) => {
+    t.classList.toggle('admin-tab-active', i === 0)
+  })
+
   $('productSettingsOverlay')?.classList.remove('hidden')
 }
 
@@ -1207,13 +1367,30 @@ async function saveProductSettings() {
   try {
     const enabledProducts = [...document.querySelectorAll('.prod-vis-toggle:checked')].map(cb => cb.dataset.product)
     if (enabledProducts.length === 0) { toast('At least one product must be enabled', 'error'); return }
-    await updateCompany(currentCompany.id, { enabled_products: enabledProducts })
+
+    // Gather prices from prices tab (if it exists)
+    const existingPrices = currentCompany.default_prices || {}
+    const newPrices = { ...existingPrices }
+    document.querySelectorAll('.ps-price-input').forEach(inp => {
+      const v = parseFloat(inp.value)
+      if (!isNaN(v) && v > 0) newPrices[inp.dataset.key] = v
+      else delete newPrices[inp.dataset.key]
+    })
+    // Preserve chemical settings keys
+    const chemKeys = ['stabilizer_name','stabilizer_rate','stabilizer_price','dry_chemical_name','dry_chemical_rate','dry_chemical_price']
+    chemKeys.forEach(k => { if (existingPrices[k] !== undefined && newPrices[k] === undefined) newPrices[k] = existingPrices[k] })
+
+    await updateCompany(currentCompany.id, {
+      enabled_products: enabledProducts,
+      default_prices: Object.keys(newPrices).length > 0 ? newPrices : null,
+    })
     currentCompany.enabled_products = enabledProducts
+    currentCompany.default_prices = Object.keys(newPrices).length > 0 ? newPrices : null
     renderProducts()
     renderRates()
     if (checked('autoOptimize')) optimizeBlend(); else calculateAll()
     closeProductSettings()
-    toast('Product visibility updated', 'success')
+    toast('Settings saved', 'success')
   } catch (err) {
     toast(err.message, 'error')
   } finally {
@@ -1264,6 +1441,12 @@ function wireAppEvents() {
   $('btnCloseProductSettings')?.addEventListener('click', closeProductSettings)
   $('btnCancelProductSettings')?.addEventListener('click', closeProductSettings)
   $('btnSaveProductSettings')?.addEventListener('click', saveProductSettings)
+  // Chemical config (all users)
+  $('btnConfigStabilizer')?.addEventListener('click', () => openChemicalConfig('stabilizer'))
+  $('btnConfigDryChem')?.addEventListener('click', () => openChemicalConfig('dry_chemical'))
+  $('btnCloseChemConfig')?.addEventListener('click', closeChemicalConfig)
+  $('btnCancelChemConfig')?.addEventListener('click', closeChemicalConfig)
+  $('btnSaveChemConfig')?.addEventListener('click', saveChemicalConfig)
   // Auto-optimize
   ;['targetN','targetP','targetK','targetS','targetB'].forEach(id => $(id)?.addEventListener('input', () => { if (checked('autoOptimize')) optimizeBlend() }))
   ;['acres','numBatches'].forEach(id => $(id)?.addEventListener('input', calculateAll))
