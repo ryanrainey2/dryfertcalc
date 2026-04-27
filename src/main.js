@@ -1119,7 +1119,7 @@ function printBlendSheet() {
   const prods = products(); const keys = productKeys()
   const isLiquid = mode === 'liquid'
 
-  const batchRows = keys.map(k => { const p = prods[k]; const rate = val(`rate_${k}`); if (rate === 0) return null; const totalField = rate * acres; return { label: `${p.name} ${p.analysis}`, color: p.color, rate, perBatch: totalField / numBatches, tons: (isLiquid ? totalField * p.lbsPerGal : totalField) / 2000 } }).filter(Boolean)
+  const batchRows = keys.map(k => { const p = prods[k]; const rate = val(`rate_${k}`); if (rate === 0) return null; const totalField = rate * acres; return { label: `${p.name} ${p.analysis}`, color: p.color, rate, perBatch: totalField / numBatches, tons: ((isLiquid ? totalField * p.lbsPerGal : totalField) / 2000) / numBatches } }).filter(Boolean)
   const totalSpreadRate = batchRows.reduce((sum, r) => sum + r.rate, 0)
 
   let cum = 0; const tableRows = batchRows.map(r => { cum += r.perBatch; return `<tr><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${r.rate.toFixed(2)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${r.perBatch.toFixed(isLiquid?1:0)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#f0fdf4;font-weight:bold;">${cum.toFixed(isLiquid?1:0)}</td></tr>` }).join('')
@@ -1145,7 +1145,7 @@ function printBlendSheet() {
   if (!isLiquid && checked('useDryChemical')) {
     const dc = getDryChemicalSettings()
     if (dc.rate > 0 && dc.price > 0) {
-      const totalTonsField = totalTons
+      const totalTonsField = totalTonsAllBatches
       const dcOzField = dc.rate * totalTonsField
       const dcOzPerBatch = dcOzField / numBatches
       const dcGalPerBatch = dcOzPerBatch / 128
@@ -1165,7 +1165,7 @@ function printBlendSheet() {
   if (isLiquid && checked('useStabilizer')) {
     const stab = getStabilizerSettings()
     if (stab.rate > 0 && stab.price > 0) {
-      const totalTonsField = totalTons  // total tons for whole field
+      const totalTonsField = totalTonsAllBatches  // total tons for whole field
       const stabOzField = stab.rate * totalTonsField
       const stabOzPerBatch = stabOzField / numBatches
       const stabGalPerBatch = stabOzPerBatch / 128
