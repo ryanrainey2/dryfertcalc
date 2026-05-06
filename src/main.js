@@ -221,6 +221,11 @@ function renderApp() {
             <input id="seedRate" type="number" min="0" step="0.1" placeholder="0" class="inp text-sm py-2 w-24" />
             <span class="text-xs text-zinc-500">lbs/acre</span>
           </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-zinc-500">$</span>
+            <input id="seedPrice" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-2 w-24" />
+            <span class="text-xs text-zinc-500">/lb</span>
+          </div>
         </div>
       </div>
 
@@ -743,6 +748,13 @@ function calculateAll() {
     $('dryChemInfo')?.classList.add('hidden')
   }
 
+  // Seed cost (mode-agnostic; rolls into per-acre cost)
+  const useSeed = checked('useSeed')
+  const seedRatePerAcre = useSeed ? (parseFloat($('seedRate')?.value) || 0) : 0
+  const seedPricePerLb = useSeed ? (parseFloat($('seedPrice')?.value) || 0) : 0
+  const seedCostPerAcre = seedRatePerAcre * seedPricePerLb
+  if (useSeed) totalCostPerAcre += seedCostPerAcre
+
   let totalN = 0, totalP = 0, totalK = 0, totalS = 0, totalB = 0
   keys.forEach(k => { totalN += lbsPerAcre[k] * prods[k].n; totalP += lbsPerAcre[k] * prods[k].p; totalK += lbsPerAcre[k] * prods[k].k; totalS += lbsPerAcre[k] * prods[k].s; totalB += lbsPerAcre[k] * (prods[k].b || 0) })
 
@@ -906,7 +918,7 @@ async function saveBlend() {
     mode, prices, selected, rates,
     acres: $('acres')?.value, numBatches: $('numBatches')?.value,
     cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), useDryChemical: checked('useDryChemical'),
-    useSeed: checked('useSeed'), seedName: $('seedName')?.value, seedRate: $('seedRate')?.value,
+    useSeed: checked('useSeed'), seedName: $('seedName')?.value, seedRate: $('seedRate')?.value, seedPrice: $('seedPrice')?.value,
     customerName: $('customerName')?.value,
     targets: { n: $('targetN')?.value, p: $('targetP')?.value, k: $('targetK')?.value, s: $('targetS')?.value, b: $('targetB')?.value },
     allowExcess: checked('allowExcess'), notes: $('notes')?.value,
@@ -991,6 +1003,7 @@ async function loadBlend() {
   if ($('useSeed')) $('useSeed').checked = d.useSeed || false
   if ($('seedName')) $('seedName').value = d.seedName || ''
   if ($('seedRate')) $('seedRate').value = d.seedRate || ''
+  if ($('seedPrice')) $('seedPrice').value = d.seedPrice || ''
   if ($('customerName')) $('customerName').value = d.customerName || ''
   if ($('targetN')) $('targetN').value = d.targets?.n || 0
   if ($('targetP')) $('targetP').value = d.targets?.p || 0
@@ -1074,6 +1087,17 @@ function printQuote() {
     }
   }
 
+  let seedQuoteRow = ''
+  if (checked('useSeed')) {
+    const seedName = ($('seedName')?.value || 'Seed').trim() || 'Seed'
+    const seedRate = parseFloat($('seedRate')?.value) || 0
+    const seedPrice = parseFloat($('seedPrice')?.value) || 0
+    if (seedRate > 0) {
+      const seedCostPerAcre = seedRate * seedPrice
+      seedQuoteRow = `<tr style="background:#f7fee7;"><td style="padding:8px 12px;border:1px solid #ddd;color:#4d7c0f;">🌱 ${seedName}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#4d7c0f;">${seedRate.toFixed(2)} lbs/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#4d7c0f;">$${seedCostPerAcre.toFixed(2)}</td></tr>`
+    }
+  }
+
   let dryChemQuoteRow = ''
   if (mode === 'dry' && checked('useDryChemical')) {
     const dc = getDryChemicalSettings()
@@ -1114,7 +1138,7 @@ function printQuote() {
     <h2 style="font-size:16px;margin:0 0 8px;">Notes</h2><p style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${notes}</p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Target (lbs/acre)</h2><p>N: <strong>${$('targetN')?.value}</strong> · P₂O₅: <strong>${$('targetP')?.value}</strong> · K₂O: <strong>${$('targetK')?.value}</strong> · S: <strong>${$('targetS')?.value}</strong>${checked('use_boron15') ? ` · B: <strong>${$('targetB')?.value}</strong>` : ''}</p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Rates</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}${dryChemQuoteRow}</table>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}${dryChemQuoteRow}${seedQuoteRow}</table>
     ${galQuoteBlock}
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
@@ -1137,6 +1161,7 @@ function printBlendSheet() {
   const totalSpreadRate = batchRows.reduce((sum, r) => sum + r.rate, 0)
 
   let cum = 0; const tableRows = batchRows.map(r => { cum += r.perBatch; return `<tr><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${r.rate.toFixed(2)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${r.perBatch.toFixed(isLiquid?1:0)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#f0fdf4;font-weight:bold;">${cum.toFixed(isLiquid?1:0)}</td></tr>` }).join('')
+  const cumBeforeSeed = cum
 
   const totalTons = batchRows.reduce((sum, r) => sum + r.tons, 0)
   const totalTonsAllBatches = totalTons * numBatches
@@ -1145,10 +1170,11 @@ function printBlendSheet() {
     const productTotalTons = r.tons * numBatches
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid ${isCart ? '#fde68a' : '#e5e5e5'};font-size:13px;"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</span><span>${productTotalTons.toFixed(2)} tons</span></div>`
   }).join('')
+  const seedTotalsRow = (checked('useSeed') && seedTotalLbs > 0) ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid ${isCart ? '#fde68a' : '#e5e5e5'};font-size:13px;"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#84cc16;margin-right:6px;"></span>🌱 ${seedNameDisplay}</span><span>${seedTotalLbs.toLocaleString(undefined, { maximumFractionDigits: 0 })} lbs (${(seedTotalLbs/2000).toFixed(2)} tons)</span></div>` : ''
   const totalTonsBlock = `<div style="margin-top:20px;padding:14px 18px;border-radius:8px;background:${isCart ? '#fffbeb' : '#f5f5f5'};border:1px solid ${isCart ? '#fde68a' : '#ddd'};font-size:15px;">
     <div style="font-weight:bold;">${isCart ? '🚜 CART RENTAL — ' : ''}Total Tons (per batch): ${totalTons.toFixed(2)}</div>
     ${numBatches > 1 ? `<div style="margin-top:6px;">Total Tons (${numBatches} batches): <strong>${totalTonsAllBatches.toFixed(2)}</strong></div>` : ''}
-    ${batchRows.length > 0 ? `<div style="margin-top:10px;font-size:13px;font-weight:600;color:#555;">Tons by Product${numBatches > 1 ? ' (all batches)' : ''}:</div><div style="margin-top:4px;">${productTonsRows}</div>` : ''}
+    ${(batchRows.length > 0 || seedTotalsRow) ? `<div style="margin-top:10px;font-size:13px;font-weight:600;color:#555;">Tons by Product${numBatches > 1 ? ' (all batches)' : ''}:</div><div style="margin-top:4px;">${productTonsRows}${seedTotalsRow}</div>` : ''}
   </div>`
 
   // Nitrogen Stabilizer blend sheet section
@@ -1199,13 +1225,19 @@ function printBlendSheet() {
 
   // Seed row (always last in mixing order)
   let seedBlendRow = ''
+  let seedTotalLbs = 0
+  let seedNameDisplay = ''
   if (checked('useSeed')) {
     const seedName = ($('seedName')?.value || 'Seed').trim() || 'Seed'
     const seedRate = parseFloat($('seedRate')?.value) || 0
     if (seedRate > 0) {
-      const seedTotalLbs = seedRate * acres
+      seedTotalLbs = seedRate * acres
+      seedNameDisplay = seedName
       const seedPerBatch = seedTotalLbs / numBatches
-      seedBlendRow = `<tr style="background:#f7fee7;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#84cc16;margin-right:6px;"></span>🌱 ${seedName}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${seedRate.toFixed(2)} lbs/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${seedPerBatch.toFixed(0)} lbs</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ecfccb;font-weight:bold;">—</td></tr>`
+      // Scale reading accounts for seed added to the batch (only meaningful in dry mode where batch unit is lbs)
+      const seedScale = isLiquid ? null : (cumBeforeSeed + seedPerBatch)
+      const seedScaleCell = seedScale == null ? '—' : seedScale.toFixed(0)
+      seedBlendRow = `<tr style="background:#f7fee7;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#84cc16;margin-right:6px;"></span>🌱 ${seedName}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${seedRate.toFixed(2)} lbs/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${seedPerBatch.toFixed(0)} lbs</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ecfccb;font-weight:bold;">${seedScaleCell}</td></tr>`
     }
   }
 
@@ -1443,6 +1475,9 @@ function wireAppEvents() {
   $('btnResetMob')?.addEventListener('click', resetAll)
   $('useStabilizer')?.addEventListener('change', calculateAll)
   $('useDryChemical')?.addEventListener('change', calculateAll)
+  $('useSeed')?.addEventListener('change', calculateAll)
+  $('seedRate')?.addEventListener('input', calculateAll)
+  $('seedPrice')?.addEventListener('input', calculateAll)
   // Tools dropdown
   $('btnToolsMenu')?.addEventListener('click', (e) => {
     e.stopPropagation()
