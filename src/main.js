@@ -213,6 +213,15 @@ function renderApp() {
           <span id="dryChemQuickInfo" class="text-xs text-zinc-500"></span>
           <button id="btnConfigDryChem" class="ml-auto text-zinc-500 hover:text-orange-400 text-xs transition-colors" title="Configure chemical settings">⚙️</button>
         </div>
+        <div id="seedRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
+          <input type="checkbox" id="useSeed" class="w-5 h-5 accent-lime-500 shrink-0" />
+          <label for="useSeed" class="text-lime-400 font-medium text-sm cursor-pointer">🌱 Seed</label>
+          <input id="seedName" type="text" placeholder="Seed name (e.g. Soybean RR2)" class="inp text-sm py-2 max-w-xs flex-1 min-w-[160px]" />
+          <div class="flex items-center gap-2">
+            <input id="seedRate" type="number" min="0" step="0.1" placeholder="0" class="inp text-sm py-2 w-24" />
+            <span class="text-xs text-zinc-500">lbs/acre</span>
+          </div>
+        </div>
       </div>
 
       <!-- Main Grid -->
@@ -896,7 +905,9 @@ async function saveBlend() {
   const blendData = {
     mode, prices, selected, rates,
     acres: $('acres')?.value, numBatches: $('numBatches')?.value,
-    cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), useDryChemical: checked('useDryChemical'), customerName: $('customerName')?.value,
+    cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), useDryChemical: checked('useDryChemical'),
+    useSeed: checked('useSeed'), seedName: $('seedName')?.value, seedRate: $('seedRate')?.value,
+    customerName: $('customerName')?.value,
     targets: { n: $('targetN')?.value, p: $('targetP')?.value, k: $('targetK')?.value, s: $('targetS')?.value, b: $('targetB')?.value },
     allowExcess: checked('allowExcess'), notes: $('notes')?.value,
   }
@@ -977,6 +988,9 @@ async function loadBlend() {
   if ($('cartRental')) $('cartRental').checked = d.cartRental || false
   if ($('useStabilizer')) $('useStabilizer').checked = d.useStabilizer || false
   if ($('useDryChemical')) $('useDryChemical').checked = d.useDryChemical || false
+  if ($('useSeed')) $('useSeed').checked = d.useSeed || false
+  if ($('seedName')) $('seedName').value = d.seedName || ''
+  if ($('seedRate')) $('seedRate').value = d.seedRate || ''
   if ($('customerName')) $('customerName').value = d.customerName || ''
   if ($('targetN')) $('targetN').value = d.targets?.n || 0
   if ($('targetP')) $('targetP').value = d.targets?.p || 0
@@ -1183,6 +1197,18 @@ function printBlendSheet() {
     }
   }
 
+  // Seed row (always last in mixing order)
+  let seedBlendRow = ''
+  if (checked('useSeed')) {
+    const seedName = ($('seedName')?.value || 'Seed').trim() || 'Seed'
+    const seedRate = parseFloat($('seedRate')?.value) || 0
+    if (seedRate > 0) {
+      const seedTotalLbs = seedRate * acres
+      const seedPerBatch = seedTotalLbs / numBatches
+      seedBlendRow = `<tr style="background:#f7fee7;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#84cc16;margin-right:6px;"></span>🌱 ${seedName}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${seedRate.toFixed(2)} lbs/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${seedPerBatch.toFixed(0)} lbs</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ecfccb;font-weight:bold;">—</td></tr>`
+    }
+  }
+
   let galBlendBlock = ''
   if (isLiquid && totalSpreadRate > 0) {
     const activeKeys = keys.filter(k => val(`rate_${k}`) > 0)
@@ -1214,7 +1240,7 @@ function printBlendSheet() {
     ${galBlendBlock}
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}${stabBlendRow}${dryChemBlendRow}</table>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}${stabBlendRow}${dryChemBlendRow}${seedBlendRow}</table>
     ${stabBlendBlock}${dryChemBlendBlock}
     <h2 style="font-size:15px;margin:${stabBlendBlock || dryChemBlendBlock ? '20px' : '0'} 0 8px;">Batch Log</h2>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;"><tr style="background:#f5f5f5;"><th style="padding:6px 12px;border:1px solid #ddd;">Batch #</th><th style="padding:6px 12px;border:1px solid #ddd;">Date/Time</th><th style="padding:6px 12px;border:1px solid #ddd;">Initials</th><th style="padding:6px 12px;border:1px solid #ddd;">Done</th></tr>${checks}</table>
