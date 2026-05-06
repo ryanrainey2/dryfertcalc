@@ -1163,6 +1163,23 @@ function printBlendSheet() {
   let cum = 0; const tableRows = batchRows.map(r => { cum += r.perBatch; return `<tr><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color};margin-right:6px;"></span>${r.label}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${r.rate.toFixed(2)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${r.perBatch.toFixed(isLiquid?1:0)}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#f0fdf4;font-weight:bold;">${cum.toFixed(isLiquid?1:0)}</td></tr>` }).join('')
   const cumBeforeSeed = cum
 
+  // Seed row (always last in mixing order) — must be computed before totals block uses these values
+  let seedBlendRow = ''
+  let seedTotalLbs = 0
+  let seedNameDisplay = ''
+  if (checked('useSeed')) {
+    const seedName = ($('seedName')?.value || 'Seed').trim() || 'Seed'
+    const seedRate = parseFloat($('seedRate')?.value) || 0
+    if (seedRate > 0) {
+      seedTotalLbs = seedRate * acres
+      seedNameDisplay = seedName
+      const seedPerBatch = seedTotalLbs / numBatches
+      const seedScale = isLiquid ? null : (cumBeforeSeed + seedPerBatch)
+      const seedScaleCell = seedScale == null ? '—' : seedScale.toFixed(0)
+      seedBlendRow = `<tr style="background:#f7fee7;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#84cc16;margin-right:6px;"></span>🌱 ${seedName}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${seedRate.toFixed(2)} lbs/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${seedPerBatch.toFixed(0)} lbs</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ecfccb;font-weight:bold;">${seedScaleCell}</td></tr>`
+    }
+  }
+
   const totalTons = batchRows.reduce((sum, r) => sum + r.tons, 0)
   const totalTonsAllBatches = totalTons * numBatches
   const isCart = checked('cartRental')
@@ -1220,24 +1237,6 @@ function printBlendSheet() {
           <span>Add'l Cost: <strong>$${stabCostPerAcreBlend.toFixed(2)}/acre</strong></span>
         </div>
       </div>`
-    }
-  }
-
-  // Seed row (always last in mixing order)
-  let seedBlendRow = ''
-  let seedTotalLbs = 0
-  let seedNameDisplay = ''
-  if (checked('useSeed')) {
-    const seedName = ($('seedName')?.value || 'Seed').trim() || 'Seed'
-    const seedRate = parseFloat($('seedRate')?.value) || 0
-    if (seedRate > 0) {
-      seedTotalLbs = seedRate * acres
-      seedNameDisplay = seedName
-      const seedPerBatch = seedTotalLbs / numBatches
-      // Scale reading accounts for seed added to the batch (only meaningful in dry mode where batch unit is lbs)
-      const seedScale = isLiquid ? null : (cumBeforeSeed + seedPerBatch)
-      const seedScaleCell = seedScale == null ? '—' : seedScale.toFixed(0)
-      seedBlendRow = `<tr style="background:#f7fee7;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#84cc16;margin-right:6px;"></span>🌱 ${seedName}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${seedRate.toFixed(2)} lbs/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${seedPerBatch.toFixed(0)} lbs</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ecfccb;font-weight:bold;">${seedScaleCell}</td></tr>`
     }
   }
 
