@@ -900,22 +900,40 @@ function calculateAll() {
     }).join('') + stabTableRow + dryChemTableRow
   }
 
-  // Cost per lb
-  const nKeys = keys.filter(k => prods[k].n > 0 && prods[k].p === 0 && prods[k].s === 0 && lbsPerAcre[k] > 0)
-  const primaryNcpl = nKeys.length > 0 ? costPerLb(nKeys[0]) / prods[nKeys[0]].n : (keys.find(k => prods[k].n > 0 && lbsPerAcre[k] > 0) ? costPerLb(keys.find(k => prods[k].n > 0 && lbsPerAcre[k] > 0)) / prods[keys.find(k => prods[k].n > 0 && lbsPerAcre[k] > 0)].n : 0)
+  // Cost per lb of nutrient (effective after N credit)
+  const priceOf = k => parseFloat($(`price_${k}`)?.value) || 0
+  const active = keys.filter(k => lbsPerAcre[k] > 0)
+
+  // Anchor the N cost from a pure-N product when one is in the blend.
+  const pureN = active.filter(k => prods[k].n > 0 && prods[k].p === 0 && prods[k].k === 0 && prods[k].s === 0)
+  let primaryNcpl = 0
+  if (pureN.length > 0) primaryNcpl = costPerLb(pureN[0]) / prods[pureN[0]].n
+  else { const nk = active.find(k => prods[k].n > 0); if (nk) primaryNcpl = costPerLb(nk) / prods[nk].n }
+
+  // Effective $/lb of a non-N nutrient from product k: credit the imputed
+  // value of its N, then split the remaining price across every non-N
+  // nutrient it carries, weighted by pounds — so a multi-nutrient blend
+  // shares the residual instead of charging it all to one nutrient.
+  const nutrientCpl = k => {
+    const p = prods[k]
+    const residual = Math.max(0, priceOf(k) - p.n * 2000 * primaryNcpl)
+    const nonNlbs = (p.p + p.k + p.s) * 2000
+    return nonNlbs > 0 ? residual / nonNlbs : 0
+  }
+
+  // Prefer a product whose only non-N nutrient is the target; otherwise
+  // fall back to the first blend that contains it.
+  const pickSource = nutrient => {
+    const others = { p: ['k', 's'], k: ['p', 's'], s: ['p', 'k'] }[nutrient]
+    return active.find(k => prods[k][nutrient] > 0 && others.every(o => prods[k][o] === 0))
+      || active.find(k => prods[k][nutrient] > 0) || null
+  }
 
   let unitN = '—', unitP = '—', unitK = '—', unitS = '—'
-  if (nKeys.length > 0) unitN = '$' + primaryNcpl.toFixed(3)
-  else { const nk = keys.find(k => prods[k].n > 0 && lbsPerAcre[k] > 0); if (nk) unitN = '$' + (costPerLb(nk) / prods[nk].n).toFixed(3) }
-
-  const pk = keys.find(k => prods[k].p > 0 && lbsPerAcre[k] > 0)
-  if (pk) { const nc = prods[pk].n * 2000 * primaryNcpl; unitP = '$' + (Math.max(0, (parseFloat($(`price_${pk}`)?.value) || 0) - nc) / 2000 / prods[pk].p).toFixed(3) }
-
-  const kk = keys.find(k => prods[k].k > 0 && lbsPerAcre[k] > 0)
-  if (kk) { const nc = prods[kk].n * 2000 * primaryNcpl; unitK = '$' + (Math.max(0, (parseFloat($(`price_${kk}`)?.value) || 0) - nc) / 2000 / prods[kk].k).toFixed(3) }
-
-  const sk = keys.find(k => prods[k].s > 0 && lbsPerAcre[k] > 0)
-  if (sk) { const nc = prods[sk].n * 2000 * primaryNcpl; unitS = '$' + (Math.max(0, (parseFloat($(`price_${sk}`)?.value) || 0) - nc) / 2000 / prods[sk].s).toFixed(3) }
+  if (active.some(k => prods[k].n > 0)) unitN = '$' + primaryNcpl.toFixed(3)
+  const pSrc = pickSource('p'); if (pSrc) unitP = '$' + nutrientCpl(pSrc).toFixed(3)
+  const kSrc = pickSource('k'); if (kSrc) unitK = '$' + nutrientCpl(kSrc).toFixed(3)
+  const sSrc = pickSource('s'); if (sSrc) unitS = '$' + nutrientCpl(sSrc).toFixed(3)
 
   if ($('costPerLbN')) $('costPerLbN').textContent = unitN
   if ($('costPerLbP')) $('costPerLbP').textContent = unitP
