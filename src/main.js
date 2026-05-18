@@ -474,9 +474,16 @@ function renderApp() {
               <label class="lbl">Chemical Name</label>
               <input id="chemConfigName" type="text" class="inp" placeholder="e.g. Instinct II" />
             </div>
+            <div>
+              <label class="lbl">Rate Basis</label>
+              <select id="chemConfigRateType" class="inp">
+                <option value="per_ton">Per Ton of Fertilizer</option>
+                <option value="per_acre">Flat Per Acre</option>
+              </select>
+            </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="lbl">Rate (oz/ton)</label>
+                <label class="lbl">Rate (<span id="chemConfigRateUnit">oz/ton</span>)</label>
                 <input id="chemConfigRate" type="number" step="0.1" min="0" class="inp" placeholder="e.g. 64" />
               </div>
               <div>
@@ -662,6 +669,7 @@ function getStabilizerSettings() {
     name:  cp.stabilizer_name  || localStorage.getItem('dfc_stabilizer_name')  || 'Nitrogen Stabilizer',
     rate:  parseFloat(cp.stabilizer_rate)  || parseFloat(localStorage.getItem('dfc_stabilizer_rate'))  || 0,
     price: parseFloat(cp.stabilizer_price) || parseFloat(localStorage.getItem('dfc_stabilizer_price')) || 0,
+    rateType: cp.stabilizer_rate_type || localStorage.getItem('dfc_stabilizer_rate_type') || 'per_ton',
   }
 }
 
@@ -672,6 +680,7 @@ function getDryChemicalSettings() {
     name:  cp.dry_chemical_name  || localStorage.getItem('dfc_dry_chemical_name')  || 'Chemical Additive',
     rate:  parseFloat(cp.dry_chemical_rate)  || parseFloat(localStorage.getItem('dfc_dry_chemical_rate'))  || 0,
     price: parseFloat(cp.dry_chemical_price) || parseFloat(localStorage.getItem('dfc_dry_chemical_price')) || 0,
+    rateType: cp.dry_chemical_rate_type || localStorage.getItem('dfc_dry_chemical_rate_type') || 'per_ton',
   }
 }
 
@@ -690,13 +699,21 @@ function calculateAll() {
 
   // Nitrogen Stabilizer (liquid mode only)
   const useStab = isLiquid && checked('useStabilizer')
-  let stabCostPerAcre = 0, stabRatePerAcre = 0
+  let stabCostPerAcre = 0, stabRatePerAcre = 0, stabRateBasis = 0, stabRateBasisUnit = 'oz/ton'
   if (useStab) {
     const stab = getStabilizerSettings()
     if (stab.rate > 0 && stab.price > 0) {
-      const totalLbsLiquidPerAcre = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
-      const tonsPerAcre = totalLbsLiquidPerAcre / 2000
-      stabRatePerAcre = stab.rate * tonsPerAcre
+      if (stab.rateType === 'per_acre') {
+        stabRatePerAcre = stab.rate
+        stabRateBasis = stab.rate
+        stabRateBasisUnit = 'oz/acre'
+      } else {
+        const totalLbsLiquidPerAcre = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
+        const tonsPerAcre = totalLbsLiquidPerAcre / 2000
+        stabRatePerAcre = stab.rate * tonsPerAcre
+        stabRateBasis = stab.rate
+        stabRateBasisUnit = 'oz/ton'
+      }
       stabCostPerAcre = (stabRatePerAcre / 128) * stab.price
       totalCostPerAcre += stabCostPerAcre
     }
@@ -706,7 +723,11 @@ function calculateAll() {
       if ($('stabInfoTitle')) $('stabInfoTitle').textContent = '🧪 ' + stab2.name
       if (stabRatePerAcre > 0) {
         stabInfoEl.classList.remove('hidden')
-        if ($('stabRatePerTon')) $('stabRatePerTon').textContent = stab2.rate.toFixed(1)
+        if ($('stabRatePerTon')) {
+          $('stabRatePerTon').textContent = stabRateBasis.toFixed(1)
+          const rateLabel = $('stabRatePerTon').parentElement
+          if (rateLabel) rateLabel.innerHTML = `Rate: <strong class="text-teal-300" id="stabRatePerTon">${stabRateBasis.toFixed(1)}</strong> ${stabRateBasisUnit}`
+        }
         if ($('stabRatePerAcre')) $('stabRatePerAcre').textContent = stabRatePerAcre.toFixed(2)
         if ($('stabCostPerAcre')) $('stabCostPerAcre').textContent = '$' + stabCostPerAcre.toFixed(2)
       } else {
@@ -720,13 +741,21 @@ function calculateAll() {
 
   // Chemical Additive (dry mode only)
   const useDryChem = !isLiquid && checked('useDryChemical')
-  let dryChemCostPerAcre = 0, dryChemRatePerAcre = 0
+  let dryChemCostPerAcre = 0, dryChemRatePerAcre = 0, dryChemRateBasis = 0, dryChemRateBasisUnit = 'oz/ton'
   if (useDryChem) {
     const dc = getDryChemicalSettings()
     if (dc.rate > 0 && dc.price > 0) {
-      const totalDryLbsPerAcre = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
-      const tonsPerAcre = totalDryLbsPerAcre / 2000
-      dryChemRatePerAcre = dc.rate * tonsPerAcre
+      if (dc.rateType === 'per_acre') {
+        dryChemRatePerAcre = dc.rate
+        dryChemRateBasis = dc.rate
+        dryChemRateBasisUnit = 'oz/acre'
+      } else {
+        const totalDryLbsPerAcre = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
+        const tonsPerAcre = totalDryLbsPerAcre / 2000
+        dryChemRatePerAcre = dc.rate * tonsPerAcre
+        dryChemRateBasis = dc.rate
+        dryChemRateBasisUnit = 'oz/ton'
+      }
       dryChemCostPerAcre = (dryChemRatePerAcre / 128) * dc.price
       totalCostPerAcre += dryChemCostPerAcre
     }
@@ -736,7 +765,11 @@ function calculateAll() {
       if ($('dryChemInfoTitle')) $('dryChemInfoTitle').textContent = '🧪 ' + dc2.name
       if (dryChemRatePerAcre > 0) {
         dryChemInfoEl.classList.remove('hidden')
-        if ($('dryChemRatePerTon')) $('dryChemRatePerTon').textContent = dc2.rate.toFixed(1)
+        if ($('dryChemRatePerTon')) {
+          $('dryChemRatePerTon').textContent = dryChemRateBasis.toFixed(1)
+          const rateLabel = $('dryChemRatePerTon').parentElement
+          if (rateLabel) rateLabel.innerHTML = `Rate: <strong class="text-orange-300" id="dryChemRatePerTon">${dryChemRateBasis.toFixed(1)}</strong> ${dryChemRateBasisUnit}`
+        }
         if ($('dryChemRatePerAcre')) $('dryChemRatePerAcre').textContent = dryChemRatePerAcre.toFixed(2)
         if ($('dryChemCostPerAcre')) $('dryChemCostPerAcre').textContent = '$' + dryChemCostPerAcre.toFixed(2)
       } else {
@@ -760,7 +793,9 @@ function calculateAll() {
 
   const totalFieldCost = totalCostPerAcre * acres
   const pUnit = isLiquid ? 'gal' : 'lbs'
-  const totalSpreadRate = keys.reduce((a, k) => a + rawRates[k], 0)
+  let totalSpreadRate = keys.reduce((a, k) => a + rawRates[k], 0)
+  if (isLiquid && stabRatePerAcre > 0) totalSpreadRate += stabRatePerAcre / 128
+  else if (!isLiquid && dryChemRatePerAcre > 0) totalSpreadRate += dryChemRatePerAcre / 16
   const totalProduct = totalSpreadRate * acres
   const perBatch = numBatches > 0 ? totalProduct / numBatches : 0
 
@@ -1079,11 +1114,16 @@ function printQuote() {
   if (mode === 'liquid' && checked('useStabilizer')) {
     const stab = getStabilizerSettings()
     if (stab.rate > 0 && stab.price > 0) {
-      const totalLbsPerAcre = keys.reduce((sum, k) => val(`rate_${k}`) * prods[k].lbsPerGal + sum, 0)
-      const tonsPerAcre = totalLbsPerAcre / 2000
-      const stabOzPerAcre = stab.rate * tonsPerAcre
+      let stabOzPerAcre
+      if (stab.rateType === 'per_acre') {
+        stabOzPerAcre = stab.rate
+      } else {
+        const totalLbsPerAcre = keys.reduce((sum, k) => val(`rate_${k}`) * prods[k].lbsPerGal + sum, 0)
+        const tonsPerAcre = totalLbsPerAcre / 2000
+        stabOzPerAcre = stab.rate * tonsPerAcre
+      }
       const stabCostPerAcre = (stabOzPerAcre / 128) * stab.price
-      stabQuoteRow = `<tr style="background:#f0fdfa;"><td style="padding:8px 12px;border:1px solid #ddd;color:#0f766e;">🧪 N Stabilizer</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#0f766e;">${stabOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#0f766e;">$${stabCostPerAcre.toFixed(2)}</td></tr>`
+      stabQuoteRow = `<tr style="background:#f0fdfa;"><td style="padding:8px 12px;border:1px solid #ddd;color:#0f766e;">🧪 ${stab.name}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#0f766e;">${stabOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#0f766e;">$${stabCostPerAcre.toFixed(2)}</td></tr>`
     }
   }
 
@@ -1102,11 +1142,16 @@ function printQuote() {
   if (mode === 'dry' && checked('useDryChemical')) {
     const dc = getDryChemicalSettings()
     if (dc.rate > 0 && dc.price > 0) {
-      const totalDryLbsPerAcre = keys.reduce((sum, k) => val(`rate_${k}`) + sum, 0)
-      const tonsPerAcre = totalDryLbsPerAcre / 2000
-      const dcOzPerAcre = dc.rate * tonsPerAcre
+      let dcOzPerAcre
+      if (dc.rateType === 'per_acre') {
+        dcOzPerAcre = dc.rate
+      } else {
+        const totalDryLbsPerAcre = keys.reduce((sum, k) => val(`rate_${k}`) + sum, 0)
+        const tonsPerAcre = totalDryLbsPerAcre / 2000
+        dcOzPerAcre = dc.rate * tonsPerAcre
+      }
       const dcCostPerAcre = (dcOzPerAcre / 128) * dc.price
-      dryChemQuoteRow = `<tr style="background:#fff7ed;"><td style="padding:8px 12px;border:1px solid #ddd;color:#c2410c;">🧪 Chemical Additive</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#c2410c;">${dcOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#c2410c;">$${dcCostPerAcre.toFixed(2)}</td></tr>`
+      dryChemQuoteRow = `<tr style="background:#fff7ed;"><td style="padding:8px 12px;border:1px solid #ddd;color:#c2410c;">🧪 ${dc.name}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#c2410c;">${dcOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#c2410c;">$${dcCostPerAcre.toFixed(2)}</td></tr>`
     }
   }
 
@@ -1197,22 +1242,32 @@ function printBlendSheet() {
   // Nitrogen Stabilizer blend sheet section
   let stabBlendRow = ''
   let stabBlendBlock = ''
+  let stabSpreadAddOn = 0  // gal/acre to add to spread rate
   let dryChemBlendRow = ''
   let dryChemBlendBlock = ''
+  let dryChemSpreadAddOn = 0  // lbs/acre to add to spread rate (oz/16)
   if (!isLiquid && checked('useDryChemical')) {
     const dc = getDryChemicalSettings()
     if (dc.rate > 0 && dc.price > 0) {
-      const totalTonsField = totalTonsAllBatches
-      const dcOzField = dc.rate * totalTonsField
+      let dcOzPerAcre
+      if (dc.rateType === 'per_acre') {
+        dcOzPerAcre = dc.rate
+      } else {
+        const totalTonsField = totalTonsAllBatches
+        dcOzPerAcre = (dc.rate * totalTonsField) / acres
+      }
+      const dcOzField = dcOzPerAcre * acres
       const dcOzPerBatch = dcOzField / numBatches
       const dcGalPerBatch = dcOzPerBatch / 128
-      const dcCostPerAcreBlend = (dcOzField / acres / 128) * dc.price
-      dryChemBlendRow = `<tr style="background:#fff7ed;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:6px;"></span>🧪 Chemical Additive</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${(dcOzField/acres).toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${dcOzPerBatch.toFixed(1)} oz (${dcGalPerBatch.toFixed(2)} gal)</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ffedd5;font-weight:bold;">+$${dcCostPerAcreBlend.toFixed(2)}/acre</td></tr>`
+      const dcCostPerAcreBlend = (dcOzPerAcre / 128) * dc.price
+      const dcRateLabel = dc.rateType === 'per_acre' ? `${dc.rate} oz/acre` : `${dc.rate} oz/ton`
+      dryChemSpreadAddOn = dcOzPerAcre / 16  // oz → lbs
+      dryChemBlendRow = `<tr style="background:#fff7ed;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316;margin-right:6px;"></span>🧪 ${dc.name}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${dcOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${dcOzPerBatch.toFixed(1)} oz (${dcGalPerBatch.toFixed(2)} gal)</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ffedd5;font-weight:bold;">+$${dcCostPerAcreBlend.toFixed(2)}/acre</td></tr>`
       dryChemBlendBlock = `<div style="margin-top:16px;padding:12px 16px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;font-size:14px;">
-        <strong style="color:#c2410c;">🧪 Chemical Additive</strong>
+        <strong style="color:#c2410c;">🧪 ${dc.name}</strong>
         <div style="margin-top:6px;display:flex;gap:24px;flex-wrap:wrap;">
-          <span>Rate: <strong>${dc.rate} oz/ton</strong></span>
-          <span>Per Acre: <strong>${(dcOzField/acres).toFixed(2)} oz</strong></span>
+          <span>Rate: <strong>${dcRateLabel}</strong></span>
+          <span>Per Acre: <strong>${dcOzPerAcre.toFixed(2)} oz</strong></span>
           <span>Per Batch: <strong>${dcOzPerBatch.toFixed(1)} oz (${dcGalPerBatch.toFixed(2)} gal)</strong></span>
           <span>Add'l Cost: <strong>$${dcCostPerAcreBlend.toFixed(2)}/acre</strong></span>
         </div>
@@ -1222,23 +1277,32 @@ function printBlendSheet() {
   if (isLiquid && checked('useStabilizer')) {
     const stab = getStabilizerSettings()
     if (stab.rate > 0 && stab.price > 0) {
-      const totalTonsField = totalTonsAllBatches  // total tons for whole field
-      const stabOzField = stab.rate * totalTonsField
+      let stabOzPerAcre
+      if (stab.rateType === 'per_acre') {
+        stabOzPerAcre = stab.rate
+      } else {
+        const totalTonsField = totalTonsAllBatches
+        stabOzPerAcre = (stab.rate * totalTonsField) / acres
+      }
+      const stabOzField = stabOzPerAcre * acres
       const stabOzPerBatch = stabOzField / numBatches
       const stabGalPerBatch = stabOzPerBatch / 128
-      const stabCostPerAcreBlend = (stabOzField / acres / 128) * stab.price
-      stabBlendRow = `<tr style="background:#f0fdfa;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#14b8a6;margin-right:6px;"></span>🧪 N Stabilizer</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${(stabOzField/acres).toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${stabOzPerBatch.toFixed(1)} oz (${stabGalPerBatch.toFixed(2)} gal)</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ccfbf1;font-weight:bold;">+$${stabCostPerAcreBlend.toFixed(2)}/acre</td></tr>`
+      const stabCostPerAcreBlend = (stabOzPerAcre / 128) * stab.price
+      const stabRateLabel = stab.rateType === 'per_acre' ? `${stab.rate} oz/acre` : `${stab.rate} oz/ton`
+      stabSpreadAddOn = stabOzPerAcre / 128  // oz → gal
+      stabBlendRow = `<tr style="background:#f0fdfa;"><td style="padding:8px 12px;border:1px solid #ddd;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#14b8a6;margin-right:6px;"></span>🧪 ${stab.name}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;">${stabOzPerAcre.toFixed(2)} oz/acre</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;font-weight:bold;">${stabOzPerBatch.toFixed(1)} oz (${stabGalPerBatch.toFixed(2)} gal)</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;background:#ccfbf1;font-weight:bold;">+$${stabCostPerAcreBlend.toFixed(2)}/acre</td></tr>`
       stabBlendBlock = `<div style="margin-top:16px;padding:12px 16px;border-radius:8px;background:#f0fdfa;border:1px solid #99f6e4;font-size:14px;">
-        <strong style="color:#0f766e;">🧪 Nitrogen Stabilizer</strong>
+        <strong style="color:#0f766e;">🧪 ${stab.name}</strong>
         <div style="margin-top:6px;display:flex;gap:24px;flex-wrap:wrap;">
-          <span>Rate: <strong>${stab.rate} oz/ton</strong></span>
-          <span>Per Acre: <strong>${(stabOzField/acres).toFixed(2)} oz</strong></span>
+          <span>Rate: <strong>${stabRateLabel}</strong></span>
+          <span>Per Acre: <strong>${stabOzPerAcre.toFixed(2)} oz</strong></span>
           <span>Per Batch: <strong>${stabOzPerBatch.toFixed(1)} oz (${stabGalPerBatch.toFixed(2)} gal)</strong></span>
           <span>Add'l Cost: <strong>$${stabCostPerAcreBlend.toFixed(2)}/acre</strong></span>
         </div>
       </div>`
     }
   }
+  const totalSpreadRateWithAddOns = totalSpreadRate + (isLiquid ? stabSpreadAddOn : dryChemSpreadAddOn)
 
   let galBlendBlock = ''
   if (isLiquid && totalSpreadRate > 0) {
@@ -1262,11 +1326,11 @@ function printBlendSheet() {
   const checks = Array.from({length:numBatches},(_,i)=>`<tr><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">${i+1}</td><td style="padding:6px 12px;border:1px solid #ddd;width:120px;"></td><td style="padding:6px 12px;border:1px solid #ddd;width:80px;"></td><td style="padding:6px 12px;border:1px solid #ddd;text-align:center;">☐</td></tr>`).join('')
 
   const html = `<div style="padding:36px;font-family:Arial,sans-serif;max-width:760px;margin:auto;color:#111;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRate.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}${checked('useStabilizer') && isLiquid ? '<div style="color:#0f766e;font-weight:bold;">🧪 N STABILIZER</div>' : ''}${checked('useDryChemical') && !isLiquid ? '<div style="color:#c2410c;font-weight:bold;">🧪 CHEMICAL ADDITIVE</div>' : ''}</div></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><h1 style="font-size:24px;margin:0;color:#d97706;">${modeLabel} Blend Sheet</h1><p style="margin:4px 0 0;color:#666;">${new Date().toLocaleDateString()} · ${companyName}</p></div><div style="text-align:right;font-size:14px;"><div><strong>Customer:</strong> ${customer}</div><div><strong>Blend:</strong> ${blendName}</div><div><strong>Acres:</strong> ${acres} · <strong>Batches:</strong> ${numBatches}</div><div><strong>Spread Rate:</strong> ${totalSpreadRateWithAddOns.toFixed(2)} ${rateUnit}</div>${checked('cartRental') ? '<div style="color:#d97706;font-weight:bold;">CART RENTAL</div>':''}${checked('useStabilizer') && isLiquid ? `<div style="color:#0f766e;font-weight:bold;">🧪 ${getStabilizerSettings().name.toUpperCase()}</div>` : ''}${checked('useDryChemical') && !isLiquid ? `<div style="color:#c2410c;font-weight:bold;">🧪 ${getDryChemicalSettings().name.toUpperCase()}</div>` : ''}</div></div>
     <hr style="border-color:#ddd;margin-bottom:20px;">
     <div style="background:#fef3c7;border:2px solid #d97706;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">
       <span style="font-size:13px;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;">Total Spread Rate</span>
-      <span style="font-size:22px;font-weight:bold;color:#d97706;">${totalSpreadRate.toFixed(2)} <span style="font-size:14px;font-weight:600;">${rateUnit}</span></span>
+      <span style="font-size:22px;font-weight:bold;color:#d97706;">${totalSpreadRateWithAddOns.toFixed(2)} <span style="font-size:14px;font-weight:600;">${rateUnit}</span>${(stabSpreadAddOn > 0 || dryChemSpreadAddOn > 0) ? `<div style="font-size:11px;font-weight:500;color:#92400e;margin-top:2px;">includes ${totalSpreadRate.toFixed(2)} ${rateUnit} blend + ${(isLiquid ? stabSpreadAddOn : dryChemSpreadAddOn).toFixed(2)} ${rateUnit} additive</div>` : ''}</span>
     </div>
     ${galBlendBlock}
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
@@ -1305,9 +1369,13 @@ function openChemicalConfig(type) {
   const rateEl = $('chemConfigRate')
   const priceEl = $('chemConfigPrice')
   if (nameEl) nameEl.value = s.name === (isStab ? 'Nitrogen Stabilizer' : 'Chemical Additive') ? '' : s.name
-  if (nameEl) nameEl.placeholder = isStab ? 'e.g. Instinct II' : 'e.g. LCO Polymer'
+  if (nameEl) nameEl.placeholder = isStab ? 'e.g. Boost or N Edge Pro' : 'e.g. LCO Polymer'
   if (rateEl) rateEl.value = s.rate || ''
   if (priceEl) priceEl.value = s.price || ''
+  const rateTypeEl = $('chemConfigRateType')
+  if (rateTypeEl) rateTypeEl.value = s.rateType || 'per_ton'
+  const rateUnitEl = $('chemConfigRateUnit')
+  if (rateUnitEl) rateUnitEl.textContent = (s.rateType === 'per_acre') ? 'oz/acre' : 'oz/ton'
   $('chemicalConfigOverlay')?.classList.remove('hidden')
 }
 
@@ -1321,6 +1389,7 @@ async function saveChemicalConfig() {
   const name  = $('chemConfigName')?.value.trim()
   const rate  = parseFloat($('chemConfigRate')?.value) || 0
   const price = parseFloat($('chemConfigPrice')?.value) || 0
+  const rateType = $('chemConfigRateType')?.value === 'per_acre' ? 'per_acre' : 'per_ton'
   const isAdmin = currentProfile?.role === 'super_admin' || currentProfile?.role === 'company_admin'
   const btn = $('btnSaveChemConfig')
   btn.disabled = true; btn.textContent = 'Saving...'
@@ -1328,8 +1397,8 @@ async function saveChemicalConfig() {
     if (isAdmin && currentCompany) {
       const existing = currentCompany.default_prices || {}
       const updates = isStab
-        ? { stabilizer_name: name || null, stabilizer_rate: rate || null, stabilizer_price: price || null }
-        : { dry_chemical_name: name || null, dry_chemical_rate: rate || null, dry_chemical_price: price || null }
+        ? { stabilizer_name: name || null, stabilizer_rate: rate || null, stabilizer_price: price || null, stabilizer_rate_type: rateType }
+        : { dry_chemical_name: name || null, dry_chemical_rate: rate || null, dry_chemical_price: price || null, dry_chemical_rate_type: rateType }
       const newPrices = { ...existing, ...updates }
       Object.keys(newPrices).forEach(k => { if (newPrices[k] === null) delete newPrices[k] })
       await updateCompany(currentCompany.id, { default_prices: Object.keys(newPrices).length > 0 ? newPrices : null })
@@ -1342,6 +1411,7 @@ async function saveChemicalConfig() {
       else localStorage.removeItem(prefix + '_rate')
       if (price > 0) localStorage.setItem(prefix + '_price', price)
       else localStorage.removeItem(prefix + '_price')
+      localStorage.setItem(prefix + '_rate_type', rateType)
     }
     refreshChemicalLabels()
     calculateAll()
@@ -1434,7 +1504,7 @@ async function saveProductSettings() {
       else delete newPrices[inp.dataset.key]
     })
     // Preserve chemical settings keys
-    const chemKeys = ['stabilizer_name','stabilizer_rate','stabilizer_price','dry_chemical_name','dry_chemical_rate','dry_chemical_price']
+    const chemKeys = ['stabilizer_name','stabilizer_rate','stabilizer_price','stabilizer_rate_type','dry_chemical_name','dry_chemical_rate','dry_chemical_price','dry_chemical_rate_type']
     chemKeys.forEach(k => { if (existingPrices[k] !== undefined && newPrices[k] === undefined) newPrices[k] = existingPrices[k] })
 
     await updateCompany(currentCompany.id, {
@@ -1507,6 +1577,10 @@ function wireAppEvents() {
   $('btnCloseChemConfig')?.addEventListener('click', closeChemicalConfig)
   $('btnCancelChemConfig')?.addEventListener('click', closeChemicalConfig)
   $('btnSaveChemConfig')?.addEventListener('click', saveChemicalConfig)
+  $('chemConfigRateType')?.addEventListener('change', () => {
+    const unitEl = $('chemConfigRateUnit')
+    if (unitEl) unitEl.textContent = $('chemConfigRateType').value === 'per_acre' ? 'oz/acre' : 'oz/ton'
+  })
   // Auto-optimize
   ;['targetN','targetP','targetK','targetS','targetB'].forEach(id => $(id)?.addEventListener('input', () => { if (checked('autoOptimize')) optimizeBlend() }))
   ;['acres','numBatches'].forEach(id => $(id)?.addEventListener('input', calculateAll))
