@@ -201,6 +201,19 @@ function renderApp() {
             <label for="cartRental" class="text-amber-400 font-medium text-sm cursor-pointer">Cart Rental</label>
           </div>
         </div>
+        <div id="applicationCostRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
+          <input type="checkbox" id="useApplicationCost" class="w-5 h-5 accent-sky-500 shrink-0" />
+          <label for="useApplicationCost" class="text-sky-400 font-medium text-sm cursor-pointer">🚜 Application Cost</label>
+          <select id="appCostType" class="inp text-sm py-2 w-auto">
+            <option value="per_acre">Flat $/acre</option>
+            <option value="per_lb">$ per lb of product</option>
+          </select>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-zinc-500">$</span>
+            <input id="appCostAmount" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-2 w-24" />
+            <span id="appCostUnit" class="text-xs text-zinc-500">/acre</span>
+          </div>
+        </div>
         <div id="stabilizerRow" class="hidden mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
           <input type="checkbox" id="useStabilizer" class="w-5 h-5 accent-teal-500 shrink-0" />
           <label for="useStabilizer" id="stabLabel" class="text-teal-400 font-medium text-sm cursor-pointer">🧪 Nitrogen Stabilizer</label>
@@ -507,6 +520,7 @@ function renderApp() {
   loadSavedList()
   wireAppEvents()
   refreshChemicalLabels()
+  updateAppCostUnit()
 
   // Check for crop targets from crop library
   const cropTargets = sessionStorage.getItem('cropTargets')
@@ -788,6 +802,17 @@ function calculateAll() {
   const seedCostPerAcre = seedRatePerAcre * seedPricePerLb
   if (useSeed) totalCostPerAcre += seedCostPerAcre
 
+  // Application cost (mode-agnostic; rolls into per-acre cost)
+  const useAppCost = checked('useApplicationCost')
+  const appCostType = $('appCostType')?.value || 'per_acre'
+  const appCostAmount = useAppCost ? (parseFloat($('appCostAmount')?.value) || 0) : 0
+  const totalProductLbsPerAcre = keys.reduce((sum, k) => sum + lbsPerAcre[k], 0)
+  let applicationCostPerAcre = 0
+  if (useAppCost && appCostAmount > 0) {
+    applicationCostPerAcre = appCostType === 'per_lb' ? appCostAmount * totalProductLbsPerAcre : appCostAmount
+    totalCostPerAcre += applicationCostPerAcre
+  }
+
   let totalN = 0, totalP = 0, totalK = 0, totalS = 0, totalB = 0
   keys.forEach(k => { totalN += lbsPerAcre[k] * prods[k].n; totalP += lbsPerAcre[k] * prods[k].p; totalK += lbsPerAcre[k] * prods[k].k; totalS += lbsPerAcre[k] * prods[k].s; totalB += lbsPerAcre[k] * (prods[k].b || 0) })
 
@@ -886,6 +911,15 @@ function calculateAll() {
         <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
         <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
       </tr>` : ''
+    const appCostTableRow = (useAppCost && applicationCostPerAcre > 0) ? `<tr class="hover:bg-sky-900/20 transition-colors border-t-2 border-sky-800/60 text-sky-300">
+        <td class="px-3 py-2.5 font-medium flex items-center gap-2"><span class="w-3 h-3 rounded-full inline-block shrink-0 bg-sky-500"></span>🚜 Application</td>
+        <td class="px-3 py-2.5 text-right">${appCostType === 'per_lb' ? '$' + appCostAmount.toFixed(2) + '/lb' : 'flat'}</td>
+        <td class="px-3 py-2.5 text-right">$${applicationCostPerAcre.toFixed(2)}</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+        <td class="px-3 py-2.5 text-right text-zinc-600">—</td>
+      </tr>` : ''
     $('breakdownBody').innerHTML = keys.map(k => {
       const p = prods[k]
       return `<tr class="hover:bg-zinc-800/30 transition-colors">
@@ -897,7 +931,7 @@ function calculateAll() {
         <td class="px-3 py-2.5 text-right">${(lbsPerAcre[k] * p.k).toFixed(1)}</td>
         <td class="px-3 py-2.5 text-right">${(lbsPerAcre[k] * p.s).toFixed(1)}</td>
       </tr>`
-    }).join('') + stabTableRow + dryChemTableRow
+    }).join('') + stabTableRow + dryChemTableRow + appCostTableRow
   }
 
   // Cost per lb of nutrient (effective after N credit)
@@ -972,6 +1006,7 @@ async function saveBlend() {
     acres: $('acres')?.value, numBatches: $('numBatches')?.value,
     cartRental: checked('cartRental'), useStabilizer: checked('useStabilizer'), useDryChemical: checked('useDryChemical'),
     useSeed: checked('useSeed'), seedName: $('seedName')?.value, seedRate: $('seedRate')?.value, seedPrice: $('seedPrice')?.value,
+    useApplicationCost: checked('useApplicationCost'), appCostType: $('appCostType')?.value, appCostAmount: $('appCostAmount')?.value,
     customerName: $('customerName')?.value,
     targets: { n: $('targetN')?.value, p: $('targetP')?.value, k: $('targetK')?.value, s: $('targetS')?.value, b: $('targetB')?.value },
     allowExcess: checked('allowExcess'), notes: $('notes')?.value,
@@ -1057,6 +1092,10 @@ async function loadBlend() {
   if ($('seedName')) $('seedName').value = d.seedName || ''
   if ($('seedRate')) $('seedRate').value = d.seedRate || ''
   if ($('seedPrice')) $('seedPrice').value = d.seedPrice || ''
+  if ($('useApplicationCost')) $('useApplicationCost').checked = d.useApplicationCost || false
+  if ($('appCostType')) $('appCostType').value = d.appCostType || 'per_acre'
+  if ($('appCostAmount')) $('appCostAmount').value = d.appCostAmount || ''
+  updateAppCostUnit()
   if ($('customerName')) $('customerName').value = d.customerName || ''
   if ($('targetN')) $('targetN').value = d.targets?.n || 0
   if ($('targetP')) $('targetP').value = d.targets?.p || 0
@@ -1173,6 +1212,18 @@ function printQuote() {
     }
   }
 
+  let appCostQuoteRow = ''
+  if (checked('useApplicationCost')) {
+    const appCostType = $('appCostType')?.value || 'per_acre'
+    const appCostAmount = parseFloat($('appCostAmount')?.value) || 0
+    if (appCostAmount > 0) {
+      const prodLbsPerAcre = keys.reduce((sum, k) => sum + (mode === 'liquid' ? val(`rate_${k}`) * prods[k].lbsPerGal : val(`rate_${k}`)), 0)
+      const appCostPerAcre = appCostType === 'per_lb' ? appCostAmount * prodLbsPerAcre : appCostAmount
+      const rateLabel = appCostType === 'per_lb' ? `$${appCostAmount.toFixed(2)}/lb × ${prodLbsPerAcre.toFixed(0)} lbs` : 'flat rate'
+      appCostQuoteRow = `<tr style="background:#eff6ff;"><td style="padding:8px 12px;border:1px solid #ddd;color:#1d4ed8;">🚜 Application</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#1d4ed8;">${rateLabel}</td><td style="padding:8px 12px;border:1px solid #ddd;text-align:right;color:#1d4ed8;">$${appCostPerAcre.toFixed(2)}</td></tr>`
+    }
+  }
+
   let galQuoteBlock = ''
   if (mode === 'liquid') {
     const activeKeys = keys.filter(k => val(`rate_${k}`) > 0)
@@ -1201,7 +1252,7 @@ function printQuote() {
     <h2 style="font-size:16px;margin:0 0 8px;">Notes</h2><p style="background:#f5f5f5;padding:12px;border-radius:8px;white-space:pre-wrap;">${notes}</p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Target (lbs/acre)</h2><p>N: <strong>${$('targetN')?.value}</strong> · P₂O₅: <strong>${$('targetP')?.value}</strong> · K₂O: <strong>${$('targetK')?.value}</strong> · S: <strong>${$('targetS')?.value}</strong>${checked('use_boron15') ? ` · B: <strong>${$('targetB')?.value}</strong>` : ''}</p>
     <h2 style="font-size:16px;margin:20px 0 8px;">Rates</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}${dryChemQuoteRow}${seedQuoteRow}</table>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;"><tr style="background:#f5f5f5;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">Cost/acre</th></tr>${rows}${stabQuoteRow}${dryChemQuoteRow}${seedQuoteRow}${appCostQuoteRow}</table>
     ${galQuoteBlock}
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
@@ -1320,6 +1371,27 @@ function printBlendSheet() {
       </div>`
     }
   }
+  // Application cost block (mode-agnostic)
+  let appCostBlock = ''
+  if (checked('useApplicationCost')) {
+    const appCostType = $('appCostType')?.value || 'per_acre'
+    const appCostAmount = parseFloat($('appCostAmount')?.value) || 0
+    if (appCostAmount > 0) {
+      const prodLbsPerAcre = keys.reduce((sum, k) => sum + (isLiquid ? val(`rate_${k}`) * prods[k].lbsPerGal : val(`rate_${k}`)), 0)
+      const appCostPerAcre = appCostType === 'per_lb' ? appCostAmount * prodLbsPerAcre : appCostAmount
+      const appCostTotal = appCostPerAcre * acres
+      const basisLabel = appCostType === 'per_lb' ? `$${appCostAmount.toFixed(2)}/lb of product` : `$${appCostAmount.toFixed(2)}/acre flat`
+      appCostBlock = `<div style="margin-top:16px;padding:12px 16px;border-radius:8px;background:#eff6ff;border:1px solid #bfdbfe;font-size:14px;">
+        <strong style="color:#1d4ed8;">🚜 Application Cost</strong>
+        <div style="margin-top:6px;display:flex;gap:24px;flex-wrap:wrap;">
+          <span>Basis: <strong>${basisLabel}</strong></span>
+          <span>Per Acre: <strong>$${appCostPerAcre.toFixed(2)}</strong></span>
+          <span>Total (${acres} ac): <strong>$${appCostTotal.toFixed(2)}</strong></span>
+        </div>
+      </div>`
+    }
+  }
+
   const totalSpreadRateWithAddOns = totalSpreadRate + (isLiquid ? stabSpreadAddOn : dryChemSpreadAddOn)
 
   let galBlendBlock = ''
@@ -1354,8 +1426,8 @@ function printBlendSheet() {
     ${$('notes')?.value ? `<p style="background:#fffbeb;border:1px solid #fde68a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;white-space:pre-wrap;">${$('notes').value}</p>`:''}
     <h2 style="font-size:15px;margin:0 0 8px;">Loading Sequence (per batch of ${cum.toFixed(isLiquid?1:0)} ${batchUnit})</h2>
     <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;"><tr style="background:#fef3c7;"><th style="padding:8px 12px;text-align:left;border:1px solid #ddd;">Product</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${rateUnit}</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;">${batchUnit}/batch</th><th style="padding:8px 12px;text-align:right;border:1px solid #ddd;background:#f0fdf4;">Scale</th></tr>${tableRows}${stabBlendRow}${dryChemBlendRow}${seedBlendRow}</table>
-    ${stabBlendBlock}${dryChemBlendBlock}
-    <h2 style="font-size:15px;margin:${stabBlendBlock || dryChemBlendBlock ? '20px' : '0'} 0 8px;">Batch Log</h2>
+    ${stabBlendBlock}${dryChemBlendBlock}${appCostBlock}
+    <h2 style="font-size:15px;margin:${stabBlendBlock || dryChemBlendBlock || appCostBlock ? '20px' : '0'} 0 8px;">Batch Log</h2>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:28px;"><tr style="background:#f5f5f5;"><th style="padding:6px 12px;border:1px solid #ddd;">Batch #</th><th style="padding:6px 12px;border:1px solid #ddd;">Date/Time</th><th style="padding:6px 12px;border:1px solid #ddd;">Initials</th><th style="padding:6px 12px;border:1px solid #ddd;">Done</th></tr>${checks}</table>
     ${totalTonsBlock}
     <p style="font-size:11px;color:#999;text-align:center;margin-top:24px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
@@ -1365,6 +1437,12 @@ function printBlendSheet() {
 }
 
 // ── Wire Events ────────────────────────────────────────────────────────────
+// ── Application cost unit label ──────────────────────────────────────────
+function updateAppCostUnit() {
+  const el = $('appCostUnit')
+  if (el) el.textContent = ($('appCostType')?.value === 'per_lb') ? '/lb' : '/acre'
+}
+
 // ── Chemical labels ──────────────────────────────────────────────────────
 function refreshChemicalLabels() {
   const stab = getStabilizerSettings()
@@ -1565,6 +1643,9 @@ function wireAppEvents() {
   $('useSeed')?.addEventListener('change', calculateAll)
   $('seedRate')?.addEventListener('input', calculateAll)
   $('seedPrice')?.addEventListener('input', calculateAll)
+  $('useApplicationCost')?.addEventListener('change', calculateAll)
+  $('appCostType')?.addEventListener('change', () => { updateAppCostUnit(); calculateAll() })
+  $('appCostAmount')?.addEventListener('input', calculateAll)
   // Tools dropdown
   $('btnToolsMenu')?.addEventListener('click', (e) => {
     e.stopPropagation()
