@@ -57,6 +57,72 @@ const val = id => parseFloat($(id)?.value) || 0
 const checked = id => $(id)?.checked || false
 function costPerLb(key) { return (parseFloat($(`price_${key}`)?.value) || 0) / 2000 }
 
+// ── Nutrient unit pricing ──────────────────────────────────────────────────
+// What one pound of each nutrient costs, priced from the cheapest product
+// that supplies it after crediting the co-nutrients it drags along (the
+// standard residual / nutrient-replacement method).
+//
+// Solving cheapest-source-first is what keeps this honest: N gets anchored by
+// urea, K by potash, and only then is a blend like MAP asked to justify its
+// price. The old code anchored N from whatever N-bearing product happened to
+// be in the blend, so a 0-70-70 (MAP + potash) imputed N at MAP's whole price
+// per unit of N and left $0.00 for the phosphate.
+const NUTRIENTS = ['n', 'p', 'k', 's']
+
+function nutrientUnitPrices(prods, keys, priceOf) {
+  const solved = {}
+  const frac = (k, x) => prods[k]?.[x] || 0
+  const lbsIn = (k, x) => frac(k, x) * 2000  // lbs of nutrient x per ton of k
+
+  // Value a nutrient only from sources whose every other nutrient is already
+  // priced — otherwise we'd be charging the whole ton to one nutrient.
+  for (let pass = 0; pass < NUTRIENTS.length; pass++) {
+    let progressed = false
+    for (const x of NUTRIENTS) {
+      if (solved[x] != null) continue
+      let best = null
+      for (const k of keys) {
+        if (frac(k, x) <= 0) continue
+        const price = priceOf(k)
+        if (price <= 0) continue
+        const others = NUTRIENTS.filter(o => o !== x && frac(k, o) > 0)
+        if (others.some(o => solved[o] == null)) continue
+        const credit = others.reduce((sum, o) => sum + lbsIn(k, o) * solved[o], 0)
+        const cpl = Math.max(0, price - credit) / lbsIn(k, x)
+        if (best == null || cpl < best) best = cpl
+      }
+      if (best != null) { solved[x] = best; progressed = true }
+    }
+    if (!progressed) break
+  }
+
+  // Circular leftovers (e.g. KTS is the only K and the only S source, or MAP
+  // is the only N source as well as the only P source): with nothing left to
+  // anchor them apart, split what the ton still owes evenly by the pound so
+  // nothing reads $0.00. Credit and divisor are always taken from the same
+  // live set of still-unpriced nutrients, so no pound is charged twice.
+  for (const x of NUTRIENTS.filter(x => solved[x] == null)) {
+    let best = null
+    for (const k of keys) {
+      if (frac(k, x) <= 0) continue
+      const price = priceOf(k)
+      if (price <= 0) continue
+      let credit = 0, shareLbs = 0
+      for (const o of NUTRIENTS) {
+        if (frac(k, o) <= 0) continue
+        if (solved[o] != null) credit += lbsIn(k, o) * solved[o]
+        else shareLbs += lbsIn(k, o)
+      }
+      if (shareLbs <= 0) continue
+      const cpl = Math.max(0, price - credit) / shareLbs
+      if (best == null || cpl < best) best = cpl
+    }
+    if (best != null) solved[x] = best
+  }
+
+  return solved
+}
+
 // ── Auth Guard ─────────────────────────────────────────────────────────────
 async function requireAuth() {
   const session = await getSession()
@@ -934,45 +1000,18 @@ function calculateAll() {
     }).join('') + stabTableRow + dryChemTableRow + appCostTableRow
   }
 
-  // Cost per lb of nutrient (effective after N credit)
+  // Cost per lb of nutrient, priced from the cheapest source of each (see
+  // nutrientUnitPrices). Priced across every listed product, not just the
+  // ones in the blend, so a 0-70-70 still values its N at the urea rate.
   const priceOf = k => parseFloat($(`price_${k}`)?.value) || 0
-  const active = keys.filter(k => lbsPerAcre[k] > 0)
+  const unitPrice = nutrientUnitPrices(prods, keys, priceOf)
+  const suppliedLbs = x => keys.reduce((sum, k) => sum + (lbsPerAcre[k] || 0) * (prods[k][x] || 0), 0)
+  const showUnit = x => (suppliedLbs(x) > 0 && unitPrice[x] != null) ? '$' + unitPrice[x].toFixed(3) : '—'
 
-  // Anchor the N cost from a pure-N product when one is in the blend.
-  const pureN = active.filter(k => prods[k].n > 0 && prods[k].p === 0 && prods[k].k === 0 && prods[k].s === 0)
-  let primaryNcpl = 0
-  if (pureN.length > 0) primaryNcpl = costPerLb(pureN[0]) / prods[pureN[0]].n
-  else { const nk = active.find(k => prods[k].n > 0); if (nk) primaryNcpl = costPerLb(nk) / prods[nk].n }
-
-  // Effective $/lb of a non-N nutrient from product k: credit the imputed
-  // value of its N, then split the remaining price across every non-N
-  // nutrient it carries, weighted by pounds — so a multi-nutrient blend
-  // shares the residual instead of charging it all to one nutrient.
-  const nutrientCpl = k => {
-    const p = prods[k]
-    const residual = Math.max(0, priceOf(k) - p.n * 2000 * primaryNcpl)
-    const nonNlbs = (p.p + p.k + p.s) * 2000
-    return nonNlbs > 0 ? residual / nonNlbs : 0
-  }
-
-  // Prefer a product whose only non-N nutrient is the target; otherwise
-  // fall back to the first blend that contains it.
-  const pickSource = nutrient => {
-    const others = { p: ['k', 's'], k: ['p', 's'], s: ['p', 'k'] }[nutrient]
-    return active.find(k => prods[k][nutrient] > 0 && others.every(o => prods[k][o] === 0))
-      || active.find(k => prods[k][nutrient] > 0) || null
-  }
-
-  let unitN = '—', unitP = '—', unitK = '—', unitS = '—'
-  if (active.some(k => prods[k].n > 0)) unitN = '$' + primaryNcpl.toFixed(3)
-  const pSrc = pickSource('p'); if (pSrc) unitP = '$' + nutrientCpl(pSrc).toFixed(3)
-  const kSrc = pickSource('k'); if (kSrc) unitK = '$' + nutrientCpl(kSrc).toFixed(3)
-  const sSrc = pickSource('s'); if (sSrc) unitS = '$' + nutrientCpl(sSrc).toFixed(3)
-
-  if ($('costPerLbN')) $('costPerLbN').textContent = unitN
-  if ($('costPerLbP')) $('costPerLbP').textContent = unitP
-  if ($('costPerLbK')) $('costPerLbK').textContent = unitK
-  if ($('costPerLbS')) $('costPerLbS').textContent = unitS
+  if ($('costPerLbN')) $('costPerLbN').textContent = showUnit('n')
+  if ($('costPerLbP')) $('costPerLbP').textContent = showUnit('p')
+  if ($('costPerLbK')) $('costPerLbK').textContent = showUnit('k')
+  if ($('costPerLbS')) $('costPerLbS').textContent = showUnit('s')
 }
 
 // ── Mode Switch ────────────────────────────────────────────────────────────
