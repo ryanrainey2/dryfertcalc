@@ -14,7 +14,7 @@ import { renderWeather } from './pages/weather.js'
 import { renderNutrientPlan } from './pages/nutrient-plan.js'
 import { renderVRT } from './pages/vrt.js'
 import { renderGrowerPortal } from './pages/grower-portal.js'
-import { toast, applyTheme, toggleTheme } from './ui.js'
+import { toast, applyTheme, toggleTheme, icon } from './ui.js'
 
 // ── Product Definitions ────────────────────────────────────────────────────
 const DRY_PRODUCTS = {
@@ -160,16 +160,16 @@ async function requireAuth() {
 
 // ── Tool Access Control ───────────────────────────────────────────────────
 const ALL_TOOLS = [
-  { key: 'crops',         route: '/crops',         label: '🌿 Crop Library' },
-  { key: 'fields',        route: '/fields',        label: '🗺️ Fields' },
-  { key: 'soil-tests',    route: '/soil-tests',    label: '🧪 Soil Tests' },
-  { key: 'planner',       route: '/planner',       label: '📅 App Planner' },
-  { key: 'inventory',     route: '/inventory',     label: '📦 Inventory' },
-  { key: 'spreader',      route: '/spreader',      label: '⚙️ Spreader Cal' },
-  { key: 'weather',       route: '/weather',       label: '🌤️ Weather' },
-  { key: 'vrt',           route: '/vrt',           label: '🗺️ VRT Rx' },
-  { key: 'nutrient-plan', route: '/nutrient-plan', label: '📋 4R Plan' },
-  { key: 'grower',        route: '/grower',        label: '👤 Grower Portal' },
+  { key: 'crops',         route: '/crops',         label: 'Crop Library',  icon: 'crop' },
+  { key: 'fields',        route: '/fields',        label: 'Fields',        icon: 'map-pin' },
+  { key: 'soil-tests',    route: '/soil-tests',    label: 'Soil Tests',    icon: 'layers' },
+  { key: 'planner',       route: '/planner',       label: 'App Planner',   icon: 'calendar' },
+  { key: 'inventory',     route: '/inventory',     label: 'Inventory',     icon: 'archive' },
+  { key: 'spreader',      route: '/spreader',      label: 'Spreader Cal',  icon: 'settings' },
+  { key: 'weather',       route: '/weather',       label: 'Weather',       icon: 'cloud-sun' },
+  { key: 'vrt',           route: '/vrt',           label: 'VRT Rx',        icon: 'grid' },
+  { key: 'nutrient-plan', route: '/nutrient-plan', label: '4R Plan',       icon: 'clipboard' },
+  { key: 'grower',        route: '/grower',        label: 'Grower Portal', icon: 'user' },
 ]
 
 function getEnabledTools() {
@@ -188,58 +188,58 @@ function renderApp() {
   const enabledTools = getEnabledTools()
 
   document.getElementById('app').innerHTML = `
-    <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="max-w-7xl mx-auto px-4 py-5">
       <!-- Header -->
-      <header class="flex items-center justify-between gap-4 mb-5">
+      <header class="flex items-center justify-between gap-4 mb-4" style="border-bottom:1px solid var(--color-border);padding-bottom:1rem;">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="text-3xl">🌾</div>
+          ${icon('wheat', 'icon-lg')}
           <div class="min-w-0">
-            <h1 class="text-xl sm:text-2xl font-bold leading-tight">FertCalc Pro</h1>
-            <p id="appSubtitle" class="text-xs text-zinc-500 mt-0.5">${companyName ? companyName : 'Fertilizer Optimizer'}</p>
+            <h1 class="text-lg font-semibold leading-tight" style="letter-spacing:-0.02em;">FertCalc Pro</h1>
+            <p id="appSubtitle" class="text-xs mt-0.5" style="color:var(--color-text-muted);">${companyName ? companyName : 'Fertilizer Optimizer'}</p>
           </div>
-          ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-8 sm:h-10 w-auto ml-2 opacity-70" />` : ''}
+          ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-7 sm:h-9 w-auto ml-2" style="opacity:0.7;" />` : ''}
         </div>
-        <div class="hidden sm:flex flex-wrap gap-2 items-center shrink-0">
-          <button class="theme-toggle" title="Toggle theme">☀️</button>
-          <button id="btnSaveHeader" class="btn-blue">💾 Save</button>
-          <button id="btnQuote" class="btn-green">📄 Quote</button>
-          <button id="btnBlend" class="btn-amber">📦 Blend Sheet</button>
+        <div class="hidden sm:flex flex-wrap gap-1.5 items-center shrink-0">
+          <button class="theme-toggle" title="Toggle theme">${icon('sun', 'icon-sm')}</button>
+          <button id="btnSaveHeader" class="btn btn-secondary">${icon('save', 'icon-sm')} Save</button>
+          <button id="btnQuote" class="btn btn-primary">${icon('file-text', 'icon-sm')} Quote</button>
+          <button id="btnBlend" class="btn btn-secondary">${icon('package', 'icon-sm')} Blend Sheet</button>
           <div class="relative" id="toolsDropdown">
-            <button id="btnToolsMenu" class="btn-ghost">🧰 Tools ▾</button>
-            <div id="toolsPanel" class="hidden absolute right-0 top-full mt-1 w-52 card p-2 z-50 shadow-xl space-y-0.5">
-              ${enabledTools.map(t => `<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="${t.route}">${t.label}</button>`).join('')}
-              ${isAdmin ? '<div class="border-t border-zinc-700 my-1"></div>' : ''}
-              ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/features">📋 Features</button>' : ''}
-              ${isAdmin ? '<button class="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-zinc-700/50 transition-colors nav-tool" data-route="/admin">🛠️ Admin</button>' : ''}
+            <button id="btnToolsMenu" class="btn btn-ghost">${icon('tools', 'icon-sm')} Tools ${icon('chevron-down', 'icon-sm')}</button>
+            <div id="toolsPanel" class="hidden absolute right-0 top-full mt-1 w-52 card p-1.5 z-50 space-y-0.5" style="box-shadow:0 4px 16px rgba(0,0,0,0.25);">
+              ${enabledTools.map(t => `<button class="w-full text-left px-3 py-2 text-sm rounded-md transition-colors nav-tool flex items-center gap-2" data-route="${t.route}" style="color:var(--color-text-secondary);" onmouseover="this.style.background='var(--color-raised)';this.style.color='var(--color-text-primary)'" onmouseout="this.style.background='';this.style.color='var(--color-text-secondary)'">${icon(t.icon, 'icon-sm')} ${t.label}</button>`).join('')}
+              ${isAdmin ? `<div style="border-top:1px solid var(--color-border);margin:4px 0;"></div>` : ''}
+              ${isAdmin ? `<button class="w-full text-left px-3 py-2 text-sm rounded-md transition-colors nav-tool flex items-center gap-2" data-route="/features" style="color:var(--color-text-secondary);" onmouseover="this.style.background='var(--color-raised)'" onmouseout="this.style.background=''">${icon('clipboard', 'icon-sm')} Features</button>` : ''}
+              ${isAdmin ? `<button class="w-full text-left px-3 py-2 text-sm rounded-md transition-colors nav-tool flex items-center gap-2" data-route="/admin" style="color:var(--color-text-secondary);" onmouseover="this.style.background='var(--color-raised)'" onmouseout="this.style.background=''">${icon('settings', 'icon-sm')} Admin</button>` : ''}
             </div>
           </div>
-          <button id="btnLogoutApp" class="btn-ghost">Sign Out</button>
+          <button id="btnLogoutApp" class="btn btn-ghost">${icon('sign-out', 'icon-sm')} Sign Out</button>
         </div>
-        <div class="flex sm:hidden gap-2 shrink-0">
-          <button id="btnQuoteMob" class="btn-green px-3 py-2">📄</button>
-          <button id="btnBlendMob" class="btn-amber px-3 py-2">📦</button>
-          <button id="btnMenuToggle" class="btn-ghost px-3 py-2">⋯</button>
+        <div class="flex sm:hidden gap-1.5 shrink-0">
+          <button id="btnQuoteMob" class="btn btn-primary px-2.5 py-2">${icon('file-text', 'icon-sm')}</button>
+          <button id="btnBlendMob" class="btn btn-secondary px-2.5 py-2">${icon('package', 'icon-sm')}</button>
+          <button id="btnMenuToggle" class="btn btn-ghost px-2.5 py-2">${icon('menu', 'icon-sm')}</button>
         </div>
       </header>
 
       <!-- Mobile menu -->
-      <div id="mobileMenu" class="hidden card p-3 mb-4 flex-col gap-2">
-        <button class="btn-ghost w-full justify-center theme-toggle">☀️ Toggle Theme</button>
-        <button id="btnSaveMob" class="btn-blue w-full justify-center">💾 Save Blend</button>
-        <div class="border-t border-zinc-700 my-1"></div>
-        ${enabledTools.map(t => `<button class="btn-ghost w-full justify-center nav-tool" data-route="${t.route}">${t.label}</button>`).join('')}
-        <div class="border-t border-zinc-700 my-1"></div>
-        ${isAdmin ? '<button id="btnAdminMob" class="btn-ghost w-full justify-center">🛠️ Admin</button>' : ''}
-        <button id="btnResetMob" class="btn-ghost w-full justify-center">↺ Reset All</button>
-        <button id="btnLogoutMob" class="btn-ghost w-full justify-center">Sign Out</button>
+      <div id="mobileMenu" class="hidden card p-3 mb-4 flex-col gap-1.5">
+        <button class="btn btn-ghost w-full justify-center theme-toggle">${icon('sun', 'icon-sm')} Toggle Theme</button>
+        <button id="btnSaveMob" class="btn btn-secondary w-full justify-center">${icon('save', 'icon-sm')} Save Blend</button>
+        <div style="border-top:1px solid var(--color-border);margin:4px 0;"></div>
+        ${enabledTools.map(t => `<button class="btn btn-ghost w-full justify-center nav-tool" data-route="${t.route}">${icon(t.icon, 'icon-sm')} ${t.label}</button>`).join('')}
+        <div style="border-top:1px solid var(--color-border);margin:4px 0;"></div>
+        ${isAdmin ? `<button id="btnAdminMob" class="btn btn-ghost w-full justify-center">${icon('settings', 'icon-sm')} Admin</button>` : ''}
+        <button id="btnResetMob" class="btn btn-ghost w-full justify-center">${icon('refresh', 'icon-sm')} Reset All</button>
+        <button id="btnLogoutMob" class="btn btn-ghost w-full justify-center">${icon('sign-out', 'icon-sm')} Sign Out</button>
       </div>
 
       <!-- Mode Toggle + Blend Bar -->
-      <div class="card p-4 mb-5">
-        <div class="flex items-center gap-2 mb-3 pb-3 border-b border-zinc-800">
-          <span class="text-xs text-zinc-500 uppercase tracking-wide font-semibold mr-1">Mode:</span>
-          <button id="btnModeDry" class="mode-btn mode-btn-active">🌾 Dry</button>
-          <button id="btnModeLiquid" class="mode-btn">💧 Liquid</button>
+      <div class="card p-4 mb-4">
+        <div class="flex items-center gap-2 mb-3 pb-3" style="border-bottom:1px solid var(--color-border);">
+          <span class="text-xs uppercase tracking-wide font-semibold mr-1" style="color:var(--color-text-muted);">Mode:</span>
+          <button id="btnModeDry" class="mode-btn mode-btn-active">${icon('wheat', 'icon-sm')} Dry</button>
+          <button id="btnModeLiquid" class="mode-btn">${icon('flask', 'icon-sm')} Liquid</button>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <div>
@@ -247,86 +247,86 @@ function renderApp() {
             <input id="blendName" type="text" placeholder="e.g. Corn 180-60-30" class="inp" />
           </div>
           <div>
-            <label class="lbl">Customer Name <span class="text-red-400 normal-case font-normal">*</span></label>
+            <label class="lbl">Customer Name <span style="color:var(--color-danger);text-transform:none;font-weight:400;">*</span></label>
             <input id="customerName" type="text" placeholder="Customer name" class="inp" />
           </div>
           <div class="flex gap-2 items-end">
             <div class="flex-1">
               <label class="lbl">Load Saved Blend</label>
-              <select id="savedBlends" class="inp text-sm py-2.5">
+              <select id="savedBlends" class="inp text-sm py-2">
                 <option value="">-- Select blend --</option>
               </select>
             </div>
             <div class="flex gap-1">
-              <button id="btnLoad" class="btn-green text-xs px-3 py-2.5">Load</button>
-              <button id="btnDelete" class="btn-red text-xs px-3 py-2.5">Del</button>
+              <button id="btnLoad" class="btn btn-primary text-xs px-3 py-2">Load</button>
+              <button id="btnDelete" class="btn btn-danger text-xs px-3 py-2">Del</button>
             </div>
           </div>
           <div class="flex items-center gap-3 pb-1">
-            <input type="checkbox" id="cartRental" class="w-5 h-5 accent-amber-500 shrink-0" />
-            <label for="cartRental" class="text-amber-400 font-medium text-sm cursor-pointer">Cart Rental</label>
+            <input type="checkbox" id="cartRental" class="w-4 h-4 accent-amber-500 shrink-0" />
+            <label for="cartRental" class="font-medium text-sm cursor-pointer" style="color:var(--color-warning);">Cart Rental</label>
           </div>
         </div>
-        <div id="applicationCostRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
-          <input type="checkbox" id="useApplicationCost" class="w-5 h-5 accent-sky-500 shrink-0" />
-          <label for="useApplicationCost" class="text-sky-400 font-medium text-sm cursor-pointer">🚜 Application Cost</label>
-          <select id="appCostType" class="inp text-sm py-2 w-auto">
+        <div id="applicationCostRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
+          <input type="checkbox" id="useApplicationCost" class="w-4 h-4 accent-sky-500 shrink-0" />
+          <label for="useApplicationCost" class="font-medium text-sm cursor-pointer" style="color:var(--color-info);">${icon('truck', 'icon-sm')} Application Cost</label>
+          <select id="appCostType" class="inp text-sm py-1.5 w-auto">
             <option value="per_acre">Flat $/acre</option>
             <option value="per_lb">$ per lb of product</option>
           </select>
           <div class="flex items-center gap-2">
-            <span class="text-xs text-zinc-500">$</span>
-            <input id="appCostAmount" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-2 w-24" />
-            <span id="appCostUnit" class="text-xs text-zinc-500">/acre</span>
+            <span class="text-xs" style="color:var(--color-text-muted);">$</span>
+            <input id="appCostAmount" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-1.5 w-24" />
+            <span id="appCostUnit" class="text-xs" style="color:var(--color-text-muted);">/acre</span>
           </div>
         </div>
-        <div id="stabilizerRow" class="hidden mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
-          <input type="checkbox" id="useStabilizer" class="w-5 h-5 accent-teal-500 shrink-0" />
-          <label for="useStabilizer" id="stabLabel" class="text-teal-400 font-medium text-sm cursor-pointer">🧪 Nitrogen Stabilizer</label>
-          <span id="stabQuickInfo" class="text-xs text-zinc-500"></span>
-          <button id="btnConfigStabilizer" class="ml-auto text-zinc-500 hover:text-teal-400 text-xs transition-colors" title="Configure stabilizer settings">⚙️</button>
+        <div id="stabilizerRow" class="hidden mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
+          <input type="checkbox" id="useStabilizer" class="w-4 h-4 accent-teal-500 shrink-0" />
+          <label for="useStabilizer" id="stabLabel" class="font-medium text-sm cursor-pointer" style="color:#2dd4bf;">${icon('flask', 'icon-sm')} Nitrogen Stabilizer</label>
+          <span id="stabQuickInfo" class="text-xs" style="color:var(--color-text-muted);"></span>
+          <button id="btnConfigStabilizer" class="ml-auto text-xs transition-colors" style="color:var(--color-text-muted);" title="Configure stabilizer settings">${icon('settings', 'icon-sm')}</button>
         </div>
-        <div id="dryChemicalRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
-          <input type="checkbox" id="useDryChemical" class="w-5 h-5 accent-orange-500 shrink-0" />
-          <label for="useDryChemical" id="dryChemLabel" class="text-orange-400 font-medium text-sm cursor-pointer">🧪 Chemical Additive</label>
-          <span id="dryChemQuickInfo" class="text-xs text-zinc-500"></span>
-          <button id="btnConfigDryChem" class="ml-auto text-zinc-500 hover:text-orange-400 text-xs transition-colors" title="Configure chemical settings">⚙️</button>
+        <div id="dryChemicalRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
+          <input type="checkbox" id="useDryChemical" class="w-4 h-4 accent-orange-500 shrink-0" />
+          <label for="useDryChemical" id="dryChemLabel" class="font-medium text-sm cursor-pointer" style="color:var(--color-p);">${icon('flask', 'icon-sm')} Chemical Additive</label>
+          <span id="dryChemQuickInfo" class="text-xs" style="color:var(--color-text-muted);"></span>
+          <button id="btnConfigDryChem" class="ml-auto text-xs transition-colors" style="color:var(--color-text-muted);" title="Configure chemical settings">${icon('settings', 'icon-sm')}</button>
         </div>
-        <div id="seedRow" class="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-3 flex-wrap">
-          <input type="checkbox" id="useSeed" class="w-5 h-5 accent-lime-500 shrink-0" />
-          <label for="useSeed" class="text-lime-400 font-medium text-sm cursor-pointer">🌱 Seed</label>
-          <input id="seedName" type="text" placeholder="Seed name (e.g. Soybean RR2)" class="inp text-sm py-2 max-w-xs flex-1 min-w-[160px]" />
+        <div id="seedRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
+          <input type="checkbox" id="useSeed" class="w-4 h-4 accent-lime-500 shrink-0" />
+          <label for="useSeed" class="font-medium text-sm cursor-pointer" style="color:#a3e635;">${icon('seed', 'icon-sm')} Seed</label>
+          <input id="seedName" type="text" placeholder="Seed name (e.g. Soybean RR2)" class="inp text-sm py-1.5 max-w-xs flex-1 min-w-[160px]" />
           <div class="flex items-center gap-2">
-            <input id="seedRate" type="number" min="0" step="0.1" placeholder="0" class="inp text-sm py-2 w-24" />
-            <span class="text-xs text-zinc-500">lbs/acre</span>
+            <input id="seedRate" type="number" min="0" step="0.1" placeholder="0" class="inp text-sm py-1.5 w-24" />
+            <span class="text-xs" style="color:var(--color-text-muted);">lbs/acre</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-xs text-zinc-500">$</span>
-            <input id="seedPrice" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-2 w-24" />
-            <span class="text-xs text-zinc-500">/lb</span>
+            <span class="text-xs" style="color:var(--color-text-muted);">$</span>
+            <input id="seedPrice" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-1.5 w-24" />
+            <span class="text-xs" style="color:var(--color-text-muted);">/lb</span>
           </div>
         </div>
       </div>
 
       <!-- Main Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- Sidebar -->
         <aside class="lg:col-span-3 space-y-3 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
-          <button id="sidebarToggle" class="lg:hidden btn-ghost w-full justify-between text-sm py-3">
-            <span>⚙️ Products &amp; Field Info</span>
-            <span id="sidebarArrow" class="text-xs">▼</span>
+          <button id="sidebarToggle" class="lg:hidden btn btn-ghost w-full justify-between text-sm py-2.5">
+            <span>${icon('settings', 'icon-sm')} Products &amp; Field Info</span>
+            <span id="sidebarArrow" class="text-xs">${icon('chevron-down', 'icon-sm')}</span>
           </button>
           <div id="sidebarContent" class="space-y-3 hidden lg:block">
             <div class="card p-4">
-              <h2 class="text-xs font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide text-zinc-400">
-                💰 Products &amp; Prices
-                <span id="priceUnitBadge" class="bg-amber-900/60 text-amber-400 px-2 py-0.5 rounded-full text-xs">$/TON</span>
-                ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? '<button id="btnProductSettings" class="ml-auto text-zinc-500 hover:text-zinc-300 transition-colors" title="Manage products & prices">⚙️</button>' : ''}
+              <h2 class="text-xs font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide" style="color:var(--color-text-muted);">
+                ${icon('dollar', 'icon-sm')} Products &amp; Prices
+                <span id="priceUnitBadge" class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold" style="background:var(--color-accent-subtle);color:var(--color-accent);">$/TON</span>
+                ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? `<button id="btnProductSettings" class="ml-auto transition-colors" style="color:var(--color-text-muted);" title="Manage products & prices">${icon('settings', 'icon-sm')}</button>` : ''}
               </h2>
               <div id="productsContainer" class="space-y-2"></div>
             </div>
             <div class="card p-4">
-              <h2 class="text-xs font-semibold mb-3 uppercase tracking-wide text-zinc-400">📍 Field Information</h2>
+              <h2 class="text-xs font-semibold mb-3 uppercase tracking-wide" style="color:var(--color-text-muted);">${icon('map-pin', 'icon-sm')} Field Information</h2>
               <div class="space-y-4">
                 <div>
                   <label class="lbl">Acres</label>
@@ -344,14 +344,14 @@ function renderApp() {
                     <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="1">+</button>
                   </div>
                 </div>
-                <div class="pt-2 border-t border-zinc-800 space-y-2">
+                <div class="pt-2 space-y-2" style="border-top:1px solid var(--color-border);">
                   <div class="flex justify-between items-baseline">
-                    <span class="text-xs text-zinc-500">Total Product</span>
-                    <span id="totalProductNeeded" class="font-semibold text-emerald-400 text-sm">0 lbs</span>
+                    <span class="text-xs" style="color:var(--color-text-muted);">Total Product</span>
+                    <span id="totalProductNeeded" class="font-semibold text-sm font-mono" style="color:var(--color-accent);">0 lbs</span>
                   </div>
                   <div class="flex justify-between items-baseline">
-                    <span class="text-xs text-zinc-500">Per Batch</span>
-                    <span id="productPerBatch" class="font-semibold text-amber-400 text-sm">0 lbs</span>
+                    <span class="text-xs" style="color:var(--color-text-muted);">Per Batch</span>
+                    <span id="productPerBatch" class="font-semibold text-sm font-mono" style="color:var(--color-warning);">0 lbs</span>
                   </div>
                 </div>
               </div>
@@ -364,105 +364,105 @@ function renderApp() {
           <!-- Targets -->
           <div class="card p-4">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">🎯 Target Nutrients (lbs/acre)</h2>
+              <h2 class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted);">${icon('target', 'icon-sm')} Target Nutrients (lbs/acre)</h2>
               <div class="flex items-center gap-3">
                 <label class="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="checkbox" id="autoOptimize" checked class="w-4 h-4 accent-emerald-500" />
                   <span class="font-medium">Auto-Optimize</span>
                 </label>
-                <button id="btnOptimize" class="btn-green text-xs px-4 py-2">⚡ Optimize</button>
+                <button id="btnOptimize" class="btn btn-primary text-xs px-3 py-1.5">${icon('zap', 'icon-sm')} Optimize</button>
               </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div><label class="lbl" style="color:#60a5fa">Nitrogen (N)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetN" data-step="-1">−</button><input id="targetN" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetN" data-step="1">+</button></div></div>
-              <div><label class="lbl" style="color:#fb923c">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button></div></div>
-              <div><label class="lbl" style="color:#a78bfa">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button></div></div>
-              <div><label class="lbl" style="color:#34d399">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button></div></div>
-              <div id="boronTargetRow" class="hidden"><label class="lbl" style="color:#a16207">Boron (B)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetB" data-step="-0.5">−</button><input id="targetB" type="number" step="0.5" value="1" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetB" data-step="0.5">+</button></div></div>
+              <div><label class="lbl" style="color:var(--color-n);">Nitrogen (N)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetN" data-step="-1">−</button><input id="targetN" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetN" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:var(--color-p);">Phosphate (P₂O₅)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetP" data-step="-1">−</button><input id="targetP" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetP" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:var(--color-k);">Potash (K₂O)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetK" data-step="-1">−</button><input id="targetK" type="number" step="1" value="40" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetK" data-step="1">+</button></div></div>
+              <div><label class="lbl" style="color:var(--color-s);">Sulfur (S)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetS" data-step="-1">−</button><input id="targetS" type="number" step="1" value="20" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetS" data-step="1">+</button></div></div>
+              <div id="boronTargetRow" class="hidden"><label class="lbl" style="color:var(--color-b);">Boron (B)</label><div class="stepper-wrap"><button class="stepper-btn stepper-lg" data-target="targetB" data-step="-0.5">−</button><input id="targetB" type="number" step="0.5" value="1" class="inp-xl" /><button class="stepper-btn stepper-lg" data-target="targetB" data-step="0.5">+</button></div></div>
             </div>
-            <div class="mt-3 flex items-start gap-3 bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3">
+            <div class="mt-3 flex items-start gap-3 rounded-lg px-4 py-3" style="background:var(--color-raised);border:1px solid var(--color-border);">
               <input type="checkbox" id="allowExcess" checked class="w-4 h-4 accent-emerald-500 mt-0.5 shrink-0" />
               <div>
-                <label for="allowExcess" class="font-medium text-emerald-400 text-sm cursor-pointer">Allow excess nutrients</label>
-                <p class="text-xs text-zinc-500 mt-0.5">Allow multi-nutrient products even if they oversupply another nutrient</p>
+                <label for="allowExcess" class="font-medium text-sm cursor-pointer" style="color:var(--color-accent);">Allow excess nutrients</label>
+                <p class="text-xs mt-0.5" style="color:var(--color-text-muted);">Allow multi-nutrient products even if they oversupply another nutrient</p>
               </div>
             </div>
-            <div id="optimizationWarning" class="hidden mt-3 text-amber-400 text-sm flex items-center gap-2">
-              <span>⚠️</span><span id="warningText"></span>
+            <div id="optimizationWarning" class="hidden mt-3 text-sm flex items-center gap-2" style="color:var(--color-warning);">
+              <span>${icon('alert-triangle', 'icon-sm')}</span><span id="warningText"></span>
             </div>
           </div>
 
           <!-- Rates & Results -->
           <div class="card p-4">
-            <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400 mb-4 flex items-center justify-between">
-              <span>🚜 Rates (<span id="rateUnitLabel">lbs/acre</span>)</span>
-              <span id="optimizationNote" class="hidden text-xs bg-emerald-900/60 text-emerald-400 px-2 py-0.5 rounded-full normal-case">✅ Optimized</span>
+            <h2 class="text-xs font-semibold uppercase tracking-wide mb-4 flex items-center justify-between" style="color:var(--color-text-muted);">
+              <span>${icon('truck', 'icon-sm')} Rates (<span id="rateUnitLabel">lbs/acre</span>)</span>
+              <span id="optimizationNote" class="hidden text-xs px-2 py-0.5 rounded-md normal-case font-mono" style="background:var(--color-accent-subtle);color:var(--color-accent);">${icon('check', 'icon-sm')} Optimized</span>
             </h2>
-            <div class="mb-3 bg-zinc-800/60 border border-zinc-600 rounded-xl px-4 py-2.5 flex items-center justify-between">
-              <span class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Total Spread Rate</span>
-              <span class="text-xl font-bold text-white"><span id="spreadRateValue">0.00</span> <span id="spreadRateUnit" class="text-sm font-medium text-zinc-300">lbs/acre</span></span>
+            <div class="mb-3 rounded-lg px-4 py-2.5 flex items-center justify-between" style="background:var(--color-raised);border:1px solid var(--color-border-strong);">
+              <span class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted);">Total Spread Rate</span>
+              <span class="text-xl font-bold font-mono"><span id="spreadRateValue">0.00</span> <span id="spreadRateUnit" class="text-sm font-medium" style="color:var(--color-text-secondary);">lbs/acre</span></span>
             </div>
             <div id="ratesContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3"></div>
 
             <!-- Cost Hero -->
-            <div class="mt-4 bg-gradient-to-br from-emerald-700 to-teal-800 rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div class="mt-4 rounded-xl p-5 flex items-center justify-between gap-4" style="background:linear-gradient(135deg, #059669, #0d9488);border:1px solid rgba(255,255,255,0.1);">
               <div class="min-w-0">
-                <div class="text-emerald-200 text-xs tracking-widest uppercase">Price Per Acre</div>
-                <div id="costPerAcreBig" class="text-5xl sm:text-6xl font-bold mt-0.5 leading-none">$0.00</div>
-                <div id="totalFieldCostSmall" class="text-emerald-200 text-sm mt-1.5">$0 total field cost</div>
+                <div class="text-xs tracking-widest uppercase" style="color:rgba(255,255,255,0.7);">Price Per Acre</div>
+                <div id="costPerAcreBig" class="text-5xl sm:text-6xl font-bold font-mono mt-0.5 leading-none" style="color:#fff;">$0.00</div>
+                <div id="totalFieldCostSmall" class="text-sm mt-1.5 font-mono" style="color:rgba(255,255,255,0.7);">$0 total field cost</div>
               </div>
               <div class="text-right shrink-0">
-                <div class="text-4xl sm:text-5xl">💵</div>
-                <div id="totalLbs" class="text-emerald-200 text-xs mt-1.5">0 lbs total</div>
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background:rgba(255,255,255,0.15);">${icon('dollar', 'icon-lg')}</div>
+                <div id="totalLbs" class="text-xs mt-1.5 font-mono" style="color:rgba(255,255,255,0.7);">0 lbs total</div>
               </div>
             </div>
 
             <!-- Stabilizer Info -->
-            <div id="stabilizerInfo" class="hidden mt-3 bg-teal-900/30 border border-teal-700 rounded-xl px-4 py-3">
+            <div id="stabilizerInfo" class="hidden mt-3 rounded-lg px-4 py-3" style="background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.2);">
               <div class="flex items-center justify-between flex-wrap gap-2">
-                <span id="stabInfoTitle" class="text-xs font-semibold text-teal-400 uppercase tracking-wide">🧪 N Stabilizer</span>
+                <span id="stabInfoTitle" class="text-xs font-semibold uppercase tracking-wide" style="color:#2dd4bf;">${icon('flask', 'icon-sm')} N Stabilizer</span>
                 <div class="flex flex-wrap gap-4 text-sm">
-                  <span class="text-zinc-400">Rate: <strong class="text-teal-300" id="stabRatePerTon">—</strong> oz/ton</span>
-                  <span class="text-zinc-400">Per Acre: <strong class="text-teal-300" id="stabRatePerAcre">—</strong> oz</span>
-                  <span class="text-zinc-400">Add'l Cost: <strong class="text-teal-300" id="stabCostPerAcre">—</strong>/acre</span>
+                  <span style="color:var(--color-text-muted);">Rate: <strong style="color:#2dd4bf;" id="stabRatePerTon">—</strong> oz/ton</span>
+                  <span style="color:var(--color-text-muted);">Per Acre: <strong style="color:#2dd4bf;" id="stabRatePerAcre">—</strong> oz</span>
+                  <span style="color:var(--color-text-muted);">Add'l Cost: <strong style="color:#2dd4bf;" id="stabCostPerAcre">—</strong>/acre</span>
                 </div>
               </div>
             </div>
 
             <!-- Dry Chemical Info -->
-            <div id="dryChemInfo" class="hidden mt-3 bg-orange-900/30 border border-orange-700 rounded-xl px-4 py-3">
+            <div id="dryChemInfo" class="hidden mt-3 rounded-lg px-4 py-3" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);">
               <div class="flex items-center justify-between flex-wrap gap-2">
-                <span id="dryChemInfoTitle" class="text-xs font-semibold text-orange-400 uppercase tracking-wide">🧪 Chemical Additive</span>
+                <span id="dryChemInfoTitle" class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-p);">${icon('flask', 'icon-sm')} Chemical Additive</span>
                 <div class="flex flex-wrap gap-4 text-sm">
-                  <span class="text-zinc-400">Rate: <strong class="text-orange-300" id="dryChemRatePerTon">—</strong> oz/ton</span>
-                  <span class="text-zinc-400">Per Acre: <strong class="text-orange-300" id="dryChemRatePerAcre">—</strong> oz</span>
-                  <span class="text-zinc-400">Add'l Cost: <strong class="text-orange-300" id="dryChemCostPerAcre">—</strong>/acre</span>
+                  <span style="color:var(--color-text-muted);">Rate: <strong style="color:var(--color-p);" id="dryChemRatePerTon">—</strong> oz/ton</span>
+                  <span style="color:var(--color-text-muted);">Per Acre: <strong style="color:var(--color-p);" id="dryChemRatePerAcre">—</strong> oz</span>
+                  <span style="color:var(--color-text-muted);">Add'l Cost: <strong style="color:var(--color-p);" id="dryChemCostPerAcre">—</strong>/acre</span>
                 </div>
               </div>
             </div>
 
             <!-- Delivered -->
             <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">N</div><div id="nDelivered" class="text-3xl sm:text-4xl font-bold text-blue-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">P₂O₅</div><div id="pDelivered" class="text-3xl sm:text-4xl font-bold text-orange-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">K₂O</div><div id="kDelivered" class="text-3xl sm:text-4xl font-bold text-violet-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
-              <div class="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">S</div><div id="sDelivered" class="text-3xl sm:text-4xl font-bold text-emerald-400">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
-              <div id="bDeliveredCard" class="hidden bg-zinc-800/50 border border-zinc-700 rounded-2xl p-3 text-center"><div class="text-xs text-zinc-500 mb-1">B</div><div id="bDelivered" class="text-3xl sm:text-4xl font-bold" style="color:#a16207">0.0</div><div class="text-xs text-zinc-500 mt-1">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">N</div><div id="nDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-n);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">P₂O₅</div><div id="pDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-p);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">K₂O</div><div id="kDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-k);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">S</div><div id="sDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-s);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div id="bDeliveredCard" class="hidden rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">B</div><div id="bDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-b);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
             </div>
 
             <!-- Breakdown Table -->
             <div class="mt-4">
               <h3 class="lbl mb-2">Detailed Breakdown Per Acre</h3>
-              <div class="overflow-x-auto rounded-xl border border-zinc-800">
+              <div class="overflow-x-auto rounded-lg" style="border:1px solid var(--color-border);">
                 <table class="w-full text-sm min-w-[520px]">
-                  <thead><tr class="border-b border-zinc-700 bg-zinc-800/50 text-zinc-400">
-                    <th class="text-left px-3 py-2.5 font-medium">Product</th>
-                    <th id="thRate" class="text-right px-3 py-2.5 font-medium">lbs/acre</th>
-                    <th class="text-right px-3 py-2.5 font-medium">Cost/acre</th>
-                    <th class="text-right px-3 py-2.5 font-medium">N</th>
-                    <th class="text-right px-3 py-2.5 font-medium">P₂O₅</th>
-                    <th class="text-right px-3 py-2.5 font-medium">K₂O</th>
-                    <th class="text-right px-3 py-2.5 font-medium">S</th>
+                  <thead><tr style="border-bottom:1px solid var(--color-border);background:var(--color-raised);color:var(--color-text-muted);">
+                    <th class="text-left px-3 py-2 font-medium">Product</th>
+                    <th id="thRate" class="text-right px-3 py-2 font-medium">lbs/acre</th>
+                    <th class="text-right px-3 py-2 font-medium">Cost/acre</th>
+                    <th class="text-right px-3 py-2 font-medium">N</th>
+                    <th class="text-right px-3 py-2 font-medium">P₂O₅</th>
+                    <th class="text-right px-3 py-2 font-medium">K₂O</th>
+                    <th class="text-right px-3 py-2 font-medium">S</th>
                   </tr></thead>
                   <tbody id="breakdownBody" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
                 </table>
@@ -470,82 +470,79 @@ function renderApp() {
             </div>
 
             <!-- 1-Gallon Blend Analysis (liquid mode only) -->
-            <div id="galAnalysis" class="hidden mt-4 bg-blue-900/30 border border-blue-700 rounded-2xl p-4">
-              <h3 class="lbl mb-3">💧 Blend Analysis <span class="text-blue-400 normal-case text-xs font-normal ml-1">(per 1 gallon of blend)</span></h3>
+            <div id="galAnalysis" class="hidden mt-4 rounded-lg p-4" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);">
+              <h3 class="lbl mb-3">${icon('flask', 'icon-sm')} Blend Analysis <span class="normal-case text-xs font-normal ml-1" style="color:var(--color-info);">(per 1 gallon of blend)</span></h3>
               <div id="galAnalysisContent" class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center"></div>
             </div>
 
             <!-- Cost per lb -->
-            <div class="mt-4 bg-zinc-800/40 border border-zinc-700 rounded-2xl p-4">
-              <h3 class="lbl mb-3">Cost Per Pound of Nutrient <span class="text-emerald-400 normal-case text-xs font-normal ml-1">(effective after N credit)</span></h3>
+            <div class="mt-4 rounded-lg p-4" style="background:var(--color-raised);border:1px solid var(--color-border);">
+              <h3 class="lbl mb-3">Cost Per Pound of Nutrient <span class="normal-case text-xs font-normal ml-1" style="color:var(--color-accent);">(effective after N credit)</span></h3>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div><div class="text-xs text-zinc-500">Nitrogen</div><div id="costPerLbN" class="text-2xl sm:text-3xl font-bold text-blue-400 mt-1">—</div><div class="text-xs text-zinc-600">per lb N</div></div>
-                <div><div class="text-xs text-zinc-500">Phosphate</div><div id="costPerLbP" class="text-2xl sm:text-3xl font-bold text-orange-400 mt-1">—</div><div class="text-xs text-zinc-600">per lb P₂O₅</div></div>
-                <div><div class="text-xs text-zinc-500">Potash</div><div id="costPerLbK" class="text-2xl sm:text-3xl font-bold text-violet-400 mt-1">—</div><div class="text-xs text-zinc-600">per lb K₂O</div></div>
-                <div><div class="text-xs text-zinc-500">Sulfur</div><div id="costPerLbS" class="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1">—</div><div class="text-xs text-zinc-600">per lb S</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Nitrogen</div><div id="costPerLbN" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-n);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb N</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Phosphate</div><div id="costPerLbP" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-p);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb P₂O₅</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Potash</div><div id="costPerLbK" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-k);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb K₂O</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Sulfur</div><div id="costPerLbS" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-s);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb S</div></div>
               </div>
             </div>
 
             <!-- Notes -->
             <div class="mt-4">
               <label class="lbl mb-1.5">Notes / Customer / Field Info</label>
-              <textarea id="notes" rows="3" class="inp resize-y rounded-xl" placeholder="Customer name, field number, crop, special instructions..."></textarea>
+              <textarea id="notes" rows="3" class="inp resize-y" placeholder="Customer name, field number, crop, special instructions..."></textarea>
             </div>
 
-            <div class="mt-5 text-center text-xs text-zinc-600 pb-1">
-              ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-4 w-auto opacity-40 inline-block mr-1" />` : ''}
-              © 2026 FertCalc Pro${companyName ? ` · ${companyName}` : ''} · Version 7.0
+            <div class="mt-5 text-center text-xs pb-1" style="color:var(--color-text-muted);">
+              ${companyLogo ? `<img src="${companyLogo}" alt="" class="h-4 w-auto inline-block mr-1" style="opacity:0.4;" />` : ''}
+              &copy; 2026 FertCalc Pro${companyName ? ` &middot; ${companyName}` : ''} &middot; v2.0
             </div>
           </div>
         </main>
       </div>
 
       <!-- Product Settings Modal -->
-      <div id="productSettingsOverlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div id="productSettingsOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.6);">
         <div class="card p-5 w-full max-w-lg max-h-[85vh] overflow-y-auto">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-bold uppercase tracking-wide text-zinc-300">⚙️ Company Settings</h2>
-            <button id="btnCloseProductSettings" class="text-zinc-500 hover:text-zinc-300 text-lg">✕</button>
+            <h2 class="text-sm font-bold uppercase tracking-wide">${icon('settings', 'icon-sm')} Company Settings</h2>
+            <button id="btnCloseProductSettings" class="btn btn-ghost px-2 py-1">${icon('x-close', 'icon-sm')}</button>
           </div>
-          <!-- Tabs (only for company_admin / super_admin) -->
           ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? `
-          <div class="flex gap-1 mb-4 border-b border-zinc-700 pb-3">
-            <button class="prod-settings-tab text-xs px-3 py-1.5 rounded-lg font-medium transition-colors prod-settings-tab-active" data-pstab="visibility">📦 Products</button>
-            <button class="prod-settings-tab text-xs px-3 py-1.5 rounded-lg font-medium transition-colors" data-pstab="prices">💰 Prices</button>
+          <div class="flex gap-1 mb-4 pb-3" style="border-bottom:1px solid var(--color-border);">
+            <button class="prod-settings-tab admin-tab admin-tab-active" data-pstab="visibility">${icon('package', 'icon-sm')} Products</button>
+            <button class="prod-settings-tab admin-tab" data-pstab="prices">${icon('dollar', 'icon-sm')} Prices</button>
           </div>` : ''}
-          <!-- Visibility tab -->
           <div id="psTabVisibility">
-            <p class="text-xs text-zinc-500 mb-4">Toggle which products appear in the calculator for your company</p>
+            <p class="text-xs mb-4" style="color:var(--color-text-muted);">Toggle which products appear in the calculator for your company</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Dry Products</div>
+                <div class="text-xs font-semibold uppercase tracking-wide mb-2" style="color:var(--color-text-muted);">Dry Products</div>
                 <div id="prodToggleDry" class="space-y-1"></div>
               </div>
               <div>
-                <div class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">Liquid Products</div>
+                <div class="text-xs font-semibold uppercase tracking-wide mb-2" style="color:var(--color-text-muted);">Liquid Products</div>
                 <div id="prodToggleLiquid" class="space-y-1"></div>
               </div>
             </div>
           </div>
-          <!-- Prices tab (company_admin / super_admin only) -->
           ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? `
           <div id="psTabPrices" class="hidden">
-            <p class="text-xs text-zinc-500 mb-3">Set default prices ($/ton) for your company. Leave blank to use system defaults.</p>
+            <p class="text-xs mb-3" style="color:var(--color-text-muted);">Set default prices ($/ton) for your company. Leave blank to use system defaults.</p>
             <div id="psPriceInputs" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
           </div>` : ''}
           <div class="flex gap-2 mt-5">
-            <button id="btnSaveProductSettings" class="btn-green">Save</button>
-            <button id="btnCancelProductSettings" class="btn-ghost">Cancel</button>
+            <button id="btnSaveProductSettings" class="btn btn-primary">Save</button>
+            <button id="btnCancelProductSettings" class="btn btn-ghost">Cancel</button>
           </div>
         </div>
       </div>
 
       <!-- Chemical Config Modal (all users) -->
-      <div id="chemicalConfigOverlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div id="chemicalConfigOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.6);">
         <div class="card p-5 w-full max-w-sm">
           <div class="flex items-center justify-between mb-4">
-            <h2 id="chemConfigTitle" class="text-sm font-bold uppercase tracking-wide text-zinc-300">🧪 Chemical Settings</h2>
-            <button id="btnCloseChemConfig" class="text-zinc-500 hover:text-zinc-300 text-lg">✕</button>
+            <h2 id="chemConfigTitle" class="text-sm font-bold uppercase tracking-wide">${icon('flask', 'icon-sm')} Chemical Settings</h2>
+            <button id="btnCloseChemConfig" class="btn btn-ghost px-2 py-1">${icon('x-close', 'icon-sm')}</button>
           </div>
           <input type="hidden" id="chemConfigType" value="" />
           <div class="space-y-3">
@@ -570,11 +567,11 @@ function renderApp() {
                 <input id="chemConfigPrice" type="number" step="0.01" min="0" class="inp" placeholder="e.g. 48.00" />
               </div>
             </div>
-            <p class="text-xs text-zinc-500">${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? 'Changes apply to all users in your company.' : 'Changes are saved locally to your device.'}</p>
+            <p class="text-xs" style="color:var(--color-text-muted);">${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? 'Changes apply to all users in your company.' : 'Changes are saved locally to your device.'}</p>
           </div>
           <div class="flex gap-2 mt-4">
-            <button id="btnSaveChemConfig" class="btn-green">Save</button>
-            <button id="btnCancelChemConfig" class="btn-ghost">Cancel</button>
+            <button id="btnSaveChemConfig" class="btn btn-primary">Save</button>
+            <button id="btnCancelChemConfig" class="btn btn-ghost">Cancel</button>
           </div>
         </div>
       </div>
@@ -800,7 +797,7 @@ function calculateAll() {
     const stabInfoEl = $('stabilizerInfo')
     if (stabInfoEl) {
       const stab2 = getStabilizerSettings()
-      if ($('stabInfoTitle')) $('stabInfoTitle').textContent = '🧪 ' + stab2.name
+      if ($('stabInfoTitle')) $('stabInfoTitle').innerHTML = icon('flask', 'icon-sm') + ' ' + stab2.name
       if (stabRatePerAcre > 0) {
         stabInfoEl.classList.remove('hidden')
         if ($('stabRatePerTon')) {
@@ -842,7 +839,7 @@ function calculateAll() {
     const dryChemInfoEl = $('dryChemInfo')
     if (dryChemInfoEl) {
       const dc2 = getDryChemicalSettings()
-      if ($('dryChemInfoTitle')) $('dryChemInfoTitle').textContent = '🧪 ' + dc2.name
+      if ($('dryChemInfoTitle')) $('dryChemInfoTitle').innerHTML = icon('flask', 'icon-sm') + ' ' + dc2.name
       if (dryChemRatePerAcre > 0) {
         dryChemInfoEl.classList.remove('hidden')
         if ($('dryChemRatePerTon')) {
@@ -1488,8 +1485,8 @@ function refreshChemicalLabels() {
   const dc = getDryChemicalSettings()
   const stabLbl = $('stabLabel')
   const dcLbl = $('dryChemLabel')
-  if (stabLbl) stabLbl.textContent = '🧪 ' + stab.name
-  if (dcLbl) dcLbl.textContent = '🧪 ' + dc.name
+  if (stabLbl) stabLbl.innerHTML = icon('flask', 'icon-sm') + ' ' + stab.name
+  if (dcLbl) dcLbl.innerHTML = icon('flask', 'icon-sm') + ' ' + dc.name
 }
 
 // ── Chemical Config Modal (all users) ────────────────────────────────────
@@ -1497,7 +1494,7 @@ function openChemicalConfig(type) {
   const isStab = type === 'stabilizer'
   const s = isStab ? getStabilizerSettings() : getDryChemicalSettings()
   const title = $('chemConfigTitle')
-  if (title) title.textContent = '🧪 ' + (isStab ? 'Stabilizer Settings' : 'Chemical Additive Settings')
+  if (title) title.innerHTML = icon('flask', 'icon-sm') + ' ' + (isStab ? 'Stabilizer Settings' : 'Chemical Additive Settings')
   const typeEl = $('chemConfigType')
   if (typeEl) typeEl.value = type
   const nameEl = $('chemConfigName')
@@ -1834,7 +1831,7 @@ route('/grower', async () => {
 applyTheme()
 
 // Show loading spinner while Supabase processes session/auth tokens
-document.getElementById('app').innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="text-zinc-500 text-sm animate-pulse">Loading...</div></div>'
+document.getElementById('app').innerHTML = '<div class="min-h-screen flex items-center justify-center"><div class="text-sm animate-pulse" style="color:var(--color-text-muted);">Loading...</div></div>'
 
 // Use onAuthStateChange for initial routing — fires after Supabase processes
 // any auth tokens in the URL (magic links, email confirmations, etc.)
