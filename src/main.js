@@ -403,26 +403,30 @@ function renderApp() {
             <label class="lbl">Customer Name <span style="color:var(--color-danger);text-transform:none;font-weight:400;">*</span></label>
             <input id="customerName" type="text" placeholder="Customer name" class="inp" />
           </div>
-          <div class="flex gap-2 items-end">
-            <div class="flex-1 min-w-0">
-              <label class="lbl">Load Saved Blend</label>
-              <select id="savedBlends" class="inp text-sm py-2">
-                <option value="">-- Select blend --</option>
-              </select>
+          <div class="space-y-2">
+            <div class="flex gap-2 items-end">
+              <div class="flex-1 min-w-0">
+                <label class="lbl">Load Saved Blend</label>
+                <select id="savedBlends" class="inp text-sm py-2">
+                  <option value="">-- Select blend --</option>
+                </select>
+              </div>
+              <div class="flex gap-1 shrink-0">
+                <button id="btnLoad" class="btn btn-primary text-xs px-3 py-2">Load</button>
+                <button id="btnDelete" class="btn btn-danger text-xs px-3 py-2">Del</button>
+              </div>
             </div>
-            <div class="flex gap-1 shrink-0">
-              <button id="btnLoad" class="btn btn-primary text-xs px-3 py-2">Load</button>
-              <button id="btnDelete" class="btn btn-danger text-xs px-3 py-2">Del</button>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2">
               <input type="checkbox" id="cartRental" class="w-4 h-4 accent-amber-500 shrink-0" />
               <label for="cartRental" class="font-medium text-sm cursor-pointer whitespace-nowrap" title="Flags this blend for cart rental billing on the blend sheet" style="color:var(--color-warning);">Cart Rental</label>
             </div>
           </div>
         </div>
-        <div id="applicationCostRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
-          <input type="checkbox" id="useApplicationCost" class="w-4 h-4 accent-sky-500 shrink-0" />
-          <label for="useApplicationCost" class="font-medium text-sm cursor-pointer" style="color:var(--color-info);">${icon('truck', 'icon-sm')} Application Cost</label>
+        <div id="applicationCostRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap additive-row" style="border-top:1px solid var(--color-border);">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="useApplicationCost" class="w-4 h-4 accent-sky-500 shrink-0" />
+            <label for="useApplicationCost" class="font-medium text-sm cursor-pointer" style="color:var(--color-info);">${icon('truck', 'icon-sm')} Application Cost</label>
+          </div>
           <select id="appCostType" class="inp text-sm py-1.5 w-auto">
             <option value="per_acre">Flat $/acre</option>
             <option value="per_lb">$ per lb of product</option>
@@ -433,30 +437,38 @@ function renderApp() {
             <span id="appCostUnit" class="text-xs" style="color:var(--color-text-muted);">/acre</span>
           </div>
         </div>
-        <div id="stabilizerRow" class="hidden mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
-          <input type="checkbox" id="useStabilizer" class="w-4 h-4 accent-teal-500 shrink-0" />
-          <label for="useStabilizer" id="stabLabel" class="font-medium text-sm cursor-pointer" style="color:#2dd4bf;">${icon('flask', 'icon-sm')} Nitrogen Stabilizer</label>
-          <span id="stabQuickInfo" class="text-xs" style="color:var(--color-text-muted);"></span>
+        <div id="stabilizerRow" class="hidden mt-3 pt-3 flex items-center gap-3 flex-wrap additive-row" style="border-top:1px solid var(--color-border);">
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <input type="checkbox" id="useStabilizer" class="w-4 h-4 accent-teal-500 shrink-0" />
+            <label for="useStabilizer" id="stabLabel" class="font-medium text-sm cursor-pointer" style="color:#2dd4bf;">${icon('flask', 'icon-sm')} Nitrogen Stabilizer</label>
+            <span id="stabQuickInfo" class="text-xs" style="color:var(--color-text-muted);"></span>
+          </div>
           <button id="btnConfigStabilizer" class="ml-auto text-xs transition-colors" style="color:var(--color-text-muted);" title="Configure stabilizer settings">${icon('settings', 'icon-sm')}</button>
         </div>
-        <div id="dryChemicalRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
-          <input type="checkbox" id="useDryChemical" class="w-4 h-4 accent-orange-500 shrink-0" />
-          <label for="useDryChemical" id="dryChemLabel" class="font-medium text-sm cursor-pointer" style="color:var(--color-p);">${icon('flask', 'icon-sm')} Chemical Additive</label>
-          <span id="dryChemQuickInfo" class="text-xs" style="color:var(--color-text-muted);"></span>
+        <div id="dryChemicalRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap additive-row" style="border-top:1px solid var(--color-border);">
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <input type="checkbox" id="useDryChemical" class="w-4 h-4 accent-orange-500 shrink-0" />
+            <label for="useDryChemical" id="dryChemLabel" class="font-medium text-sm cursor-pointer" style="color:var(--color-p);">${icon('flask', 'icon-sm')} Chemical Additive</label>
+            <span id="dryChemQuickInfo" class="text-xs" style="color:var(--color-text-muted);"></span>
+          </div>
           <button id="btnConfigDryChem" class="ml-auto text-xs transition-colors" style="color:var(--color-text-muted);" title="Configure chemical settings">${icon('settings', 'icon-sm')}</button>
         </div>
-        <div id="seedRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
-          <input type="checkbox" id="useSeed" class="w-4 h-4 accent-lime-500 shrink-0" />
-          <label for="useSeed" class="font-medium text-sm cursor-pointer" style="color:#a3e635;">${icon('seed', 'icon-sm')} Seed</label>
-          <input id="seedName" type="text" placeholder="Seed name (e.g. Soybean RR2)" class="inp text-sm py-1.5 max-w-xs flex-1 min-w-[160px]" />
+        <div id="seedRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap additive-row" style="border-top:1px solid var(--color-border);">
           <div class="flex items-center gap-2">
-            <input id="seedRate" type="number" min="0" step="0.1" placeholder="0" class="inp text-sm py-1.5 w-24" />
-            <span class="text-xs" style="color:var(--color-text-muted);">lbs/acre</span>
+            <input type="checkbox" id="useSeed" class="w-4 h-4 accent-lime-500 shrink-0" />
+            <label for="useSeed" class="font-medium text-sm cursor-pointer" style="color:#a3e635;">${icon('seed', 'icon-sm')} Seed</label>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs" style="color:var(--color-text-muted);">$</span>
-            <input id="seedPrice" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-1.5 w-24" />
-            <span class="text-xs" style="color:var(--color-text-muted);">/lb</span>
+          <input id="seedName" type="text" placeholder="Seed name (e.g. Soybean RR2)" class="inp text-sm py-1.5 flex-1 min-w-[160px]" />
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+              <input id="seedRate" type="number" min="0" step="0.1" placeholder="0" class="inp text-sm py-1.5 w-24" />
+              <span class="text-xs" style="color:var(--color-text-muted);">lbs/acre</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs" style="color:var(--color-text-muted);">$</span>
+              <input id="seedPrice" type="number" min="0" step="0.01" placeholder="0.00" class="inp text-sm py-1.5 w-24" />
+              <span class="text-xs" style="color:var(--color-text-muted);">/lb</span>
+            </div>
           </div>
         </div>
       </div>
@@ -559,13 +571,13 @@ function renderApp() {
               <span class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted);">Total Spread Rate</span>
               <span class="text-xl font-bold font-mono"><span id="spreadRateValue">0.00</span> <span id="spreadRateUnit" class="text-sm font-medium" style="color:var(--color-text-secondary);">lbs/acre</span></span>
             </div>
-            <div id="ratesContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3"></div>
+            <div id="ratesContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
 
             <!-- Cost Hero -->
             <div class="mt-4 rounded-xl p-5 flex items-center justify-between gap-4" style="background:linear-gradient(135deg, #059669, #0d9488);border:1px solid rgba(255,255,255,0.1);">
               <div class="min-w-0">
                 <div class="text-xs tracking-widest uppercase" style="color:rgba(255,255,255,0.7);">Price Per Acre</div>
-                <div id="costPerAcreBig" class="text-5xl sm:text-6xl font-bold font-mono mt-0.5 leading-none" style="color:#fff;">$0.00</div>
+                <div id="costPerAcreBig" class="text-4xl sm:text-6xl font-bold font-mono mt-0.5 leading-none cost-hero-amount" style="color:#fff;">$0.00</div>
                 <div id="totalFieldCostSmall" class="text-sm mt-1.5 font-mono" style="color:rgba(255,255,255,0.7);">$0 total field cost</div>
               </div>
               <div class="text-right shrink-0">
@@ -600,11 +612,11 @@ function renderApp() {
 
             <!-- Delivered -->
             <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">N</div><div id="nDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-n);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
-              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">P₂O₅</div><div id="pDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-p);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
-              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">K₂O</div><div id="kDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-k);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
-              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">S</div><div id="sDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-s);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
-              <div id="bDeliveredCard" class="hidden rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">B</div><div id="bDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-b);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">N</div><div id="nDelivered" class="text-2xl sm:text-4xl font-bold font-mono" style="color:var(--color-n);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">P₂O₅</div><div id="pDelivered" class="text-2xl sm:text-4xl font-bold font-mono" style="color:var(--color-p);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">K₂O</div><div id="kDelivered" class="text-2xl sm:text-4xl font-bold font-mono" style="color:var(--color-k);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div class="rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">S</div><div id="sDelivered" class="text-2xl sm:text-4xl font-bold font-mono" style="color:var(--color-s);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
+              <div id="bDeliveredCard" class="hidden rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">B</div><div id="bDelivered" class="text-2xl sm:text-4xl font-bold font-mono" style="color:var(--color-b);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
             </div>
 
             <!-- Breakdown Table (collapsible) -->
@@ -633,7 +645,7 @@ function renderApp() {
             <!-- 1-Gallon Blend Analysis (liquid mode only) -->
             <div id="galAnalysis" class="hidden mt-4 rounded-lg p-4" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);">
               <h3 class="lbl mb-3">${icon('flask', 'icon-sm')} Blend Analysis <span class="normal-case text-xs font-normal ml-1" style="color:var(--color-info);">(per 1 gallon of blend)</span></h3>
-              <div id="galAnalysisContent" class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center"></div>
+              <div id="galAnalysisContent" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-center"></div>
             </div>
 
             <!-- Cost per lb (collapsible) -->
@@ -644,10 +656,10 @@ function renderApp() {
               <div id="costPerLbSection" class="collapsible-body hidden">
               <div class="rounded-lg p-4" style="background:var(--color-raised);border:1px solid var(--color-border);border-top:none;border-radius:0 0 0.5rem 0.5rem;">
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div><div class="text-xs" style="color:var(--color-text-muted);">Nitrogen</div><div id="costPerLbN" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-n);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb N</div></div>
-                <div><div class="text-xs" style="color:var(--color-text-muted);">Phosphate</div><div id="costPerLbP" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-p);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb P₂O₅</div></div>
-                <div><div class="text-xs" style="color:var(--color-text-muted);">Potash</div><div id="costPerLbK" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-k);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb K₂O</div></div>
-                <div><div class="text-xs" style="color:var(--color-text-muted);">Sulfur</div><div id="costPerLbS" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-s);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb S</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Nitrogen</div><div id="costPerLbN" class="text-xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-n);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb N</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Phosphate</div><div id="costPerLbP" class="text-xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-p);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb P₂O₅</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Potash</div><div id="costPerLbK" class="text-xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-k);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb K₂O</div></div>
+                <div><div class="text-xs" style="color:var(--color-text-muted);">Sulfur</div><div id="costPerLbS" class="text-xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-s);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb S</div></div>
               </div>
               </div>
               </div>
