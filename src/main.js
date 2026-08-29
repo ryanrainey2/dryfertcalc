@@ -797,7 +797,7 @@ function renderProducts() {
     const companyPrices = currentCompany?.default_prices || {}
     const priceVal = savedPrices[key] || companyPrices[key] || p.defaultPrice
     return `
-      <div class="flex items-center justify-between gap-1.5">
+      <div class="product-row">
         <div class="flex items-center gap-1.5 min-w-0">
           <input type="checkbox" id="use_${key}" checked class="w-4 h-4 shrink-0" style="accent-color:${p.color}" />
           <div class="badge" style="background:${p.color}">${p.abbr}</div>
