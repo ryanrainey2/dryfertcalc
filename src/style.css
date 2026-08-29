@@ -67,12 +67,14 @@ html.light {
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   color: var(--color-text-primary);
+  width: 100%;
+  box-sizing: border-box;
   outline: none;
   transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
 }
 .inp:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+  box-shadow: 0 0 0 1px var(--color-accent-subtle);
 }
 
 .inp-ro {
