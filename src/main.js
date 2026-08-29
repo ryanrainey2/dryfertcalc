@@ -14,7 +14,7 @@ import { renderWeather } from './pages/weather.js'
 import { renderNutrientPlan } from './pages/nutrient-plan.js'
 import { renderVRT } from './pages/vrt.js'
 import { renderGrowerPortal } from './pages/grower-portal.js'
-import { toast, applyTheme, toggleTheme, icon } from './ui.js'
+import { toast, applyTheme, toggleTheme, icon, friendlyError } from './ui.js'
 
 // ── Product Definitions ────────────────────────────────────────────────────
 const DRY_PRODUCTS = {
@@ -56,6 +56,159 @@ const $ = id => document.getElementById(id)
 const val = id => parseFloat($(id)?.value) || 0
 const checked = id => $(id)?.checked || false
 function costPerLb(key) { return (parseFloat($(`price_${key}`)?.value) || 0) / 2000 }
+
+// ── Print preview overlay ─────────────────────────────────────────────────
+function previewBeforePrint(html, title) {
+  // Remove any existing preview
+  document.getElementById('printPreviewOverlay')?.remove()
+
+  const overlay = document.createElement('div')
+  overlay.id = 'printPreviewOverlay'
+  overlay.className = 'print-preview-overlay'
+  overlay.innerHTML = `
+    <div class="print-preview-panel">
+      <div class="print-preview-header">
+        <h2>${icon('file-text', 'icon-sm')} ${title}</h2>
+        <button id="btnPreviewClose" class="btn btn-ghost" style="padding:4px;">${icon('x-close', 'icon-sm')}</button>
+      </div>
+      <div class="print-preview-body">
+        <iframe id="previewFrame" title="Print preview"></iframe>
+      </div>
+      <div class="print-preview-footer">
+        <button id="btnPreviewCancel" class="btn btn-ghost">Cancel</button>
+        <button id="btnPreviewPrint" class="btn btn-primary">${icon('file-text', 'icon-sm')} Print</button>
+      </div>
+    </div>`
+
+  document.body.appendChild(overlay)
+
+  // Write content into iframe
+  const frame = document.getElementById('previewFrame')
+  const frameDoc = frame.contentDocument || frame.contentWindow.document
+  frameDoc.open()
+  frameDoc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{margin:0;background:#fff;}</style></head><body>${html}</body></html>`)
+  frameDoc.close()
+
+  function close() { overlay.remove() }
+
+  document.getElementById('btnPreviewClose').addEventListener('click', close)
+  document.getElementById('btnPreviewCancel').addEventListener('click', close)
+  document.getElementById('btnPreviewPrint').addEventListener('click', () => {
+    close()
+    openPrintWindow(html, title)
+    toast('Print dialog opened', 'success')
+  })
+
+  // Close on backdrop click
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close() })
+  // Close on Escape
+  const onKey = (e) => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey) } }
+  document.addEventListener('keydown', onKey)
+}
+
+// ── Dirty state & autosave draft ──────────────────────────────────────────
+let _dirty = false
+let _draftInterval = null
+
+function markDirty() { _dirty = true }
+
+function collectDraft() {
+  const ids = ['customerName', 'blendName', 'notes', 'acres', 'numBatches',
+    'targetN', 'targetP', 'targetK', 'targetS', 'targetB',
+    'allowExcess', 'autoOptimize', 'cartRental',
+    'useStabilizer', 'useSeed', 'useDryChemical', 'useApplicationCost',
+    'seedName', 'seedRate', 'seedPrice',
+    'appCostType', 'appCostAmount']
+  const data = {}
+  for (const id of ids) {
+    const el = $(id)
+    if (!el) continue
+    data[id] = el.type === 'checkbox' ? el.checked : el.value
+  }
+  // Collect product rates and prices
+  document.querySelectorAll('input[id^="rate_"]').forEach(el => { data[el.id] = el.value })
+  document.querySelectorAll('input[id^="price_"]').forEach(el => { data[el.id] = el.value })
+  data._ts = Date.now()
+  return data
+}
+
+function restoreDraft(data) {
+  for (const [id, v] of Object.entries(data)) {
+    if (id === '_ts') continue
+    const el = $(id)
+    if (!el) continue
+    if (el.type === 'checkbox') el.checked = !!v
+    else el.value = v
+  }
+  calculateAll()
+  _dirty = false
+}
+
+function saveDraft() {
+  if (!_dirty) return
+  try {
+    localStorage.setItem('dfc_draft', JSON.stringify(collectDraft()))
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function clearDraft() {
+  localStorage.removeItem('dfc_draft')
+  _dirty = false
+}
+
+function offerDraftRestore() {
+  const raw = localStorage.getItem('dfc_draft')
+  if (!raw) return
+  let data
+  try { data = JSON.parse(raw) } catch { localStorage.removeItem('dfc_draft'); return }
+  // Ignore drafts older than 7 days
+  if (data._ts && Date.now() - data._ts > 7 * 86400000) { localStorage.removeItem('dfc_draft'); return }
+
+  const banner = document.createElement('div')
+  banner.className = 'draft-banner'
+  banner.id = 'draftBanner'
+  const age = data._ts ? timeAgo(data._ts) : 'recently'
+  banner.innerHTML = `
+    <span>${icon('save', 'icon-sm')} Unsaved draft from ${age}</span>
+    <div class="draft-banner-actions">
+      <button id="btnRestoreDraft" class="btn btn-primary" style="padding:4px 10px;font-size:0.75rem;">Restore</button>
+      <button id="btnDismissDraft" class="btn btn-ghost" style="padding:4px 10px;font-size:0.75rem;">Dismiss</button>
+    </div>`
+  document.body.appendChild(banner)
+
+  document.getElementById('btnRestoreDraft').addEventListener('click', () => {
+    restoreDraft(data)
+    clearDraft()
+    banner.remove()
+    toast('Draft restored', 'success')
+  })
+  document.getElementById('btnDismissDraft').addEventListener('click', () => {
+    clearDraft()
+    banner.remove()
+  })
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
+}
+
+function startDraftAutosave() {
+  if (_draftInterval) clearInterval(_draftInterval)
+  _draftInterval = setInterval(saveDraft, 30000)
+}
+
+function installBeforeUnloadGuard() {
+  window.addEventListener('beforeunload', (e) => {
+    if (_dirty) { e.preventDefault(); e.returnValue = '' }
+  })
+}
 
 // ── Nutrient unit pricing ──────────────────────────────────────────────────
 // What one pound of each nutrient costs, priced from the cheapest product
@@ -238,8 +391,8 @@ function renderApp() {
       <div class="card p-4 mb-4">
         <div class="flex items-center gap-2 mb-3 pb-3" style="border-bottom:1px solid var(--color-border);">
           <span class="text-xs uppercase tracking-wide font-semibold mr-1" style="color:var(--color-text-muted);">Mode:</span>
-          <button id="btnModeDry" class="mode-btn mode-btn-active">${icon('wheat', 'icon-sm')} Dry</button>
-          <button id="btnModeLiquid" class="mode-btn">${icon('flask', 'icon-sm')} Liquid</button>
+          <button id="btnModeDry" class="mode-btn mode-btn-active" title="Dry granular fertilizer products">${icon('wheat', 'icon-sm')} Dry</button>
+          <button id="btnModeLiquid" class="mode-btn" title="Liquid fertilizer products">${icon('flask', 'icon-sm')} Liquid</button>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <div>
@@ -264,7 +417,7 @@ function renderApp() {
           </div>
           <div class="flex items-center gap-3 pb-1">
             <input type="checkbox" id="cartRental" class="w-4 h-4 accent-amber-500 shrink-0" />
-            <label for="cartRental" class="font-medium text-sm cursor-pointer" style="color:var(--color-warning);">Cart Rental</label>
+            <label for="cartRental" class="font-medium text-sm cursor-pointer" title="Flags this blend for cart rental billing on the blend sheet" style="color:var(--color-warning);">Cart Rental</label>
           </div>
         </div>
         <div id="applicationCostRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
@@ -320,13 +473,13 @@ function renderApp() {
             <div class="card p-4">
               <h2 class="text-xs font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide" style="color:var(--color-text-muted);">
                 ${icon('dollar', 'icon-sm')} Products &amp; Prices
-                <span id="priceUnitBadge" class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold" style="background:var(--color-accent-subtle);color:var(--color-accent);">$/TON</span>
+                <span id="priceUnitBadge" class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold" title="All prices are per ton of product" style="background:var(--color-accent-subtle);color:var(--color-accent);cursor:help;">$/TON</span>
                 ${(currentProfile?.role === 'company_admin' || isAdmin) && currentCompany ? `<button id="btnProductSettings" class="ml-auto transition-colors" style="color:var(--color-text-muted);" title="Manage products & prices">${icon('settings', 'icon-sm')}</button>` : ''}
               </h2>
               <div id="productsContainer" class="space-y-2"></div>
             </div>
             <div class="card p-4">
-              <h2 class="text-xs font-semibold mb-3 uppercase tracking-wide" style="color:var(--color-text-muted);">${icon('map-pin', 'icon-sm')} Field Information</h2>
+              <h2 class="text-xs font-semibold mb-3 uppercase tracking-wide" title="Acreage and batch settings for this blend" style="color:var(--color-text-muted);">${icon('map-pin', 'icon-sm')} Field Information</h2>
               <div class="space-y-4">
                 <div>
                   <label class="lbl">Acres</label>
@@ -337,7 +490,7 @@ function renderApp() {
                   </div>
                 </div>
                 <div>
-                  <label class="lbl">Number of Batches</label>
+                  <label class="lbl" title="Split the total blend into multiple batches for smaller mixer loads">Number of Batches</label>
                   <div class="stepper-wrap">
                     <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="-1">−</button>
                     <input id="numBatches" type="number" value="1" min="1" class="inp-xl" />
@@ -364,11 +517,15 @@ function renderApp() {
           <!-- Targets -->
           <div class="card p-4">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <h2 class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted);">${icon('target', 'icon-sm')} Target Nutrients (lbs/acre)</h2>
+              <div>
+                <h2 class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted);">${icon('target', 'icon-sm')} Target Nutrients (lbs/acre)</h2>
+                <p class="text-xs mt-1" style="color:var(--color-text-muted);">Set your desired nutrient rates — the optimizer will calculate product amounts</p>
+              </div>
               <div class="flex items-center gap-3">
                 <label class="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="checkbox" id="autoOptimize" checked class="w-4 h-4 accent-emerald-500" />
-                  <span class="font-medium">Auto-Optimize</span>
+                  <span class="font-medium" title="Automatically calculates the cheapest product rates to meet your nutrient targets">Auto-Optimize</span>
+                  <span title="Automatically calculates the cheapest product rates to meet your nutrient targets" style="cursor:help;color:var(--color-text-muted);">${icon('info', 'icon-sm')}</span>
                 </label>
                 <button id="btnOptimize" class="btn btn-primary text-xs px-3 py-1.5">${icon('zap', 'icon-sm')} Optimize</button>
               </div>
@@ -450,9 +607,12 @@ function renderApp() {
               <div id="bDeliveredCard" class="hidden rounded-lg p-3 text-center" style="background:var(--color-raised);border:1px solid var(--color-border);"><div class="text-xs mb-1" style="color:var(--color-text-muted);">B</div><div id="bDelivered" class="text-3xl sm:text-4xl font-bold font-mono" style="color:var(--color-b);">0.0</div><div class="text-xs mt-1" style="color:var(--color-text-muted);">lbs/acre</div></div>
             </div>
 
-            <!-- Breakdown Table -->
+            <!-- Breakdown Table (collapsible) -->
             <div class="mt-4">
-              <h3 class="lbl mb-2">Detailed Breakdown Per Acre</h3>
+              <button id="toggleBreakdown" class="collapsible-toggle" aria-expanded="false">
+                <span class="flex items-center gap-1.5"><span class="collapsible-chevron">${icon('chevron-down', 'icon-sm')}</span> Detailed Breakdown Per Acre</span>
+              </button>
+              <div id="breakdownSection" class="collapsible-body hidden">
               <div class="overflow-x-auto rounded-lg" style="border:1px solid var(--color-border);">
                 <table class="w-full text-sm min-w-[520px]">
                   <thead><tr style="border-bottom:1px solid var(--color-border);background:var(--color-raised);color:var(--color-text-muted);">
@@ -467,6 +627,7 @@ function renderApp() {
                   <tbody id="breakdownBody" class="text-zinc-300 divide-y divide-zinc-800"></tbody>
                 </table>
               </div>
+              </div>
             </div>
 
             <!-- 1-Gallon Blend Analysis (liquid mode only) -->
@@ -475,14 +636,20 @@ function renderApp() {
               <div id="galAnalysisContent" class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center"></div>
             </div>
 
-            <!-- Cost per lb -->
-            <div class="mt-4 rounded-lg p-4" style="background:var(--color-raised);border:1px solid var(--color-border);">
-              <h3 class="lbl mb-3">Cost Per Pound of Nutrient <span class="normal-case text-xs font-normal ml-1" style="color:var(--color-accent);">(effective after N credit)</span></h3>
+            <!-- Cost per lb (collapsible) -->
+            <div class="mt-4">
+              <button id="toggleCostPerLb" class="collapsible-toggle" aria-expanded="false">
+                <span class="flex items-center gap-1.5"><span class="collapsible-chevron">${icon('chevron-down', 'icon-sm')}</span> Cost Per Pound of Nutrient <span class="normal-case text-xs font-normal ml-1" style="color:var(--color-accent);">(effective after N credit)</span></span>
+              </button>
+              <div id="costPerLbSection" class="collapsible-body hidden">
+              <div class="rounded-lg p-4" style="background:var(--color-raised);border:1px solid var(--color-border);border-top:none;border-radius:0 0 0.5rem 0.5rem;">
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div><div class="text-xs" style="color:var(--color-text-muted);">Nitrogen</div><div id="costPerLbN" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-n);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb N</div></div>
                 <div><div class="text-xs" style="color:var(--color-text-muted);">Phosphate</div><div id="costPerLbP" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-p);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb P₂O₅</div></div>
                 <div><div class="text-xs" style="color:var(--color-text-muted);">Potash</div><div id="costPerLbK" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-k);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb K₂O</div></div>
                 <div><div class="text-xs" style="color:var(--color-text-muted);">Sulfur</div><div id="costPerLbS" class="text-2xl sm:text-3xl font-bold font-mono mt-1" style="color:var(--color-s);">—</div><div class="text-xs" style="color:var(--color-text-muted);">per lb S</div></div>
+              </div>
+              </div>
               </div>
             </div>
 
@@ -600,6 +767,11 @@ function renderApp() {
     } catch {}
   }
   optimizeBlend()
+
+  // Draft autosave & restore
+  installBeforeUnloadGuard()
+  startDraftAutosave()
+  offerDraftRestore()
 }
 
 // ── Render Products ────────────────────────────────────────────────────────
@@ -1058,13 +1230,15 @@ async function saveBlend() {
         name, customer_name: $('customerName')?.value || '',
         mode, data: blendData,
       })
+      clearDraft()
       toast(`"${name}" saved to cloud`, 'success')
       loadSavedList()
-    } catch (err) { toast('Save failed: ' + err.message, 'error') }
+    } catch (err) { toast('Save failed: ' + friendlyError(err), 'error') }
   } else {
     const blends = JSON.parse(localStorage.getItem('dfc_blends') || '{}')
     blends[name] = blendData
     localStorage.setItem('dfc_blends', JSON.stringify(blends))
+    clearDraft()
     loadSavedList()
     toast(`"${name}" saved locally`, 'success')
   }
@@ -1074,6 +1248,7 @@ async function loadSavedList() {
   const sel = $('savedBlends'); if (!sel) return
   sel.innerHTML = '<option value="">-- Select blend --</option>'
 
+  let count = 0
   if (currentCompany) {
     try {
       const blends = await listBlends(currentCompany.id)
@@ -1082,6 +1257,7 @@ async function loadSavedList() {
         opt.value = b.id; opt.textContent = `${b.name} (${b.mode})`
         sel.appendChild(opt)
       })
+      count = blends.length
     } catch { /* silently fail */ }
   } else {
     const blends = JSON.parse(localStorage.getItem('dfc_blends') || '{}')
@@ -1090,6 +1266,10 @@ async function loadSavedList() {
       opt.value = name; opt.textContent = `${name} (${blends[name].mode || 'dry'})`
       sel.appendChild(opt)
     })
+    count = Object.keys(blends).length
+  }
+  if (count === 0) {
+    sel.innerHTML = '<option value="">No saved blends yet</option>'
   }
 }
 
@@ -1105,7 +1285,7 @@ async function loadBlend() {
       if (!blend) return
       d = blend.data; d._dbId = blend.id
       if ($('blendName')) $('blendName').value = blend.name
-    } catch (err) { toast(err.message, 'error'); return }
+    } catch (err) { toast(friendlyError(err), 'error'); return }
   } else {
     const blends = JSON.parse(localStorage.getItem('dfc_blends') || '{}')
     d = blends[selVal]
@@ -1152,7 +1332,7 @@ async function deleteBlend() {
   if (!confirm('Delete this blend?')) return
 
   if (currentCompany) {
-    try { await deleteBlendFromDB(selVal); toast('Deleted', 'info') } catch (err) { toast(err.message, 'error') }
+    try { await deleteBlendFromDB(selVal); toast('Deleted', 'info') } catch (err) { toast(friendlyError(err), 'error') }
   } else {
     const blends = JSON.parse(localStorage.getItem('dfc_blends') || '{}')
     delete blends[selVal]
@@ -1293,8 +1473,7 @@ function printQuote() {
     <div style="background:#ecfdf5;padding:20px;border-radius:12px;margin:20px 0;"><div style="color:#065f46;font-size:13px;text-transform:uppercase;">Price Per Acre</div><div style="font-size:40px;font-weight:bold;">${$('costPerAcreBig')?.textContent}</div><div style="color:#065f46;">${$('totalFieldCostSmall')?.textContent} · ${$('acres')?.value} acres</div></div>
     <p style="font-size:11px;color:#999;text-align:center;margin-top:32px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
-  openPrintWindow(html, `Quote - ${blendName}`)
-  toast('Print dialog opened', 'success')
+  previewBeforePrint(html, `Quote - ${blendName}`)
 }
 
 function printBlendSheet() {
@@ -1468,8 +1647,7 @@ function printBlendSheet() {
     ${totalTonsBlock}
     <p style="font-size:11px;color:#999;text-align:center;margin-top:24px;">© 2026 ${companyName} · Powered by FertCalc Pro</p></div>`
 
-  openPrintWindow(html, `Blend Sheet - ${blendName}`)
-  toast('Print dialog opened', 'success')
+  previewBeforePrint(html, `Blend Sheet - ${blendName}`)
 }
 
 // ── Wire Events ────────────────────────────────────────────────────────────
@@ -1550,7 +1728,7 @@ async function saveChemicalConfig() {
     closeChemicalConfig()
     toast('Chemical settings saved', 'success')
   } catch (err) {
-    toast(err.message, 'error')
+    toast(friendlyError(err), 'error')
   } finally {
     btn.disabled = false; btn.textContent = 'Save'
   }
@@ -1651,13 +1829,30 @@ async function saveProductSettings() {
     closeProductSettings()
     toast('Settings saved', 'success')
   } catch (err) {
-    toast(err.message, 'error')
+    toast(friendlyError(err), 'error')
   } finally {
     btn.disabled = false; btn.textContent = 'Save'
   }
 }
 
+function initCollapsible(toggleId, sectionId, storageKey) {
+  const btn = $(toggleId), body = $(sectionId)
+  if (!btn || !body) return
+  const saved = localStorage.getItem(storageKey)
+  const open = saved === 'true'
+  if (open) { body.classList.remove('hidden'); btn.setAttribute('aria-expanded', 'true'); btn.querySelector('.collapsible-chevron').innerHTML = icon('chevron-up', 'icon-sm') }
+  btn.addEventListener('click', () => {
+    const isHidden = body.classList.toggle('hidden')
+    btn.setAttribute('aria-expanded', String(!isHidden))
+    btn.querySelector('.collapsible-chevron').innerHTML = isHidden ? icon('chevron-down', 'icon-sm') : icon('chevron-up', 'icon-sm')
+    localStorage.setItem(storageKey, String(!isHidden))
+  })
+}
+
 function wireAppEvents() {
+  // Collapsible sections
+  initCollapsible('toggleBreakdown', 'breakdownSection', 'fc_collapse_breakdown')
+  initCollapsible('toggleCostPerLb', 'costPerLbSection', 'fc_collapse_costperlb')
   // Theme
   document.querySelectorAll('.theme-toggle').forEach(b => b.addEventListener('click', toggleTheme))
   // Mode
@@ -1700,7 +1895,7 @@ function wireAppEvents() {
   // Mobile menu
   $('btnMenuToggle')?.addEventListener('click', () => { const m = $('mobileMenu'); m?.classList.toggle('hidden'); m?.classList.toggle('flex') })
   // Sidebar
-  $('sidebarToggle')?.addEventListener('click', () => { const c = $('sidebarContent'); c?.classList.toggle('hidden'); if ($('sidebarArrow')) $('sidebarArrow').textContent = c?.classList.contains('hidden') ? '▼' : '▲' })
+  $('sidebarToggle')?.addEventListener('click', () => { const c = $('sidebarContent'); c?.classList.toggle('hidden'); if ($('sidebarArrow')) $('sidebarArrow').innerHTML = c?.classList.contains('hidden') ? icon('chevron-down', 'icon-sm') : icon('chevron-up', 'icon-sm') })
   // Product settings (company_admin + super_admin)
   $('btnProductSettings')?.addEventListener('click', openProductSettings)
   $('btnCloseProductSettings')?.addEventListener('click', closeProductSettings)
@@ -1734,6 +1929,13 @@ function wireAppEvents() {
       input.dispatchEvent(new Event('change'))
     })
   })
+
+  // Track dirty state on any calc-related input change
+  const appEl = $('app')
+  if (appEl) {
+    appEl.addEventListener('input', markDirty)
+    appEl.addEventListener('change', markDirty)
+  }
 }
 
 // ── Routes ─────────────────────────────────────────────────────────────────

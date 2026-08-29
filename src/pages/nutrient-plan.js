@@ -1,6 +1,6 @@
 import { listFields, listSoilTests, listFieldApplications, listApplicationPlans, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, icon } from '../ui.js'
 
 let fields = []
 let soilTests = []
@@ -17,12 +17,12 @@ export async function renderNutrientPlan(profile, company) {
     <div class="max-w-5xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">📋 4R Nutrient Management Plan</h1>
+          <h1 class="text-2xl font-bold">${icon('clipboard','w-5 h-5 inline -mt-0.5')} 4R Nutrient Management Plan</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Right Source · Right Rate · Right Time · Right Place</p>
         </div>
         <div class="flex gap-2">
-          <button id="btnGenerate" class="btn-green">📄 Generate PDF</button>
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
+          <button id="btnGenerate" class="btn-green">${icon('file-text','w-4 h-4 inline -mt-0.5')} Generate PDF</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -121,7 +121,7 @@ function renderPlan() {
           </ul>
         </div>
         <div class="bg-zinc-800/30 rounded-xl p-4">
-          <h3 class="font-semibold text-emerald-400 mb-2">📊 Right Rate</h3>
+          <h3 class="font-semibold text-emerald-400 mb-2">${icon('chart','w-4 h-4 inline -mt-0.5')} Right Rate</h3>
           <ul class="text-sm text-zinc-300 space-y-1">
             <li>• Rates based on yield goals and soil test levels</li>
             <li>• Crop removal balanced with soil test adjustments</li>
@@ -130,7 +130,7 @@ function renderPlan() {
           </ul>
         </div>
         <div class="bg-zinc-800/30 rounded-xl p-4">
-          <h3 class="font-semibold text-violet-400 mb-2">📅 Right Time</h3>
+          <h3 class="font-semibold text-blue-400 mb-2">${icon('calendar','w-4 h-4 inline -mt-0.5')} Right Time</h3>
           <ul class="text-sm text-zinc-300 space-y-1">
             <li>• Split N applications to reduce loss potential</li>
             <li>• P and K applied pre-plant for incorporation</li>
@@ -139,7 +139,7 @@ function renderPlan() {
           </ul>
         </div>
         <div class="bg-zinc-800/30 rounded-xl p-4">
-          <h3 class="font-semibold text-orange-400 mb-2">📍 Right Place</h3>
+          <h3 class="font-semibold text-orange-400 mb-2">${icon('map-pin','w-4 h-4 inline -mt-0.5')} Right Place</h3>
           <ul class="text-sm text-zinc-300 space-y-1">
             <li>• Broadcast application with incorporation where possible</li>
             <li>• Banded starter where applicable</li>
@@ -159,7 +159,7 @@ function renderPlan() {
       return `
       <div class="card p-5">
         <h2 class="font-semibold mb-3 flex items-center gap-2">
-          🗺️ ${f.name}
+          ${icon('layers','w-4 h-4 inline -mt-0.5')} ${f.name}
           <span class="text-sm text-emerald-400 font-normal">${f.acres} ac</span>
           ${f.county ? `<span class="text-xs text-zinc-500">${f.county}${f.state ? ', ' + f.state : ''}</span>` : ''}
         </h2>

@@ -3,7 +3,7 @@ import {
   updateFeatureRequest, deleteFeatureRequest, signOut
 } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, friendlyError } from '../ui.js'
 
 const CATEGORIES = ['General', 'Calculator', 'Blends', 'Reports', 'Admin', 'Integrations', 'UI/UX', 'Other']
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
@@ -159,7 +159,7 @@ export async function renderFeatures(profile) {
       document.getElementById('frPriority').value = 'Medium'
       loadFeatures()
     } catch (err) {
-      toast(err.message, 'error')
+      toast(friendlyError(err), 'error')
     } finally {
       btn.disabled = false; btn.textContent = 'Submit (Auto-Approved)'
     }
@@ -266,7 +266,7 @@ function renderList() {
         await updateFeatureRequest(sel.dataset.id, updates)
         toast(`Status → ${sel.value}`, 'success')
         loadFeatures()
-      } catch (err) { toast(err.message, 'error') }
+      } catch (err) { toast(friendlyError(err), 'error') }
     })
   })
 
@@ -283,7 +283,7 @@ function renderList() {
         await deleteFeatureRequest(btn.dataset.id)
         toast('Deleted', 'info')
         loadFeatures()
-      } catch (err) { toast(err.message, 'error') }
+      } catch (err) { toast(friendlyError(err), 'error') }
     })
   })
 }
@@ -358,7 +358,7 @@ function openEditModal(id) {
       closeEditModal()
       loadFeatures()
     } catch (err) {
-      toast(err.message, 'error')
+      toast(friendlyError(err), 'error')
     } finally {
       btn.disabled = false; btn.textContent = 'Save'
     }

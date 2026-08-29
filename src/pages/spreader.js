@@ -1,6 +1,6 @@
 import { signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, icon } from '../ui.js'
 
 // Common spreader calibration formulas
 // Rate (lbs/ac) = (lbs caught / swath width ft × distance ft) × 43560
@@ -11,11 +11,11 @@ export async function renderSpreader(profile) {
     <div class="max-w-4xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">⚙️ Spreader Calibration</h1>
+          <h1 class="text-2xl font-bold">${icon('settings','w-5 h-5 inline -mt-0.5')} Spreader Calibration</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Calculate applicator settings and verify rates</p>
         </div>
         <div class="flex gap-2">
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -79,7 +79,7 @@ export async function renderSpreader(profile) {
 
         <!-- Speed/Gate Chart -->
         <div class="card p-5 lg:col-span-2">
-          <h2 class="text-sm font-semibold mb-4 text-amber-400">📊 Speed vs. Rate Chart</h2>
+          <h2 class="text-sm font-semibold mb-4 text-amber-400">${icon('chart','w-4 h-4 inline -mt-0.5')} Speed vs. Rate Chart</h2>
           <p class="text-xs text-zinc-500 mb-4">See how ground speed affects your application rate for a given output.</p>
           <div class="grid grid-cols-3 gap-3 mb-4">
             <div><label class="lbl">Swath Width (ft)</label><input id="chSwath" type="number" step="1" value="60" class="inp" /></div>

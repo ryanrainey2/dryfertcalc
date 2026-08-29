@@ -1,6 +1,6 @@
 import { listFields, listSoilTests, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, icon } from '../ui.js'
 
 let fields = []
 let companyId = null
@@ -12,11 +12,11 @@ export async function renderVRT(profile, company) {
     <div class="max-w-5xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">🗺️ Variable Rate Prescriptions</h1>
+          <h1 class="text-2xl font-bold">${icon('grid','w-5 h-5 inline -mt-0.5')} Variable Rate Prescriptions</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Create zone-based rate maps for precision application</p>
         </div>
         <div class="flex gap-2">
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -84,7 +84,7 @@ export async function renderVRT(profile, company) {
 
       <!-- Rate Recommendation Table -->
       <div class="card p-5">
-        <h2 class="text-sm font-semibold mb-4 text-blue-400">📊 Soil Test-Based Rate Guide</h2>
+        <h2 class="text-sm font-semibold mb-4 text-blue-400">${icon('chart','w-4 h-4 inline -mt-0.5')} Soil Test-Based Rate Guide</h2>
         <p class="text-xs text-zinc-500 mb-3">Use this table to determine rates based on soil test levels (Mehlich-3, lbs/ac build + maintenance).</p>
         <div class="overflow-x-auto rounded-xl border border-zinc-800">
           <table class="w-full text-sm">

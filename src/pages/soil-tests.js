@@ -1,6 +1,6 @@
 import { listSoilTests, createSoilTest, deleteSoilTest, listFields, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, friendlyError, icon } from '../ui.js'
 
 let tests = []
 let fields = []
@@ -52,13 +52,13 @@ export async function renderSoilTests(profile, company) {
     <div class="max-w-6xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">🧪 Soil Tests</h1>
+          <h1 class="text-2xl font-bold">${icon('flask','w-5 h-5 inline -mt-0.5')} Soil Tests</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Enter and interpret soil test results</p>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button id="btnNewTest" class="btn-green">+ New Soil Test</button>
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
-          <button id="btnGoFields" class="btn-ghost">🗺️ Fields</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
+          <button id="btnGoFields" class="btn-ghost">${icon('layers','w-4 h-4 inline -mt-0.5')} Fields</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -163,7 +163,7 @@ export async function renderSoilTests(profile, company) {
       toast('Soil test saved', 'success')
       document.getElementById('newTestForm').classList.add('hidden')
       loadTests()
-    } catch (err) { toast(err.message, 'error') }
+    } catch (err) { toast(friendlyError(err), 'error') }
     finally { btn.disabled = false; btn.textContent = 'Save Soil Test' }
   })
 
@@ -262,7 +262,7 @@ function renderTestsList() {
     btn.addEventListener('click', async () => {
       if (!confirm('Delete this soil test?')) return
       try { await deleteSoilTest(btn.dataset.id); toast('Deleted', 'info'); loadTests() }
-      catch (err) { toast(err.message, 'error') }
+      catch (err) { toast(friendlyError(err), 'error') }
     })
   })
 }

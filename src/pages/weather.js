@@ -1,6 +1,6 @@
 import { signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, icon } from '../ui.js'
 
 // Application condition thresholds
 const CONDITIONS = {
@@ -15,11 +15,11 @@ export async function renderWeather(profile) {
     <div class="max-w-5xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">🌤️ Weather & Application Timing</h1>
+          <h1 class="text-2xl font-bold">${icon('cloud-sun','w-5 h-5 inline -mt-0.5')} Weather & Application Timing</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Check conditions before heading to the field</p>
         </div>
         <div class="flex gap-2">
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -29,7 +29,7 @@ export async function renderWeather(profile) {
         <div class="flex items-end gap-3 flex-wrap">
           <div class="flex-1 min-w-[200px]"><label class="lbl">Location (ZIP or City)</label><input id="wxLocation" type="text" class="inp" placeholder="e.g. 68508 or Lincoln, NE" /></div>
           <button id="btnGetWeather" class="btn-green">Get Forecast</button>
-          <button id="btnUseGPS" class="btn-ghost">📍 Use My Location</button>
+          <button id="btnUseGPS" class="btn-ghost">${icon('map-pin','w-4 h-4 inline -mt-0.5')} Use My Location</button>
         </div>
       </div>
 
@@ -79,7 +79,7 @@ export async function renderWeather(profile) {
 
         <!-- Soil Temp Guide -->
         <div class="card p-5">
-          <h2 class="text-sm font-semibold mb-4 text-violet-400">🌡️ Soil Temperature Guide</h2>
+          <h2 class="text-sm font-semibold mb-4 text-blue-400">🌡️ Soil Temperature Guide</h2>
           <div class="overflow-x-auto rounded-xl border border-zinc-800">
             <table class="w-full text-sm">
               <thead><tr class="bg-zinc-800/50 text-zinc-400 border-b border-zinc-700">

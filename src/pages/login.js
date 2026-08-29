@@ -1,6 +1,6 @@
 import { signIn, signUp, resetPassword, supabase, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast, icon } from '../ui.js'
+import { toast, icon, friendlyError } from '../ui.js'
 
 export function renderLogin() {
   const app = document.getElementById('app')
@@ -169,7 +169,7 @@ export function renderLogin() {
       await resetPassword(email)
       toast('Password reset email sent — check your inbox', 'success')
     } catch (err) {
-      toast(err.message, 'error')
+      toast(friendlyError(err), 'error')
     }
   })
 
@@ -189,7 +189,7 @@ export function renderLogin() {
       document.getElementById('verifyEmailAddr').textContent = email
       document.getElementById('verifyEmailMsg').classList.remove('hidden')
     } catch (err) {
-      toast(err.message, 'error')
+      toast(friendlyError(err), 'error')
       btn.disabled = false; btn.textContent = 'Create Account'
     }
   })

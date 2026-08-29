@@ -1,6 +1,6 @@
 import { listApplicationPlans, createApplicationPlan, updateApplicationPlan, deleteApplicationPlan, listFields, listCrops, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, friendlyError, icon } from '../ui.js'
 
 const APP_TYPES = ['Pre-Plant', 'At-Plant/Starter', 'Side-Dress', 'Topdress', 'Fall Application', 'Foliar', 'Manure Credit']
 const PLAN_STATUSES = ['Draft', 'Active', 'Completed']
@@ -17,13 +17,13 @@ export async function renderPlanner(profile, company) {
     <div class="max-w-6xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">📅 Application Planner</h1>
+          <h1 class="text-2xl font-bold">${icon('calendar','w-5 h-5 inline -mt-0.5')} Application Planner</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Plan split applications across the season</p>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button id="btnNewPlan" class="btn-green">+ New Plan</button>
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
-          <button id="btnGoFields" class="btn-ghost">🗺️ Fields</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
+          <button id="btnGoFields" class="btn-ghost">${icon('layers','w-4 h-4 inline -mt-0.5')} Fields</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -122,7 +122,7 @@ export async function renderPlanner(profile, company) {
       toast('Plan created with auto-generated splits', 'success')
       document.getElementById('newPlanForm').classList.add('hidden')
       loadPlans()
-    } catch (err) { toast(err.message, 'error') }
+    } catch (err) { toast(friendlyError(err), 'error') }
     finally { btn.disabled = false; btn.textContent = 'Create Plan' }
   })
 
@@ -170,9 +170,9 @@ function renderPlansList() {
             <span class="px-2 py-0.5 rounded-full text-xs font-medium ${p.status === 'Active' ? 'bg-emerald-900/60 text-emerald-400' : p.status === 'Completed' ? 'bg-blue-900/60 text-blue-400' : 'bg-zinc-700 text-zinc-300'}">${p.status}</span>
           </div>
           <div class="text-xs text-zinc-500 flex gap-3 flex-wrap">
-            ${field ? `<span>🗺️ ${field.name}</span>` : ''}
-            ${p.crop ? `<span>🌿 ${p.crop}</span>` : ''}
-            ${p.yield_goal ? `<span>🎯 ${p.yield_goal}</span>` : ''}
+            ${field ? `<span>${icon('layers','w-3 h-3 inline -mt-0.5')} ${field.name}</span>` : ''}
+            ${p.crop ? `<span>${icon('seed','w-3 h-3 inline -mt-0.5')} ${p.crop}</span>` : ''}
+            ${p.yield_goal ? `<span>${icon('target','w-3 h-3 inline -mt-0.5')} ${p.yield_goal}</span>` : ''}
             <span>${p.crop_year}</span>
           </div>
         </div>
@@ -194,7 +194,7 @@ function renderPlansList() {
       <div class="space-y-2">
         ${splits.map((s, i) => `
           <div class="flex items-center gap-3 p-2 rounded-lg ${s.applied ? 'bg-emerald-900/20 border border-emerald-700/30' : 'bg-zinc-800/30'}">
-            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${s.applied ? 'bg-emerald-600 text-white' : 'bg-zinc-700 text-zinc-400'}">${s.applied ? '✓' : i + 1}</div>
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${s.applied ? 'bg-emerald-600 text-white' : 'bg-zinc-700 text-zinc-200'}">${s.applied ? '✓' : i + 1}</div>
             <div class="flex-1 min-w-0">
               <div class="font-medium text-sm">${s.type}</div>
               <div class="text-xs text-zinc-500">N: ${s.n} · P: ${s.p} · K: ${s.k} · S: ${s.s || 0}</div>
@@ -218,7 +218,7 @@ function renderPlansList() {
   el.querySelectorAll('.del-plan').forEach(btn => btn.addEventListener('click', async () => {
     if (!confirm('Delete this plan?')) return
     try { await deleteApplicationPlan(btn.dataset.id); toast('Deleted', 'info'); loadPlans() }
-    catch (err) { toast(err.message, 'error') }
+    catch (err) { toast(friendlyError(err), 'error') }
   }))
 }
 
@@ -296,7 +296,7 @@ function openSplitEditor(id) {
         toast('Splits saved', 'success')
         document.getElementById('splitModal').classList.add('hidden')
         loadPlans()
-      } catch (err) { toast(err.message, 'error') }
+      } catch (err) { toast(friendlyError(err), 'error') }
     })
 
     function updateRemaining() {

@@ -6,7 +6,7 @@ import {
   adminListUsers, adminDeleteUser, adminSendPasswordReset, adminApproveUser, adminSetUserPassword
 } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, friendlyError } from '../ui.js'
 
 let companies = []
 let profiles = []
@@ -219,7 +219,7 @@ export async function renderAdmin(profile) {
       document.getElementById('ncLogoFile').value = ''
       loadCompanies()
     } catch (err) {
-      toast(err.message, 'error')
+      toast(friendlyError(err), 'error')
     } finally {
       btn.disabled = false; btn.textContent = 'Create'
     }
@@ -253,7 +253,7 @@ export async function renderAdmin(profile) {
       document.getElementById('invEmail').value = ''
       loadUsers()
     } catch (err) {
-      toast(err.message, 'error')
+      toast(friendlyError(err), 'error')
     } finally {
       btn.disabled = false; btn.textContent = 'Send Invite'
     }
@@ -591,7 +591,7 @@ async function openCompanySettings(companyId) {
       closeCompanyModal()
       loadCompanies()
     } catch (err) {
-      toast(err.message, 'error')
+      toast(friendlyError(err), 'error')
     } finally {
       btn.disabled = false; btn.textContent = 'Save Changes'
     }
@@ -700,7 +700,7 @@ async function loadUsers() {
             toast(btn.dataset.name + ' approved — notification email sent', 'success')
             loadUsers()
           } catch (err) {
-            toast(err.message, 'error')
+            toast(friendlyError(err), 'error')
             btn.disabled = false; btn.textContent = '✓ Approve'
           }
         })
@@ -716,7 +716,7 @@ async function loadUsers() {
             toast(btn.dataset.name + ' denied and removed', 'info')
             loadUsers()
           } catch (err) {
-            toast(err.message, 'error')
+            toast(friendlyError(err), 'error')
             btn.disabled = false; btn.textContent = '✕ Deny'
           }
         })
@@ -770,7 +770,7 @@ async function loadUsers() {
         try {
           await updateProfile(sel.dataset.profileId, { company_id: sel.value || null })
           toast('Company updated', 'success')
-        } catch (err) { toast(err.message, 'error') }
+        } catch (err) { toast(friendlyError(err), 'error') }
       })
     })
     el.querySelectorAll('.assign-role').forEach(sel => {
@@ -778,7 +778,7 @@ async function loadUsers() {
         try {
           await updateProfile(sel.dataset.profileId, { role: sel.value })
           toast('Role updated', 'success')
-        } catch (err) { toast(err.message, 'error') }
+        } catch (err) { toast(friendlyError(err), 'error') }
       })
     })
 
@@ -797,7 +797,7 @@ async function loadUsers() {
             toast('Link generated but empty response', 'error')
           }
         } catch (err) {
-          toast(err.message, 'error')
+          toast(friendlyError(err), 'error')
         } finally {
           btn.disabled = false; btn.textContent = 'Reset Link'
         }
@@ -815,7 +815,7 @@ async function loadUsers() {
           await adminSetUserPassword(btn.dataset.userId, newPw)
           toast(`Password set for ${btn.dataset.name}`, 'success')
         } catch (err) {
-          toast(err.message, 'error')
+          toast(friendlyError(err), 'error')
         } finally {
           btn.disabled = false; btn.textContent = 'Set Password'
         }
@@ -832,7 +832,7 @@ async function loadUsers() {
           toast('User deleted', 'info')
           loadUsers()
         } catch (err) {
-          toast(err.message, 'error')
+          toast(friendlyError(err), 'error')
           btn.disabled = false; btn.textContent = 'Delete'
         }
       })
@@ -898,7 +898,7 @@ async function loadBlends(filterCompanyId) {
           toast('Blend deleted', 'info')
           loadBlends(filterCompanyId)
         } catch (err) {
-          toast(err.message, 'error')
+          toast(friendlyError(err), 'error')
         }
       })
     })

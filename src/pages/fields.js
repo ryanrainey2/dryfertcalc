@@ -1,6 +1,6 @@
 import { listFields, createField, updateField, deleteField, uploadFieldFile, getFieldFileUrl, deleteFieldFile, listSoilTests, listFieldApplications, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, friendlyError, icon } from '../ui.js'
 
 let fields = []
 let companyId = null
@@ -12,13 +12,13 @@ export async function renderFields(profile, company) {
     <div class="max-w-6xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">🗺️ Field Management</h1>
+          <h1 class="text-2xl font-bold">${icon('layers','w-5 h-5 inline -mt-0.5')} Field Management</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Manage fields, acreage, and soil data</p>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button id="btnNewField" class="btn-green">+ New Field</button>
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
-          <button id="btnGoSoil" class="btn-ghost">🧪 Soil Tests</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
+          <button id="btnGoSoil" class="btn-ghost">${icon('flask','w-4 h-4 inline -mt-0.5')} Soil Tests</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -126,7 +126,7 @@ export async function renderFields(profile, company) {
       document.getElementById('nfName').value = ''
       document.getElementById('nfAcres').value = ''
       loadFields()
-    } catch (err) { toast(err.message, 'error') }
+    } catch (err) { toast(friendlyError(err), 'error') }
     finally { btn.disabled = false; btn.textContent = 'Create Field' }
   })
 
@@ -168,10 +168,10 @@ function renderFieldsList() {
             ${f.irrigation ? '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900/60 text-blue-400">Irrigated</span>' : '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-900/60 text-amber-400">Dryland</span>'}
           </div>
           <div class="text-xs text-zinc-500 flex flex-wrap gap-x-3 gap-y-1 mt-1">
-            ${f.county ? `<span>📍 ${f.county}${f.state ? ', ' + f.state : ''}</span>` : ''}
-            ${f.soil_type ? `<span>🪨 ${f.soil_type}</span>` : ''}
-            ${f.drainage ? `<span>💧 ${f.drainage}</span>` : ''}
-            ${f.legal_description ? `<span>📋 ${f.legal_description}</span>` : ''}
+            ${f.county ? `<span>${icon('map-pin','w-3 h-3 inline -mt-0.5')} ${f.county}${f.state ? ', ' + f.state : ''}</span>` : ''}
+            ${f.soil_type ? `<span>${icon('layers','w-3 h-3 inline -mt-0.5')} ${f.soil_type}</span>` : ''}
+            ${f.drainage ? `<span>${icon('zap','w-3 h-3 inline -mt-0.5')} ${f.drainage}</span>` : ''}
+            ${f.legal_description ? `<span>${icon('clipboard','w-3 h-3 inline -mt-0.5')} ${f.legal_description}</span>` : ''}
           </div>
           ${f.notes ? `<p class="text-xs text-zinc-400 mt-1.5">${f.notes}</p>` : ''}
           <div class="flex flex-wrap gap-2 mt-2">
@@ -209,7 +209,7 @@ function renderFieldsList() {
   el.querySelectorAll('.del-field').forEach(btn => btn.addEventListener('click', async () => {
     if (!confirm('Delete this field and all its soil tests?')) return
     try { await deleteField(btn.dataset.id); toast('Deleted', 'info'); loadFields() }
-    catch (err) { toast(err.message, 'error') }
+    catch (err) { toast(friendlyError(err), 'error') }
   }))
 
   // File uploads
@@ -304,7 +304,7 @@ function openEditField(id) {
       toast('Updated', 'success')
       document.getElementById('editFieldModal').classList.add('hidden')
       loadFields()
-    } catch (err) { toast(err.message, 'error') }
+    } catch (err) { toast(friendlyError(err), 'error') }
     finally { btn.disabled = false; btn.textContent = 'Save' }
   })
   body.querySelector('#efCancel').addEventListener('click', () => document.getElementById('editFieldModal').classList.add('hidden'))

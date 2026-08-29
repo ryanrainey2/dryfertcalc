@@ -1,6 +1,6 @@
 import { listInventory, upsertInventory, deleteInventoryItem, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, friendlyError, icon } from '../ui.js'
 
 const ALL_PRODUCTS = [
   { key: 'an', name: 'Ammonium Nitrate', analysis: '34-0-0' },
@@ -32,12 +32,12 @@ export async function renderInventory(profile, company) {
     <div class="max-w-6xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">📦 Inventory</h1>
+          <h1 class="text-2xl font-bold">${icon('package','w-5 h-5 inline -mt-0.5')} Inventory</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Track product on hand and costs</p>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button id="btnAddProduct" class="btn-green">+ Add Product</button>
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -141,7 +141,7 @@ export async function renderInventory(profile, company) {
       toast('Added to inventory', 'success')
       document.getElementById('addProductForm').classList.add('hidden')
       loadInventory()
-    } catch (err) { toast(err.message, 'error') }
+    } catch (err) { toast(friendlyError(err), 'error') }
     finally { btn.disabled = false; btn.textContent = 'Add to Inventory' }
   })
 
@@ -216,7 +216,7 @@ function renderTable() {
         await upsertInventory({ id: btn.dataset.id, quantity_tons: parseFloat(newQty) || 0 })
         toast('Updated', 'success')
         loadInventory()
-      } catch (err) { toast(err.message, 'error') }
+      } catch (err) { toast(friendlyError(err), 'error') }
     })
   })
 
@@ -224,7 +224,7 @@ function renderTable() {
     btn.addEventListener('click', async () => {
       if (!confirm('Remove from inventory?')) return
       try { await deleteInventoryItem(btn.dataset.id); toast('Removed', 'info'); loadInventory() }
-      catch (err) { toast(err.message, 'error') }
+      catch (err) { toast(friendlyError(err), 'error') }
     })
   })
 }

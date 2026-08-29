@@ -1,6 +1,6 @@
 import { listFields, listSoilTests, listFieldApplications, listApplicationPlans, listBlends, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, icon } from '../ui.js'
 
 let fields = []
 let soilTests = []
@@ -19,11 +19,11 @@ export async function renderGrowerPortal(profile, company) {
     <div class="max-w-5xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">👋 Welcome, ${growerName}</h1>
+          <h1 class="text-2xl font-bold">${icon('user','w-5 h-5 inline -mt-0.5')} Welcome, ${growerName}</h1>
           <p class="text-xs text-zinc-500 mt-0.5">${companyName} · Grower Portal</p>
         </div>
         <div class="flex gap-2">
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -50,11 +50,11 @@ export async function renderGrowerPortal(profile, company) {
 
       <!-- Tab Buttons -->
       <div class="flex gap-2 mb-5 flex-wrap">
-        <button class="mode-btn mode-btn-active gp-tab" data-tab="fields">🗺️ My Fields</button>
-        <button class="mode-btn gp-tab" data-tab="tests">🧪 Soil Tests</button>
-        <button class="mode-btn gp-tab" data-tab="plans">📅 Plans</button>
-        <button class="mode-btn gp-tab" data-tab="blends">📦 Blends</button>
-        <button class="mode-btn gp-tab" data-tab="history">📜 History</button>
+        <button class="mode-btn mode-btn-active gp-tab" data-tab="fields">${icon('layers','w-4 h-4 inline -mt-0.5')} My Fields</button>
+        <button class="mode-btn gp-tab" data-tab="tests">${icon('flask','w-4 h-4 inline -mt-0.5')} Soil Tests</button>
+        <button class="mode-btn gp-tab" data-tab="plans">${icon('calendar','w-4 h-4 inline -mt-0.5')} Plans</button>
+        <button class="mode-btn gp-tab" data-tab="blends">${icon('package','w-4 h-4 inline -mt-0.5')} Blends</button>
+        <button class="mode-btn gp-tab" data-tab="history">${icon('clipboard','w-4 h-4 inline -mt-0.5')} History</button>
       </div>
 
       <!-- Tab Content -->
@@ -177,7 +177,7 @@ function renderTab(tab) {
             <div class="space-y-1">
               ${splits.map((s, i) => `
                 <div class="flex items-center gap-2 text-xs p-1.5 rounded ${s.applied ? 'bg-emerald-900/20' : ''}">
-                  <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs ${s.applied ? 'bg-emerald-600 text-white' : 'bg-zinc-700 text-zinc-400'}">${s.applied ? '✓' : i + 1}</span>
+                  <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs ${s.applied ? 'bg-emerald-600 text-white' : 'bg-zinc-700 text-zinc-200'}">${s.applied ? '✓' : i + 1}</span>
                   <span class="font-medium">${s.type}</span>
                   <span class="text-zinc-500">N:${s.n} P:${s.p} K:${s.k} S:${s.s || 0}</span>
                 </div>

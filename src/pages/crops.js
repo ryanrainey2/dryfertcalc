@@ -1,6 +1,6 @@
 import { listCrops, signOut } from '../supabase.js'
 import { navigate } from '../router.js'
-import { toast } from '../ui.js'
+import { toast, icon } from '../ui.js'
 
 let crops = []
 let filterCategory = ''
@@ -11,12 +11,12 @@ export async function renderCrops(profile) {
     <div class="max-w-6xl mx-auto px-4 py-6">
       <header class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 class="text-2xl font-bold">🌿 Crop Library</h1>
+          <h1 class="text-2xl font-bold">${icon('seed','w-5 h-5 inline -mt-0.5')} Crop Library</h1>
           <p class="text-xs text-zinc-500 mt-0.5">Nutrient recommendations by crop and yield goal · Source: ISU PM 1688</p>
         </div>
         <div class="flex gap-2 flex-wrap">
-          <button id="btnGoApp" class="btn-ghost">🌾 Calculator</button>
-          <button id="btnGoFields" class="btn-ghost">🗺️ Fields</button>
+          <button id="btnGoApp" class="btn-ghost">${icon('wheat','w-4 h-4 inline -mt-0.5')} Calculator</button>
+          <button id="btnGoFields" class="btn-ghost">${icon('layers','w-4 h-4 inline -mt-0.5')} Fields</button>
           <button id="btnLogout" class="btn-ghost">Sign Out</button>
         </div>
       </header>
@@ -126,7 +126,7 @@ function openCropDetail(id) {
     <div class="space-y-4">
       <!-- Yield Calculator -->
       <div class="card p-4 bg-zinc-800/30">
-        <h3 class="text-sm font-semibold mb-3 text-emerald-400">🎯 Yield-Based Recommendation</h3>
+        <h3 class="text-sm font-semibold mb-3 text-emerald-400">${icon('target','w-4 h-4 inline -mt-0.5')} Yield-Based Recommendation</h3>
         <div class="grid grid-cols-3 gap-3 mb-3">
           <div class="text-center cursor-pointer yield-preset p-2 rounded-lg hover:bg-zinc-700/50" data-yield="${c.yield_low}">
             <div class="text-xs text-zinc-500">Low</div>
