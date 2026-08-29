@@ -394,7 +394,7 @@ function renderApp() {
           <button id="btnModeDry" class="mode-btn mode-btn-active" title="Dry granular fertilizer products">${icon('wheat', 'icon-sm')} Dry</button>
           <button id="btnModeLiquid" class="mode-btn" title="Liquid fertilizer products">${icon('flask', 'icon-sm')} Liquid</button>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
           <div>
             <label class="lbl">Blend Name</label>
             <input id="blendName" type="text" placeholder="e.g. Corn 180-60-30" class="inp" />
@@ -404,20 +404,20 @@ function renderApp() {
             <input id="customerName" type="text" placeholder="Customer name" class="inp" />
           </div>
           <div class="flex gap-2 items-end">
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
               <label class="lbl">Load Saved Blend</label>
               <select id="savedBlends" class="inp text-sm py-2">
                 <option value="">-- Select blend --</option>
               </select>
             </div>
-            <div class="flex gap-1">
+            <div class="flex gap-1 shrink-0">
               <button id="btnLoad" class="btn btn-primary text-xs px-3 py-2">Load</button>
               <button id="btnDelete" class="btn btn-danger text-xs px-3 py-2">Del</button>
             </div>
-          </div>
-          <div class="flex items-center gap-3 pb-1">
-            <input type="checkbox" id="cartRental" class="w-4 h-4 accent-amber-500 shrink-0" />
-            <label for="cartRental" class="font-medium text-sm cursor-pointer" title="Flags this blend for cart rental billing on the blend sheet" style="color:var(--color-warning);">Cart Rental</label>
+            <div class="flex items-center gap-2 shrink-0">
+              <input type="checkbox" id="cartRental" class="w-4 h-4 accent-amber-500 shrink-0" />
+              <label for="cartRental" class="font-medium text-sm cursor-pointer whitespace-nowrap" title="Flags this blend for cart rental billing on the blend sheet" style="color:var(--color-warning);">Cart Rental</label>
+            </div>
           </div>
         </div>
         <div id="applicationCostRow" class="mt-3 pt-3 flex items-center gap-3 flex-wrap" style="border-top:1px solid var(--color-border);">
