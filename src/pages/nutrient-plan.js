@@ -216,7 +216,7 @@ function renderPlan() {
   `
 }
 
-function generatePDF() {
+async function generatePDF() {
   const content = document.getElementById('planContent')
   if (!content || content.children.length === 0) { toast('Load data first', 'error'); return }
 
@@ -242,7 +242,9 @@ function generatePDF() {
     <p style="text-align:center;font-size:10px;color:#999;margin-top:24px;">© ${year} ${companyName} · Powered by FertCalc Pro</p>
   </div>`
 
-  if (typeof html2pdf === 'undefined') { toast('PDF library not loaded', 'error'); return }
+  try {
+    await window.loadHtml2Pdf()
+  } catch { toast('Failed to load PDF library', 'error'); return }
   html2pdf().set({ margin: 0, filename: `nutrient-plan-${year}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
   toast('PDF generated', 'success')
 }

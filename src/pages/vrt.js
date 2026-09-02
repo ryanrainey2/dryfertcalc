@@ -164,7 +164,7 @@ export async function renderVRT(profile, company) {
   })
 
   // Export
-  document.getElementById('btnExportRx').addEventListener('click', () => {
+  document.getElementById('btnExportRx').addEventListener('click', async () => {
     const format = document.getElementById('vrtFormat').value
     const type = document.getElementById('vrtType').value
 
@@ -183,7 +183,7 @@ export async function renderVRT(profile, company) {
   })
 
   // Print summary
-  document.getElementById('btnPrintRx').addEventListener('click', () => {
+  document.getElementById('btnPrintRx').addEventListener('click', async () => {
     const field = fields.find(f => f.id === document.getElementById('vrtField').value)
     const fieldName = field?.name || 'All Fields'
     const type = document.getElementById('vrtType').selectedOptions[0]?.textContent || ''
@@ -202,6 +202,9 @@ export async function renderVRT(profile, company) {
       <p style="text-align:center;font-size:10px;color:#999;margin-top:24px;">© ${new Date().getFullYear()} FertCalc Pro</p>
     </div>`
 
+    try {
+      await window.loadHtml2Pdf()
+    } catch { toast('Failed to load PDF library', 'error'); return }
     html2pdf().set({ margin: 0, filename: `vrt-prescription-${fieldName.replace(/\s+/g, '-')}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, onclone: (doc) => { doc.querySelectorAll('link[rel="stylesheet"],style').forEach(s => s.remove()) } }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(html).save()
     toast('PDF generated', 'success')
   })

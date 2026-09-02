@@ -106,6 +106,19 @@ function previewBeforePrint(html, title) {
   document.addEventListener('keydown', onKey)
 }
 
+// ── Lazy-load html2pdf ───────────────────────────────────────────────────
+let _html2pdfLoaded = false
+window.loadHtml2Pdf = function() {
+  if (_html2pdfLoaded || typeof window.html2pdf !== 'undefined') return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
+    s.onload = () => { _html2pdfLoaded = true; resolve() }
+    s.onerror = () => reject(new Error('Failed to load PDF library'))
+    document.head.appendChild(s)
+  })
+}
+
 // ── Field validation helpers ─────────────────────────────────────────────
 function highlightField(id) {
   const el = $(id)
@@ -370,12 +383,12 @@ function renderApp() {
           <button id="btnQuote" class="btn btn-primary">${icon('file-text', 'icon-sm')} Quote</button>
           <button id="btnBlend" class="btn btn-secondary">${icon('package', 'icon-sm')} Blend Sheet</button>
           <div class="relative" id="toolsDropdown">
-            <button id="btnToolsMenu" class="btn btn-ghost">${icon('tools', 'icon-sm')} Tools ${icon('chevron-down', 'icon-sm')}</button>
-            <div id="toolsPanel" class="hidden absolute right-0 top-full mt-1 w-52 card p-1.5 z-50 space-y-0.5" style="box-shadow:0 4px 16px rgba(0,0,0,0.25);">
-              ${enabledTools.map(t => `<button class="w-full text-left px-3 py-2 text-sm rounded-md transition-colors nav-tool flex items-center gap-2" data-route="${t.route}" style="color:var(--color-text-secondary);" onmouseover="this.style.background='var(--color-raised)';this.style.color='var(--color-text-primary)'" onmouseout="this.style.background='';this.style.color='var(--color-text-secondary)'">${icon(t.icon, 'icon-sm')} ${t.label}</button>`).join('')}
-              ${isAdmin ? `<div style="border-top:1px solid var(--color-border);margin:4px 0;"></div>` : ''}
-              ${isAdmin ? `<button class="w-full text-left px-3 py-2 text-sm rounded-md transition-colors nav-tool flex items-center gap-2" data-route="/features" style="color:var(--color-text-secondary);" onmouseover="this.style.background='var(--color-raised)'" onmouseout="this.style.background=''">${icon('clipboard', 'icon-sm')} Features</button>` : ''}
-              ${isAdmin ? `<button class="w-full text-left px-3 py-2 text-sm rounded-md transition-colors nav-tool flex items-center gap-2" data-route="/admin" style="color:var(--color-text-secondary);" onmouseover="this.style.background='var(--color-raised)'" onmouseout="this.style.background=''">${icon('settings', 'icon-sm')} Admin</button>` : ''}
+            <button id="btnToolsMenu" class="btn btn-ghost" aria-haspopup="true" aria-expanded="false">${icon('tools', 'icon-sm')} Tools ${icon('chevron-down', 'icon-sm')}</button>
+            <div id="toolsPanel" class="hidden absolute right-0 top-full mt-1 w-52 card p-1.5 z-50 space-y-0.5" role="menu" style="box-shadow:0 4px 16px rgba(0,0,0,0.25);">
+              ${enabledTools.map(t => `<button class="dropdown-item nav-tool" role="menuitem" data-route="${t.route}">${icon(t.icon, 'icon-sm')} ${t.label}</button>`).join('')}
+              ${isAdmin ? `<div class="divider"></div>` : ''}
+              ${isAdmin ? `<button class="dropdown-item nav-tool" role="menuitem" data-route="/features">${icon('clipboard', 'icon-sm')} Features</button>` : ''}
+              ${isAdmin ? `<button class="dropdown-item nav-tool" role="menuitem" data-route="/admin">${icon('settings', 'icon-sm')} Admin</button>` : ''}
             </div>
           </div>
           <button id="btnLogoutApp" class="btn btn-ghost">${icon('sign-out', 'icon-sm')} Sign Out</button>
@@ -408,17 +421,17 @@ function renderApp() {
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
           <div>
-            <label class="lbl">Blend Name</label>
+            <label class="lbl" for="blendName">Blend Name</label>
             <input id="blendName" type="text" placeholder="e.g. Corn 180-60-30" class="inp" />
           </div>
           <div>
-            <label class="lbl">Customer Name <span style="color:var(--color-danger);text-transform:none;font-weight:400;">*</span></label>
+            <label class="lbl" for="customerName">Customer Name <span style="color:var(--color-danger);text-transform:none;font-weight:400;">*</span></label>
             <input id="customerName" type="text" placeholder="Customer name" class="inp" />
           </div>
           <div class="space-y-2">
             <div class="flex gap-2 items-end">
               <div class="flex-1 min-w-0">
-                <label class="lbl">Load Saved Blend</label>
+                <label class="lbl" for="savedBlends">Load Saved Blend</label>
                 <select id="savedBlends" class="inp text-sm py-2">
                   <option value="">-- Select blend --</option>
                 </select>
@@ -509,7 +522,7 @@ function renderApp() {
               <h2 class="text-xs font-semibold mb-3 uppercase tracking-wide" title="Acreage and batch settings for this blend" style="color:var(--color-text-muted);">${icon('map-pin', 'icon-sm')} Field Information</h2>
               <div class="space-y-4">
                 <div>
-                  <label class="lbl">Acres</label>
+                  <label class="lbl" for="acres">Acres</label>
                   <div class="stepper-wrap">
                     <button class="stepper-btn stepper-lg" data-target="acres" data-step="-1">−</button>
                     <input id="acres" type="number" value="120" min="1" class="inp-xl" />
@@ -517,7 +530,7 @@ function renderApp() {
                   </div>
                 </div>
                 <div>
-                  <label class="lbl" title="Split the total blend into multiple batches for smaller mixer loads">Number of Batches</label>
+                  <label class="lbl" for="numBatches" title="Split the total blend into multiple batches for smaller mixer loads">Number of Batches</label>
                   <div class="stepper-wrap">
                     <button class="stepper-btn stepper-lg" data-target="numBatches" data-step="-1">−</button>
                     <input id="numBatches" type="number" value="1" min="1" class="inp-xl" />
@@ -1917,12 +1930,20 @@ function wireAppEvents() {
   $('useApplicationCost')?.addEventListener('change', calculateAll)
   $('appCostType')?.addEventListener('change', () => { updateAppCostUnit(); calculateAll() })
   $('appCostAmount')?.addEventListener('input', calculateAll)
-  // Tools dropdown
-  $('btnToolsMenu')?.addEventListener('click', (e) => {
-    e.stopPropagation()
-    $('toolsPanel')?.classList.toggle('hidden')
+  // Tools dropdown (accessible)
+  const toggleTools = (e) => {
+    if (e) e.stopPropagation()
+    const panel = $('toolsPanel')
+    const btn = $('btnToolsMenu')
+    if (!panel || !btn) return
+    const open = panel.classList.toggle('hidden')
+    btn.setAttribute('aria-expanded', !open)
+  }
+  $('btnToolsMenu')?.addEventListener('click', toggleTools)
+  $('btnToolsMenu')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { $('toolsPanel')?.classList.add('hidden'); $('btnToolsMenu')?.setAttribute('aria-expanded', 'false') }
   })
-  document.addEventListener('click', () => $('toolsPanel')?.classList.add('hidden'))
+  document.addEventListener('click', () => { $('toolsPanel')?.classList.add('hidden'); $('btnToolsMenu')?.setAttribute('aria-expanded', 'false') })
   // Nav tool buttons (both desktop dropdown and mobile menu)
   document.querySelectorAll('.nav-tool').forEach(btn => {
     btn.addEventListener('click', () => navigate(btn.dataset.route))
@@ -1960,6 +1981,13 @@ function wireAppEvents() {
   document.querySelectorAll('.stepper-btn').forEach(btn => {
     if (btn._stepperWired) return
     btn._stepperWired = true
+    // Add aria-label for screen readers
+    if (!btn.getAttribute('aria-label')) {
+      const target = btn.dataset.target || ''
+      const dir = parseInt(btn.dataset.step) > 0 ? 'Increase' : 'Decrease'
+      const name = target.replace(/^(target|price_|rate_)/, '').replace(/([A-Z])/g, ' $1').trim() || 'value'
+      btn.setAttribute('aria-label', `${dir} ${name}`)
+    }
     btn.addEventListener('click', () => {
       const input = $(btn.dataset.target)
       if (!input) return
