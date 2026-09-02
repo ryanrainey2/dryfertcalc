@@ -106,6 +106,18 @@ function previewBeforePrint(html, title) {
   document.addEventListener('keydown', onKey)
 }
 
+// ── Field validation helpers ─────────────────────────────────────────────
+function highlightField(id) {
+  const el = $(id)
+  if (!el) return
+  el.style.borderColor = 'var(--color-danger)'
+  el.style.boxShadow = '0 0 0 2px rgba(239,68,68,0.25)'
+  el.focus()
+  const clear = () => { el.style.borderColor = ''; el.style.boxShadow = '' }
+  el.addEventListener('input', clear, { once: true })
+  setTimeout(clear, 4000)
+}
+
 // ── Dirty state & autosave draft ──────────────────────────────────────────
 let _dirty = false
 let _draftInterval = null
@@ -1223,7 +1235,7 @@ function savePrices() {
 
 async function saveBlend() {
   const name = $('blendName')?.value.trim()
-  if (!name) { toast('Enter a blend name first', 'error'); return }
+  if (!name) { toast('Enter a blend name first', 'error'); highlightField('blendName'); return }
 
   const rates = {}; productKeys().forEach(k => rates[k] = $(`rate_${k}`)?.value)
   const prices = {}; productKeys().forEach(k => prices[k] = $(`price_${k}`)?.value)
@@ -1240,6 +1252,11 @@ async function saveBlend() {
     allowExcess: checked('allowExcess'), notes: $('notes')?.value,
   }
 
+  // Saving indicator
+  const saveBtn = $('btnSaveHeader') || $('btnSaveMob')
+  const saveBtnText = saveBtn?.innerHTML
+  if (saveBtn) { saveBtn.innerHTML = `${icon('save', 'icon-sm')} Saving…`; saveBtn.disabled = true }
+
   // Save to cloud if company exists, otherwise localStorage
   if (currentCompany) {
     try {
@@ -1254,6 +1271,7 @@ async function saveBlend() {
       toast(`"${name}" saved to cloud`, 'success')
       loadSavedList()
     } catch (err) { toast('Save failed: ' + friendlyError(err), 'error') }
+    if (saveBtn) { saveBtn.innerHTML = saveBtnText; saveBtn.disabled = false }
   } else {
     const blends = JSON.parse(localStorage.getItem('dfc_blends') || '{}')
     blends[name] = blendData
@@ -1261,6 +1279,7 @@ async function saveBlend() {
     clearDraft()
     loadSavedList()
     toast(`"${name}" saved locally`, 'success')
+    if (saveBtn) { saveBtn.innerHTML = saveBtnText; saveBtn.disabled = false }
   }
 }
 
@@ -1389,8 +1408,9 @@ function openPrintWindow(html, title) {
 }
 
 function printQuote() {
+  const customer = $('customerName')?.value
+  if (!customer) { toast('Enter a customer name first', 'error'); highlightField('customerName'); return }
   const notes = $('notes')?.value || 'No notes'
-  const customer = $('customerName')?.value || 'N/A'
   const blendName = $('blendName')?.value || 'Unnamed'
   const companyName = currentCompany?.name || 'FertCalc Pro'
   const modeLabel = mode === 'liquid' ? 'Liquid' : 'Dry'
@@ -1498,7 +1518,7 @@ function printQuote() {
 
 function printBlendSheet() {
   const customer = $('customerName')?.value
-  if (!customer) { toast('Enter a customer name first', 'error'); return }
+  if (!customer) { toast('Enter a customer name first', 'error'); highlightField('customerName'); return }
   const blendName = $('blendName')?.value || 'Unnamed'; const acres = val('acres'); const numBatches = parseInt($('numBatches')?.value) || 1
   const companyName = currentCompany?.name || 'FertCalc Pro'
   const modeLabel = mode === 'liquid' ? 'Liquid' : 'Dry'; const batchUnit = mode === 'liquid' ? 'gal' : 'lbs'
@@ -1956,6 +1976,64 @@ function wireAppEvents() {
     appEl.addEventListener('input', markDirty)
     appEl.addEventListener('change', markDirty)
   }
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 's') { e.preventDefault(); saveBlend() }
+      if (e.key === 'o') { e.preventDefault(); optimizeBlend() }
+    }
+    if (e.key === '?' && !e.ctrlKey && !e.metaKey) showKeyboardHelp()
+  })
+
+  // First-visit onboarding hint
+  if (!localStorage.getItem('dfc_onboarded')) {
+    const hint = document.createElement('div')
+    hint.className = 'card p-4 mb-4'
+    hint.id = 'onboardHint'
+    hint.style.cssText = 'border-color:var(--color-accent);background:var(--color-accent-subtle);'
+    hint.innerHTML = `
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="font-semibold text-sm mb-1" style="color:var(--color-accent);">${icon('zap', 'icon-sm')} Welcome to FertCalc Pro</div>
+          <p class="text-xs" style="color:var(--color-text-secondary);">Set your <strong>nutrient targets</strong> below and the optimizer will calculate the cheapest product rates. Adjust <strong>product prices</strong> in the sidebar. Press <kbd class="font-mono text-xs px-1 rounded" style="background:var(--color-raised);border:1px solid var(--color-border);">?</kbd> anytime for keyboard shortcuts.</p>
+        </div>
+        <button id="btnDismissOnboard" class="btn btn-ghost text-xs shrink-0" style="padding:4px 8px;">Got it</button>
+      </div>`
+    const main = document.querySelector('main')
+    if (main) main.prepend(hint)
+    $('btnDismissOnboard')?.addEventListener('click', () => {
+      hint.remove()
+      localStorage.setItem('dfc_onboarded', '1')
+    })
+  }
+}
+
+function showKeyboardHelp() {
+  const existing = $('kbdHelpOverlay')
+  if (existing) { existing.remove(); return }
+  const overlay = document.createElement('div')
+  overlay.id = 'kbdHelpOverlay'
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:1rem;'
+  const kbd = (k) => `<kbd class="font-mono text-xs px-1.5 py-0.5 rounded" style="background:var(--color-raised);border:1px solid var(--color-border);">${k}</kbd>`
+  overlay.innerHTML = `
+    <div class="card p-6" style="max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold">Keyboard Shortcuts</h2>
+        <button id="btnCloseKbd" class="btn btn-ghost" style="padding:4px;">${icon('x-close', 'icon-sm')}</button>
+      </div>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between">${kbd('⌘/Ctrl + S')} <span style="color:var(--color-text-secondary);">Save blend</span></div>
+        <div class="flex justify-between">${kbd('⌘/Ctrl + O')} <span style="color:var(--color-text-secondary);">Optimize blend</span></div>
+        <div class="flex justify-between">${kbd('?')} <span style="color:var(--color-text-secondary);">This help</span></div>
+      </div>
+    </div>`
+  document.body.appendChild(overlay)
+  const close = () => overlay.remove()
+  $('btnCloseKbd')?.addEventListener('click', close)
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close() })
+  document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc) } })
 }
 
 // ── Routes ─────────────────────────────────────────────────────────────────
