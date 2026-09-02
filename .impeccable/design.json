@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-01T20:30:00Z",
+  "title": "Design System: FertCalc Pro",
+  "extensions": {
+    "colorMeta": {
+      "emerald-accent": { "role": "primary", "displayName": "Emerald Accent", "canonical": "#10b981", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"] },
+      "coal-ground": { "role": "neutral", "displayName": "Coal Ground", "canonical": "#09090b", "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#fafafa"] },
+      "signal-danger": { "role": "signal", "displayName": "Danger Red", "canonical": "#ef4444", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5", "#fecaca", "#fee2e2"] },
+      "signal-warning": { "role": "signal", "displayName": "Warning Amber", "canonical": "#f59e0b", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d", "#fde68a", "#fef3c7"] },
+      "nutrient-nitrogen": { "role": "domain", "displayName": "Nitrogen Blue", "canonical": "#60a5fa", "tonalRamp": ["#172554", "#1e3a5f", "#1e40af", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe", "#eff6ff"] },
+      "nutrient-phosphate": { "role": "domain", "displayName": "Phosphate Orange", "canonical": "#fb923c", "tonalRamp": ["#431407", "#7c2d12", "#9a3412", "#c2410c", "#ea580c", "#f97316", "#fb923c", "#fdba74", "#fed7aa", "#fff7ed"] },
+      "nutrient-potash": { "role": "domain", "displayName": "Potash Violet", "canonical": "#a78bfa", "tonalRamp": ["#2e1065", "#3b0764", "#4c1d95", "#5b21b6", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ede9fe"] },
+      "nutrient-sulfur": { "role": "domain", "displayName": "Sulfur Emerald", "canonical": "#34d399", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Mono)", "purpose": "Target nutrient inputs, rate cards, cost hero — the largest numbers on screen." },
+      "title": { "displayName": "Title", "purpose": "Section headings, card titles, page headers." },
+      "body": { "displayName": "Body", "purpose": "Descriptions, form labels, table content." },
+      "label": { "displayName": "Label", "purpose": "Section sub-headers, field labels, unit annotations. Always muted and uppercase." }
+    },
+    "shadows": [
+      { "name": "overlay", "value": "0 8px 32px rgba(0,0,0,0.4)", "purpose": "Print preview panel, modal dialogs." },
+      { "name": "dropdown", "value": "0 4px 16px rgba(0,0,0,0.25)", "purpose": "Toast notifications, draft banner, tools dropdown." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "150ms ease-out", "purpose": "Default transition for border, background, and color state changes." },
+      { "name": "ease-overlay", "value": "200ms ease-out", "purpose": "Toast and overlay entrance/exit transitions." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "480px" },
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action button — emerald fill, white text, lifts on hover.",
+      "html": "<button class=\"ds-btn-primary\">Optimize</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 1rem; border-radius: 6px; font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif; font-weight: 600; font-size: 0.8125rem; background: #10b981; color: #fff; border: none; cursor: pointer; transition: all 150ms ease-out; } .ds-btn-primary:hover { background: #059669; transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action — transparent at rest, fills on hover.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 1rem; border-radius: 6px; font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif; font-weight: 600; font-size: 0.8125rem; background: transparent; color: #a1a1aa; border: none; cursor: pointer; transition: all 150ms ease-out; } .ds-btn-ghost:hover { background: #27272a; color: #fafafa; } .ds-btn-ghost:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Standard container — surface background, soft border, no shadow.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Section Title</h3><p class=\"ds-card-body\">Card content goes here.</p></div>",
+      "css": ".ds-card { background: #18181b; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 1rem; } .ds-card-title { font-family: 'Figtree', ui-sans-serif, sans-serif; font-size: 1rem; font-weight: 600; color: #fafafa; margin: 0 0 0.5rem; } .ds-card-body { font-family: 'Figtree', ui-sans-serif, sans-serif; font-size: 0.875rem; color: #a1a1aa; margin: 0; line-height: 1.5; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard form input — ground background, emerald focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Blend name\" />",
+      "css": ".ds-input { background: #09090b; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 0.5rem 0.75rem; color: #fafafa; font-family: 'Figtree', ui-sans-serif, sans-serif; font-size: 0.875rem; width: 100%; box-sizing: border-box; outline: none; transition: border-color 150ms ease-out, box-shadow 150ms ease-out; } .ds-input:focus { border-color: #10b981; box-shadow: 0 0 0 1px rgba(16,185,129,0.12); } .ds-input::placeholder { color: #71717a; }"
+    },
+    {
+      "name": "Product Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Compact product identifier — colored square with abbreviation.",
+      "html": "<span class=\"ds-badge\" style=\"background:#ef4444\">AN</span><span class=\"ds-badge\" style=\"background:#f97316\">MAP</span><span class=\"ds-badge\" style=\"background:#8b5cf6\">K</span><span class=\"ds-badge\" style=\"background:#10b981\">AMS</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 6px; font-family: 'Figtree', ui-sans-serif, sans-serif; font-size: 0.625rem; font-weight: 700; color: #fff; flex-shrink: 0; }"
+    },
+    {
+      "name": "Toast Success",
+      "kind": "custom",
+      "refersTo": "toast-success",
+      "description": "Success notification — emerald tint, fixed bottom-right.",
+      "html": "<div class=\"ds-toast-success\"><span>Blend saved to cloud</span></div>",
+      "css": ".ds-toast-success { display: flex; align-items: center; padding: 0.75rem 1.25rem; border-radius: 8px; font-family: 'Figtree', ui-sans-serif, sans-serif; font-size: 0.875rem; font-weight: 500; background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25); box-shadow: 0 4px 16px rgba(0,0,0,0.25); max-width: 20rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Co-op Dashboard",
+    "overview": "FertCalc Pro is a modern operations board for agricultural business. It is data-dense, professional, and built to move fast at scale. The interface runs dark by default because retail counters are often dim and screens are viewed all day. Every surface exists to present numbers clearly and let the operator act on them without hunting.\n\nThe system favors density over whitespace, monospace for numeric data, and emerald as the single accent that signals \"go\" across every module. Controls are sturdy and reliable — they feel like they can take a beating, built for calloused hands and fast decisions. There is no decorative chrome; the data is the product.\n\nDual-theme support (dark default, light toggle) ensures outdoor field use on tablets remains readable. Nutrient colors (N=blue, P=orange, K=purple, S=green, B=amber) are industry conventions and never change between themes.",
+    "keyCharacteristics": [
+      "Dark-first, tonal layering with subtle shadows on interactive overlays",
+      "Emerald accent used sparingly — primary actions and success states only",
+      "Monospace numerals (JetBrains Mono) for all calculated values",
+      "Figtree for all UI text — geometric, readable, and quietly distinctive",
+      "Single-column sidebar + wide main panel on desktop; full-width stacked on mobile",
+      "Nutrient colors are domain-fixed and carry meaning, not decoration"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Emerald is the only chromatic accent in the neutral UI. Nutrient colors appear strictly within nutrient data contexts. If something needs emphasis and it is not a nutrient, it is emerald or it is weight/size — never a second accent color.", "section": "colors" },
+      { "name": "The Numbers-in-Mono Rule", "body": "Every numeric value that is calculated, entered, or displayed as data uses JetBrains Mono. Figtree is for words. This split is absolute — mixing them blurs the line between label and value.", "section": "typography" },
+      { "name": "The Flat-at-Rest Rule", "body": "Surfaces are flat at rest. Shadows appear only on elements that float above the page (overlays, toasts, dropdowns). A card never has a shadow — its border and tonal step are sufficient.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use JetBrains Mono for every numeric value — rates, prices, totals, percentages, nutrient amounts.",
+      "Do use emerald exclusively for primary actions, success states, and brand identity.",
+      "Do test every control at coarse-pointer size (min 44px touch target) and on mobile-width viewports.",
+      "Do use the tonal step (ground → surface → raised → elevated) to indicate nesting depth.",
+      "Do preserve nutrient color assignments (N=blue, P=orange, K=purple, S=green, B=amber) in every context.",
+      "Do keep labels uppercase, tracked, muted, and small (0.6875rem)."
+    ],
+    "donts": [
+      "Don't add box-shadows to cards, inputs, or buttons.",
+      "Don't use nutrient colors outside of nutrient data context.",
+      "Don't mix Figtree and JetBrains Mono within the same data element.",
+      "Don't use gradient text, glass effects, or decorative blur.",
+      "Don't introduce a second accent color.",
+      "Don't use rounded-full on buttons or inputs."
+    ]
+  }
+}

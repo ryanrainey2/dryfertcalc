@@ -185,6 +185,54 @@ html.light {
   color: var(--color-text-primary);
 }
 
+.btn-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+.btn-green:hover { background: var(--color-accent-hover); }
+
+.btn-red {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  background: var(--color-danger);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+.btn-red:hover { opacity: 0.9; }
+
+.btn-blue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  background: var(--color-info);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+.btn-blue:hover { opacity: 0.9; }
+
 /* --- Label --- */
 .lbl {
   display: block;
@@ -589,7 +637,7 @@ body {
     padding: 0.5rem 1rem;
     min-height: 2.75rem;
   }
-  .btn {
+  .btn, .btn-green, .btn-red, .btn-blue {
     min-height: 2.75rem;
   }
   .collapsible-toggle {

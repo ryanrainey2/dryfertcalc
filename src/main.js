@@ -479,7 +479,10 @@ function renderApp() {
         <aside class="lg:col-span-3 space-y-3 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
           <button id="sidebarToggle" class="lg:hidden btn btn-ghost w-full justify-between text-sm py-2.5">
             <span>${icon('settings', 'icon-sm')} Products &amp; Field Info</span>
-            <span id="sidebarArrow" class="text-xs">${icon('chevron-down', 'icon-sm')}</span>
+            <span class="flex items-center gap-2">
+              <span id="sidebarSummary" class="text-xs font-mono" style="color:var(--color-text-muted);">${Object.keys(products()).length} products · 120 ac</span>
+              <span id="sidebarArrow">${icon('chevron-down', 'icon-sm')}</span>
+            </span>
           </button>
           <div id="sidebarContent" class="space-y-3 hidden lg:block">
             <div class="card p-4">
@@ -1192,6 +1195,12 @@ function calculateAll() {
   if ($('costPerLbP')) $('costPerLbP').textContent = showUnit('p')
   if ($('costPerLbK')) $('costPerLbK').textContent = showUnit('k')
   if ($('costPerLbS')) $('costPerLbS').textContent = showUnit('s')
+
+  // Update mobile sidebar summary
+  if ($('sidebarSummary')) {
+    const ac = val('acres') || 0
+    $('sidebarSummary').textContent = `${productKeys().length} products · ${ac} ac · $${totalCostPerAcre.toFixed(0)}/ac`
+  }
 }
 
 // ── Mode Switch ────────────────────────────────────────────────────────────
