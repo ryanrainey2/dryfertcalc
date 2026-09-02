@@ -1,6 +1,6 @@
 import './style.css'
 import { getSession, getProfile, signOut, supabase, listBlends, saveBlendToDB, deleteBlendFromDB, updateCompany } from './supabase.js'
-import { route, navigate, startRouter } from './router.js'
+import { route, navigate, startRouter, setNavigationGuard } from './router.js'
 import { renderLogin } from './pages/login.js'
 import { renderAdmin } from './pages/admin.js'
 import { renderFeatures } from './pages/features.js'
@@ -69,7 +69,7 @@ function previewBeforePrint(html, title) {
     <div class="print-preview-panel">
       <div class="print-preview-header">
         <h2>${icon('file-text', 'icon-sm')} ${title}</h2>
-        <button id="btnPreviewClose" class="btn btn-ghost" style="padding:4px;">${icon('x-close', 'icon-sm')}</button>
+        <button id="btnPreviewClose" class="btn btn-ghost" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;">${icon('x-close', 'icon-sm')}</button>
       </div>
       <div class="print-preview-body">
         <iframe id="previewFrame" title="Print preview"></iframe>
@@ -782,6 +782,10 @@ function renderApp() {
 
   // Draft autosave & restore
   installBeforeUnloadGuard()
+  setNavigationGuard(() => {
+    if (!_dirty) return true
+    return confirm('You have unsaved changes. Leave this page?')
+  })
   startDraftAutosave()
   offerDraftRestore()
 }
@@ -798,18 +802,13 @@ function renderProducts() {
     const priceVal = savedPrices[key] || companyPrices[key] || p.defaultPrice
     return `
       <div class="product-row">
-        <div class="flex items-center gap-1.5 min-w-0">
-          <input type="checkbox" id="use_${key}" checked class="w-4 h-4 shrink-0" style="accent-color:${p.color}" />
-          <div class="badge" style="background:${p.color}">${p.abbr}</div>
-          <div class="min-w-0">
-            <div class="font-medium text-sm leading-tight">${p.name}</div>
-            <div class="text-xs text-zinc-500 leading-tight">${p.analysis}</div>
-          </div>
-        </div>
-        <div class="flex items-center gap-0.5 shrink-0">
+        <input type="checkbox" id="use_${key}" checked class="w-4 h-4 shrink-0" style="accent-color:${p.color}" />
+        <div class="badge" style="background:${p.color}" title="${p.analysis}">${p.abbr}</div>
+        <span class="font-medium text-sm truncate min-w-0">${p.name}</span>
+        <div class="flex items-center gap-px shrink-0 ml-auto">
           <button class="stepper-btn" data-target="price_${key}" data-step="-1">−</button>
           <input id="price_${key}" type="number" step="1" value="${priceVal}"
-            class="w-20 text-right inp py-1.5 rounded-xl text-sm font-semibold" />
+            class="price-input" />
           <button class="stepper-btn" data-target="price_${key}" data-step="1">+</button>
         </div>
       </div>`

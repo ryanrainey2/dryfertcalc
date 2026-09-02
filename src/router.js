@@ -1,11 +1,17 @@
 // Simple hash-based router
 const routes = {}
+let _navGuard = null
 
 export function route(path, handler) {
   routes[path] = handler
 }
 
+export function setNavigationGuard(fn) {
+  _navGuard = fn
+}
+
 export function navigate(path) {
+  if (_navGuard && !_navGuard(path)) return
   window.location.hash = '#' + path
 }
 
